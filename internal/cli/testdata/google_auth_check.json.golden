@@ -1,0 +1,5 @@
+{
+  "clientEmail": "store-cli-test@store-cli-test.iam.gserviceaccount.com",
+  "app": "com.example.app",
+  "ok": true
+}

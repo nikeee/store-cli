@@ -8,6 +8,7 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
+	"github.com/nikeee/store-cli/internal/google"
 	"github.com/nikeee/store-cli/internal/output"
 )
 
@@ -50,7 +51,7 @@ func Run(ctx context.Context, args []string, d Deps) int {
 	root.SetArgs(args)
 	slot := &printerSlot{}
 	if err := root.ExecuteContext(context.WithValue(ctx, printerKey{}, slot)); err != nil {
-		err = appleAPIError(err)
+		err = google.FromAPIError(appleAPIError(err))
 		p := slot.p
 		if p == nil {
 			// failed before the mode was resolved: honor the environment, else text
