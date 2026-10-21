@@ -1,0 +1,3 @@
+[2]{locale,title,shortDescription,fullDescription,video}:
+  en-US,Title,Short,"",""
+  it-IT,Titolo,Breve,"Riga uno\nRiga due","https://youtu.be/x"

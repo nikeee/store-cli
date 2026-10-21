@@ -1,0 +1,13 @@
+locale: en-US
+title: Title
+shortDescription: Short
+fullDescription:
+video:
+
+locale: it-IT
+title: Titolo
+shortDescription: Breve
+fullDescription:
+  Riga uno
+  Riga due
+video: https://youtu.be/x

@@ -1,0 +1,16 @@
+[
+  {
+    "locale": "en-US",
+    "title": "Title",
+    "shortDescription": "Short",
+    "fullDescription": "",
+    "video": ""
+  },
+  {
+    "locale": "it-IT",
+    "title": "Titolo",
+    "shortDescription": "Breve",
+    "fullDescription": "Riga uno\nRiga due",
+    "video": "https://youtu.be/x"
+  }
+]
