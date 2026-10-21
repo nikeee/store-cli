@@ -42,7 +42,7 @@ func TestAppleTestflightNotesSetRequiresText(t *testing.T) {
 func TestAppleTestflightNotesSetTooLongSendsNothing(t *testing.T) {
 	srv := notesCLIServer(t)
 	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "testflight", "notes", "set", "45", "--text", strings.Repeat("x", 4001))
-	if code != 2 || !strings.Contains(stderr, "4000") {
+	if code != 1 || !strings.Contains(stderr, "4000") {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
 	if n := len(srv.Requests()); n != 0 {

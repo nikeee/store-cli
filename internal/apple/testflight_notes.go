@@ -74,7 +74,7 @@ func (s *Service) PreviewBuildNotes(ctx context.Context, b Build, locale, text s
 // CheckBuildNotes reports an error when text exceeds the 4000 character limit.
 func CheckBuildNotes(text string) error {
 	if n := utf8.RuneCountInString(text); n > maxBuildNotes {
-		return clierr.Usagef("notes are %d characters long (maximum %d)", n, maxBuildNotes)
+		return clierr.New("notes are %d characters long (maximum %d)", n, maxBuildNotes)
 	}
 	return nil
 }
