@@ -132,3 +132,58 @@ func TestAppleVersionMutationsDryRun(t *testing.T) {
 		}
 	}
 }
+
+func submitCLIServer(t *testing.T, list string) *ascfake.Server {
+	t.Helper()
+	srv := versionCLIServer(t, "app_appStoreVersions.json")
+	srv.Handle("GET", "/v1/apps/{id}/reviewSubmissions", ascfake.JSON(http.StatusOK, list))
+	srv.Handle("POST", "/v1/reviewSubmissions", ascfake.JSON(http.StatusCreated, "review_submission_created.json"))
+	srv.Handle("POST", "/v1/reviewSubmissionItems", ascfake.JSON(http.StatusCreated, "review_submission_item_created.json"))
+	srv.Handle("PATCH", "/v1/reviewSubmissions/{id}", ascfake.JSON(http.StatusOK, "review_submission_submitted.json"))
+	return srv
+}
+
+func TestAppleVersionSubmit(t *testing.T) {
+	srv := submitCLIServer(t, "review_submissions_none.json")
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "submit", "1.3.0", "-o", "json")
+	if code != 0 || !strings.Contains(stdout, `"submissionId": "5c1b7e30-0a42-4d9f-8e11-3b6f2a9d7c01"`) || !strings.Contains(stdout, `"state": "WAITING_FOR_REVIEW"`) || !strings.Contains(stdout, `"items": 1`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}
+
+func TestAppleVersionSubmitNotFound(t *testing.T) {
+	srv := submitCLIServer(t, "review_submissions_none.json")
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "submit", "9.9")
+	if code != 1 || !strings.Contains(stderr, "version 9.9 not found") || !strings.Contains(stderr, "store apple version create 9.9") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+}
+
+func TestAppleVersionCancel(t *testing.T) {
+	srv := submitCLIServer(t, "review_submissions_waiting.json")
+	srv.Handle("PATCH", "/v1/reviewSubmissions/{id}", ascfake.JSON(http.StatusOK, "review_submission_canceled.json"))
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", ascfake.JSON(http.StatusOK, "app_appStoreVersions.json"))
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "cancel", "1.3.0", "-o", "json")
+	if code != 0 || !strings.Contains(stdout, `"state": "CANCELING"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}
+
+func TestAppleVersionSubmitCancelDryRun(t *testing.T) {
+	for _, cmd := range []string{"submit", "cancel"} {
+		list := "review_submissions_draft.json"
+		if cmd == "cancel" {
+			list = "review_submissions_waiting.json"
+		}
+		srv := submitCLIServer(t, list)
+		code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", cmd, "1.3.0", "--dry-run", "-o", "json")
+		if code != 0 || !strings.Contains(stdout, `"state": "dry-run"`) {
+			t.Fatalf("%s: code=%d stdout=%q stderr=%q", cmd, code, stdout, stderr)
+		}
+		for _, r := range srv.Requests() {
+			if r.Method != http.MethodGet {
+				t.Errorf("%s: dry run sent %s %s", cmd, r.Method, r.Path)
+			}
+		}
+	}
+}

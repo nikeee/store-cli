@@ -1,0 +1,12 @@
+{
+  "data": [],
+  "links": {
+    "self": "{{baseURL}}/v1/apps/1234567890/reviewSubmissions"
+  },
+  "meta": {
+    "paging": {
+      "total": 0,
+      "limit": 50
+    }
+  }
+}

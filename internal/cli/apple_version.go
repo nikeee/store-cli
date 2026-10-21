@@ -20,6 +20,8 @@ func newAppleVersionCmd(Deps) *cobra.Command {
 		newAppleVersionShowCmd(),
 		newAppleVersionCreateCmd(),
 		newAppleVersionSetBuildCmd(),
+		newAppleVersionSubmitCmd(),
+		newAppleVersionCancelCmd(),
 	)
 	return cmd
 }
@@ -165,6 +167,86 @@ func newAppleVersionSetBuildCmd() *cobra.Command {
 				return err
 			}
 			return emit(cmd, v)
+		},
+	}
+	addDryRun(cmd)
+	return cmd
+}
+
+// findVersionToChange returns the version v on --platform; a missing one is
+// an error that points at version create.
+func findVersionToChange(cmd *cobra.Command, svc *apple.Service, app apple.App, v string) (apple.Version, error) {
+	found, ok, err := svc.FindVersion(cmd.Context(), app, v, platformFlag(cmd))
+	if err != nil {
+		return apple.Version{}, err
+	}
+	if !ok {
+		e := clierr.New("version %s not found", v)
+		e.Hint = "store apple version create " + v
+		return apple.Version{}, e
+	}
+	return found, nil
+}
+
+func newAppleVersionSubmitCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "submit <version>",
+		Short: "Submit a version for App Review",
+		Long: "Submits the version for App Review. An open, unsubmitted review submission of the app is reused\n" +
+			"together with its other items (Apple only accepts e.g. a first subscription group together with an\n" +
+			"app version). If that open submission holds a different version, the command fails and names it.\n" +
+			"Result: {version, submissionId, state, items}.",
+		Example: "  store apple version submit 1.4.0",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, app, err := appleService(cmd)
+			if err != nil {
+				return err
+			}
+			v, err := findVersionToChange(cmd, svc, app, args[0])
+			if err != nil {
+				return err
+			}
+			submit := svc.SubmitVersion
+			if dryRun(cmd) {
+				submit = svc.PreviewSubmitVersion
+			}
+			res, err := submit(cmd.Context(), app, v)
+			if err != nil {
+				return err
+			}
+			return emit(cmd, res)
+		},
+	}
+	addDryRun(cmd)
+	return cmd
+}
+
+func newAppleVersionCancelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cancel <version>",
+		Short:   "Withdraw the review submission of a version",
+		Long:    "Withdraws the version's review submission. Result: {version, submissionId, state}.",
+		Example: "  store apple version cancel 1.4.0",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, app, err := appleService(cmd)
+			if err != nil {
+				return err
+			}
+			v, err := findVersionToChange(cmd, svc, app, args[0])
+			if err != nil {
+				return err
+			}
+			cancel := svc.CancelVersion
+			if dryRun(cmd) {
+				cancel = svc.PreviewCancelVersion
+			}
+			res, err := cancel(cmd.Context(), app, v)
+			if err != nil {
+				return err
+			}
+			return emit(cmd, res)
 		},
 	}
 	addDryRun(cmd)
