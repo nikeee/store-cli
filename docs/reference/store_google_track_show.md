@@ -4,7 +4,9 @@ Show a track and its releases
 
 ### Synopsis
 
-Shows one track with its releases. Result: Track.
+Shows one track with its releases.
+
+Result: Track
 
 ```
 store google track show <track> [flags]

@@ -6,8 +6,9 @@ Show the App Review information
 
 Shows the App Review contact, demo account, notes and attachments of a version. Without --version:
 the editable version if there is one, else the live one. The demo password is shown as *** unless
---reveal is given. Result: {firstName, lastName, phone, email, demoRequired, demoUser,
-demoPassword, notes, attachments: [fileName]}.
+--reveal is given.
+
+Result: ReviewInfo
 
 ```
 store apple review-info show [--version <v>] [flags]

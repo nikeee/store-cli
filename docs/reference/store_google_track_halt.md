@@ -4,7 +4,9 @@ Halt the staged rollout of a track
 
 ### Synopsis
 
-Halts the track's staged release (status halted, user fraction kept). Result: Track.
+Halts the track's staged release (status halted, user fraction kept).
+
+Result: Track
 
 ```
 store google track halt <track> [flags]

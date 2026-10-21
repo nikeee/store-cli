@@ -6,7 +6,7 @@ Verify the credentials by creating and deleting an edit
 
 Creates and deletes an edit for --app.
 
-Result: {clientEmail, app, ok}.
+Result: GoogleAuthCheck
 
 ```
 store google auth check [flags]

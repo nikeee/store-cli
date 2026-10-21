@@ -4,7 +4,9 @@ Set the export compliance answer of a build
 
 ### Synopsis
 
-Sets usesNonExemptEncryption (export compliance). Result: Build.
+Sets usesNonExemptEncryption (export compliance).
+
+Result: Build
 
 ```
 store apple build set-encryption <build> <true|false> [flags]

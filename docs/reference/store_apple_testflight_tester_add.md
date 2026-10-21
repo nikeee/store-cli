@@ -5,7 +5,8 @@ Add a tester to a beta group
 ### Synopsis
 
 Creates the tester if needed and adds them to the group; already a member is a no-op.
-Result: the tester.
+
+Result: Tester
 
 ```
 store apple testflight tester add <email> [flags]

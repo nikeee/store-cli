@@ -15,7 +15,8 @@ The whole App Store submission in one command:
    this step is skipped with a notice (Apple rejects the field then).
 6. Submit as in version submit.
 Local inputs are checked before the first API call. --dry-run changes nothing and shows the steps.
-Result: {version, build, submissionId, state, plan}.
+
+Result: SubmitResult
 
 ```
 store apple submit <version> [--build N|latest] [--metadata <dir>] [--screenshots <dir>] [--release-notes <dir>] [--release manual|after-approval|scheduled] [--release-date <time>] [flags]

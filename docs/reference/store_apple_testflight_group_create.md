@@ -4,7 +4,9 @@ Create a beta group
 
 ### Synopsis
 
-Creates a beta group, optionally internal or with a public link. Result: the group.
+Creates a beta group, optionally internal or with a public link.
+
+Result: BetaGroup
 
 ```
 store apple testflight group create <name> [flags]

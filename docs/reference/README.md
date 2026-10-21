@@ -2,6 +2,7 @@
 
 Generated from the command help by `go generate ./...`; do not edit.
 Lookup tables (fields, devices, image types, locales, environment variables) are in [tables.md](tables.md).
+The JSON result objects named in the `Result:` line of each command are in [results.md](results.md).
 Conventions, output formats and exit codes are in [../commands.md](../commands.md).
 
 - [store](store.md) - Manage App Store Connect and Google Play from the command line

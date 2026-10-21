@@ -4,7 +4,9 @@ Expire a build in TestFlight
 
 ### Synopsis
 
-Expires the build in TestFlight. Result: Build.
+Expires the build in TestFlight.
+
+Result: Build
 
 ```
 store apple build expire <build> [flags]

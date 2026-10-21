@@ -5,7 +5,9 @@ Set the What to Test text of a build
 ### Synopsis
 
 Sets the "What to Test" text (max 4000 characters). Works while the build is still processing.
-A text starting with @ is read from that file. Result: {build, locale, text}.
+A text starting with @ is read from that file.
+
+Result: BuildNotes
 
 ```
 store apple testflight notes set <build> [flags]

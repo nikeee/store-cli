@@ -4,7 +4,9 @@ Withdraw the review submission of a version
 
 ### Synopsis
 
-Withdraws the version's review submission. Result: {version, submissionId, state}.
+Withdraws the version's review submission.
+
+Result: SubmissionResult
 
 ```
 store apple version cancel <version> [flags]

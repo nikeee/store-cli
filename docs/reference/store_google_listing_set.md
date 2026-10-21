@@ -7,7 +7,9 @@ Change listing texts of one locale
 Changes the given fields of one locale; fields not given stay as they are (including the promo video).
 A locale that does not exist yet is created. An empty value clears a field. Lengths are checked
 before any API call. --locale takes an App Store style locale, sent as the Play language code. A text
-starting with @ is read from that file. Result: Listing; with --dry-run the listing as it would be.
+starting with @ is read from that file. With --dry-run the listing is shown as it would be.
+
+Result: Listing
 
 ```
 store google listing set --locale <l> [field flags] [flags]

@@ -4,8 +4,9 @@ Show the app given by --app
 
 ### Synopsis
 
-The app given by --app. Result: {app: App, versions: [Version], locales: [string]}.
-versions holds the newest versions per platform (at most 5).
+Shows the app given by --app with its locales and the newest versions per platform (at most 5).
+
+Result: AppDetails
 
 ```
 store apple app show [flags]

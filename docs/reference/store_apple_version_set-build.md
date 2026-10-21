@@ -5,7 +5,9 @@ Attach a build to an editable version
 ### Synopsis
 
 Attaches a processed (VALID) build to an editable version. The build is looked up under the
-version's own number. Result: Version.
+version's own number.
+
+Result: Version
 
 ```
 store apple version set-build <version> <build> [flags]

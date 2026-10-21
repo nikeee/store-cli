@@ -25,7 +25,7 @@ func newAppleSubmitCmd() *cobra.Command {
 			"   this step is skipped with a notice (Apple rejects the field then).\n" +
 			"6. Submit as in version submit.\n" +
 			"Local inputs are checked before the first API call. --dry-run changes nothing and shows the steps.\n" +
-			"Result: {version, build, submissionId, state, plan}.",
+			"Result: SubmitResult",
 		Example: "  store apple submit 1.4.0 --metadata fastlane/metadata --release-notes release-notes --release after-approval",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

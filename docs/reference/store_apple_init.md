@@ -8,8 +8,9 @@ Scaffolds the metadata directory for a new app: per locale one empty file per ro
 table, review_information/ with its files, and <screenshots>/<locale>/. Never touches existing
 files, so it can be re-run to add a locale. Works offline, needs no credentials. For an app that
 already has a listing, use pull instead (an empty file clears its field on push).
-Result: {created: [path], existing: [path]}. Text mode also prints each created file with its
-character limit.
+Text mode also prints each created file with its character limit.
+
+Result: InitResult
 
 ```
 store apple init <dir> --locale <l> [--locale <l>]... [--screenshots <dir>] [flags]

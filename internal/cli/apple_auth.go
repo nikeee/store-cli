@@ -2,8 +2,8 @@ package cli
 
 import "github.com/spf13/cobra"
 
-// appleAuthCheck is the result of `store apple auth check`.
-type appleAuthCheck struct {
+// AppleAuthCheck is the result of `store apple auth check`.
+type AppleAuthCheck struct {
 	IssuerID string `json:"issuerId"`
 	KeyID    string `json:"keyId"`
 	OK       bool   `json:"ok"`
@@ -19,7 +19,7 @@ func newAppleAuthCmd(Deps) *cobra.Command {
 		Use:     "check",
 		Short:   "Verify the credentials with one read call",
 		Example: "  store apple auth check",
-		Long:    "Verifies the credentials with one read call.\n\nResult: {issuerId, keyId, ok}. Never prints the key.",
+		Long:    "Verifies the credentials with one read call. Never prints the key.\nResult: AppleAuthCheck",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			creds, err := appleCredentials(cmd)
@@ -33,7 +33,7 @@ func newAppleAuthCmd(Deps) *cobra.Command {
 			if err := svc.CheckAuth(cmd.Context()); err != nil {
 				return err
 			}
-			return emit(cmd, appleAuthCheck{IssuerID: creds.IssuerID, KeyID: creds.KeyID, OK: true})
+			return emit(cmd, AppleAuthCheck{IssuerID: creds.IssuerID, KeyID: creds.KeyID, OK: true})
 		},
 	})
 	return cmd

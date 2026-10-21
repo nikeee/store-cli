@@ -3,10 +3,11 @@
 Every command, flag and example is documented in the generated reference in
 [`reference/`](reference/README.md), built from the command help (`store <command> --help`) by
 `go generate ./...`. Lookup tables (listing fields, devices, image types, locales, environment
-variables) are in [`reference/tables.md`](reference/tables.md).
+variables) are in [`reference/tables.md`](reference/tables.md), the JSON result objects in
+[`reference/results.md`](reference/results.md).
 
-This page keeps what the command help cannot express: conventions, output formats, result
-objects, exit codes, the metadata directory and a typical CI flow.
+This page keeps what the command help cannot express: conventions, output formats, exit codes,
+the metadata directory and a typical CI flow.
 
 Design: `superpowers/specs/2026-10-21-store-cli-design.md`.
 
@@ -73,32 +74,9 @@ and `toon` mode as an object:
  "status": 409, "code": "STATE_ERROR", "detail": "<API detail>", "hint": "store apple version cancel 1.2.0"}
 ```
 
-The `Result:` line of each command page names the result; the objects it refers to are:
-
-### Apple result objects
-
-```
-App          {id, bundleId, name, sku, primaryLocale}
-Build        {id, version, build, platform, state, uploadedAt, expired, usesNonExemptEncryption}
-             state: processing | failed | invalid | valid
-Version      {id, platform, version, state, releaseType, earliestReleaseDate, build}
-             build: {id, build} or null; state is App Store Connect's appVersionState
-Localization {locale, name, subtitle, privacyUrl, privacyChoicesUrl, description, keywords,
-              promotionalText, marketingUrl, supportUrl, whatsNew}
-Screenshot   {id, fileName, position, checksum, state}
-ScreenshotSet{locale, device, displayType, screenshots: [Screenshot]}
-Change       {action, scope, locale, field, old, new}     action: create | update | replace | skip
-Plan         {changes: [Change]}                           used by push and --dry-run
-```
-
-### Google result objects
-
-```
-Release   {name, versionCodes, status, userFraction, releaseNotes: [{locale, text}]}
-Track     {track, releases: [Release]}
-Listing   {locale, title, shortDescription, fullDescription, video}
-Image     {id, url, sha256}
-```
+The last line of the description of each command starts with `Result:` and names the object the command prints
+(`[Name]` is a list of it). The fields of every object are in [results.md](reference/results.md),
+generated from the result types.
 
 ## Exit codes
 

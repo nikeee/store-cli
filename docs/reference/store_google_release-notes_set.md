@@ -7,7 +7,9 @@ Set the release notes of a release on a track
 Sets the release notes of a release on a track, by --release-name or, by default, the newest
 release by version code. --dir reads <locale>.txt per locale. The notes of other languages stay.
 Max 500 characters per locale; locales the listing does not have are dropped with a warning.
-The other releases of the track are not changed. Result: Release.
+The other releases of the track are not changed.
+
+Result: Release
 
 ```
 store google release-notes set <track> (--dir <dir> | --locale <l> --text <text>) [flags]

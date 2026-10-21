@@ -47,13 +47,28 @@ func run(out string) error {
 
 	root := cli.NewRootCmd(cli.DefaultDeps())
 	root.DisableAutoGenTag = true
+	resultParagraphs(root)
 	if err := doc.GenMarkdownTree(root, out); err != nil {
 		return err
 	}
 	if err := os.WriteFile(filepath.Join(out, "README.md"), []byte(index(root)), 0o644); err != nil {
 		return err
 	}
+	if err := os.WriteFile(filepath.Join(out, "results.md"), []byte(resultsPage()), 0o644); err != nil {
+		return err
+	}
 	return os.WriteFile(filepath.Join(out, "tables.md"), []byte(tables()), 0o644)
+}
+
+// resultParagraphs puts the final Result line of every Long text in its own
+// paragraph, so Markdown does not join it to the text above.
+func resultParagraphs(c *cobra.Command) {
+	if i := strings.LastIndex(c.Long, "\nResult: "); i >= 0 && !strings.Contains(c.Long[i+1:], "\n") {
+		c.Long = c.Long[:i] + "\n" + c.Long[i:]
+	}
+	for _, sub := range c.Commands() {
+		resultParagraphs(sub)
+	}
 }
 
 func pageName(c *cobra.Command) string {
@@ -66,6 +81,7 @@ func index(root *cobra.Command) string {
 	b.WriteString("# store - command reference\n\n")
 	b.WriteString("Generated from the command help by `go generate ./...`; do not edit.\n")
 	b.WriteString("Lookup tables (fields, devices, image types, locales, environment variables) are in [tables.md](tables.md).\n")
+	b.WriteString("The JSON result objects named in the `Result:` line of each command are in [results.md](results.md).\n")
 	b.WriteString("Conventions, output formats and exit codes are in [../commands.md](../commands.md).\n\n")
 	var walk func(c *cobra.Command, depth int)
 	walk = func(c *cobra.Command, depth int) {

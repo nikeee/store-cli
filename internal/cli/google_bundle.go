@@ -41,7 +41,7 @@ func newGoogleBundleUploadCmd() *cobra.Command {
 			"completed one beside it. A draft keeps the releases that are not drafts.\n" +
 			"With --dry-run the edit is created and deleted; nothing is uploaded or changed. The result then\n" +
 			"has versionCode 0 and releases without versionCodes.\n" +
-			"Result: {versionCode, tracks: [Track]}.",
+			"Result: BundleUploadResult",
 		Example: "  store google bundle upload app.aab --track internal --release-name v1.4.0 --release-notes release-notes",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

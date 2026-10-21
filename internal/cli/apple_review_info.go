@@ -23,8 +23,8 @@ func newAppleReviewInfoShowCmd() *cobra.Command {
 		Short: "Show the App Review information",
 		Long: "Shows the App Review contact, demo account, notes and attachments of a version. Without --version:\n" +
 			"the editable version if there is one, else the live one. The demo password is shown as *** unless\n" +
-			"--reveal is given. Result: {firstName, lastName, phone, email, demoRequired, demoUser,\n" +
-			"demoPassword, notes, attachments: [fileName]}.",
+			"--reveal is given.\n" +
+			"Result: ReviewInfo",
 		Example: "  store apple review-info show --reveal",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -56,8 +56,9 @@ func newAppleReviewInfoSetCmd() *cobra.Command {
 		Short: "Change the App Review information",
 		Long: "Changes the given fields; fields not given stay as they are. An empty value clears a field, except\n" +
 			"--demo-required, which cannot be cleared. A text starting with @ is read from that file.\n" +
-			"--attachment (repeatable) replaces all existing attachments with the given files. Result: the\n" +
-			"review information as in show (password masked); with --dry-run the planned changes.",
+			"--attachment (repeatable) replaces all existing attachments with the given files. The\n" +
+			"password is masked as in show; with --dry-run the result is the planned Plan.\n" +
+			"Result: ReviewInfo",
 		Example: "  store apple review-info set --demo-required true --demo-user reviewer --demo-password @pw.txt\n" +
 			"  store apple review-info set --attachment login-flow.pdf",
 		Args: cobra.NoArgs,

@@ -4,7 +4,9 @@ Show the app contact details
 
 ### Synopsis
 
-Shows the contact email, website, phone and the default language. Result: {email, website, phone, defaultLocale}.
+Shows the contact email, website, phone and the default language.
+
+Result: Details
 
 ```
 store google details show [flags]

@@ -4,7 +4,9 @@ Remove a tester from a beta group
 
 ### Synopsis
 
-Removes the tester from the group only. Result: the tester.
+Removes the tester from the group only.
+
+Result: Tester
 
 ```
 store apple testflight tester remove <email> [flags]

@@ -18,7 +18,9 @@ All texts and images are checked before any API call. First the plan is computed
 (stderr in text mode), then applied; --dry-run stops after the plan. Unchanged values cause no
 API call. When a change fails, push stops with exit 1 and the plan shows which changes were
 applied (skip for the others); a screenshot set changed only partly is reported incomplete, run
-push again. Result: Plan (with action showing what was done).
+push again. The action of each change shows what was done.
+
+Result: Plan
 
 ```
 store apple push <dir> [--screenshots <dir>] [--version <v>] [--only texts,screenshots,review] [flags]

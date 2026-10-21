@@ -4,7 +4,9 @@ List the versions of the app, newest first
 
 ### Synopsis
 
-Lists the versions of the app on --platform, newest first. Result: [Version].
+Lists the versions of the app on --platform, newest first.
+
+Result: [Version]
 
 ```
 store apple version list [flags]

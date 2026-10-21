@@ -37,7 +37,7 @@ func newGoogleImagesListCmd() *cobra.Command {
 		Short: "List the images of a locale",
 		Long: "Lists the images of one locale in Play's order with their ID, SHA-256 and preview URL. Without\n" +
 			"--type every image type that holds images is listed. --locale takes an App Store style locale,\n" +
-			"sent as the Play language code. Types: " + imageTypeAliases() + ". Result: [ImageSet].",
+			"sent as the Play language code. Types: " + imageTypeAliases() + ".\nResult: [ImageSet]",
 		Example: "  store google images list --locale en-US --type phone",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -84,7 +84,8 @@ func newGoogleImagesUploadCmd() *cobra.Command {
 			"tv-banner) take exactly one file and always replace their image; phone needs 2 to 8 screenshots.\n" +
 			"If an upload fails after images were deleted, the whole edit is discarded, so nothing is published;\n" +
 			"run the command again. --locale takes an App Store style locale. Types: " + imageTypeAliases() + ".\n" +
-			"Result: ImageSet; with --dry-run the planned change.",
+			"With --dry-run the result is the planned Plan.\n" +
+			"Result: ImageSet",
 		Example: "  store google images upload --locale en-US --type phone --replace shots/1.png shots/2.png\n" +
 			"  store google images upload --locale en-US --type feature-graphic feature.png",
 		Args: cobra.MinimumNArgs(1),
@@ -129,8 +130,9 @@ func newGoogleImagesDeleteCmd() *cobra.Command {
 		Use:   "delete --locale <l> --type <t>",
 		Short: "Delete all images of one locale and type",
 		Long: "Deletes all images of the type in the locale. A type without images is an error. --locale takes an\n" +
-			"App Store style locale. Types: " + imageTypeAliases() + ". Result: {locale, type, deleted}; with\n" +
-			"--dry-run the planned change.",
+			"App Store style locale. Types: " + imageTypeAliases() + ".\n" +
+			"With --dry-run the result is the planned Plan.\n" +
+			"Result: ImagesDeleted",
 		Example: "  store google images delete --locale en-US --type tv-banner",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {

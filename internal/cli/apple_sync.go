@@ -26,8 +26,8 @@ func newAppleInitCmd() *cobra.Command {
 			"table, review_information/ with its files, and <screenshots>/<locale>/. Never touches existing\n" +
 			"files, so it can be re-run to add a locale. Works offline, needs no credentials. For an app that\n" +
 			"already has a listing, use pull instead (an empty file clears its field on push).\n" +
-			"Result: {created: [path], existing: [path]}. Text mode also prints each created file with its\n" +
-			"character limit.",
+			"Text mode also prints each created file with its character limit.\n" +
+			"Result: InitResult",
 		Example: "  store apple init fastlane/metadata --locale en-US --locale de-DE",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -112,7 +112,8 @@ func newApplePushCmd() *cobra.Command {
 			"(stderr in text mode), then applied; --dry-run stops after the plan. Unchanged values cause no\n" +
 			"API call. When a change fails, push stops with exit 1 and the plan shows which changes were\n" +
 			"applied (skip for the others); a screenshot set changed only partly is reported incomplete, run\n" +
-			"push again. Result: Plan (with action showing what was done).",
+			"push again. The action of each change shows what was done.\n" +
+			"Result: Plan",
 		Example: "  store apple push fastlane/metadata --dry-run\n" +
 			"  store apple push fastlane/metadata --only texts,review",
 		Args: cobra.ExactArgs(1),
@@ -188,7 +189,7 @@ func newApplePullCmd() *cobra.Command {
 			"in the store stays cleared on the next push. Overwrites the files it writes and touches nothing\n" +
 			"else. Does not download screenshots (Apple re-encodes them, so they would never match the\n" +
 			"originals). Without --version: the editable version if there is one, else the live one.\n" +
-			"Result: {locales: [string], files: int}.",
+			"Result: ApplePullResult",
 		Example: "  store apple pull fastlane/metadata",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -11,8 +11,10 @@ PNG or JPEG without an alpha channel, checked locally before any API call.
 Without --replace the files are appended to the set (max 10 per set). With --replace: if the set
 already holds exactly these files in this order (MD5), nothing happens; otherwise the set is emptied
 and the files are uploaded in order. Each file is reserved, uploaded, committed with its MD5 and
-polled until Apple processed it; --timeout is the time per file. Result: ScreenshotSet; with
---dry-run the planned change.
+polled until Apple processed it; --timeout is the time per file. With
+--dry-run the result is the planned Plan.
+
+Result: ScreenshotSet
 
 ```
 store apple screenshots upload --locale <l> [--device <d>] [--version <v>] [--replace] <png>... [flags]

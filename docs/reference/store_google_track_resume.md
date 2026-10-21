@@ -4,7 +4,9 @@ Resume the halted rollout of a track
 
 ### Synopsis
 
-Resumes the track's halted release (status in progress, user fraction kept). Result: Track.
+Resumes the track's halted release (status in progress, user fraction kept).
+
+Result: Track
 
 ```
 store google track resume <track> [flags]

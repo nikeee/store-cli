@@ -7,7 +7,8 @@ Submit a version for App Review
 Submits the version for App Review. An open, unsubmitted review submission of the app is reused
 together with its other items (Apple only accepts e.g. a first subscription group together with an
 app version). If that open submission holds a different version, the command fails and names it.
-Result: {version, submissionId, state, items}.
+
+Result: SubmissionResult
 
 ```
 store apple version submit <version> [flags]

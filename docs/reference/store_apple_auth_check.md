@@ -4,9 +4,9 @@ Verify the credentials with one read call
 
 ### Synopsis
 
-Verifies the credentials with one read call.
+Verifies the credentials with one read call. Never prints the key.
 
-Result: {issuerId, keyId, ok}. Never prints the key.
+Result: AppleAuthCheck
 
 ```
 store apple auth check [flags]

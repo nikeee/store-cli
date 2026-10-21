@@ -27,7 +27,8 @@ func newAppleScreenshotsListCmd() *cobra.Command {
 		Use:   "list [--locale <l>] [--device <d>] [--version <v>]",
 		Short: "List the screenshot sets of a version",
 		Long: "Lists the screenshot sets per locale and device with their screenshots in order. Without --version:\n" +
-			"the editable version if there is one, else the live one. Result: [ScreenshotSet].",
+			"the editable version if there is one, else the live one.\n" +
+			"Result: [ScreenshotSet]",
 		Example: "  store apple screenshots list --locale en-US --device iphone-6.9",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -72,8 +73,9 @@ func newAppleScreenshotsUploadCmd() *cobra.Command {
 			"Without --replace the files are appended to the set (max 10 per set). With --replace: if the set\n" +
 			"already holds exactly these files in this order (MD5), nothing happens; otherwise the set is emptied\n" +
 			"and the files are uploaded in order. Each file is reserved, uploaded, committed with its MD5 and\n" +
-			"polled until Apple processed it; --timeout is the time per file. Result: ScreenshotSet; with\n" +
-			"--dry-run the planned change.",
+			"polled until Apple processed it; --timeout is the time per file. With\n" +
+			"--dry-run the result is the planned Plan.\n" +
+			"Result: ScreenshotSet",
 		Example: "  store apple screenshots upload --locale en-US --replace shots/en-US/*.png\n" +
 			"  store apple screenshots upload --locale de-DE --device ipad-12.9 --timeout 20m ipad1.png ipad2.png",
 		Args: cobra.MinimumNArgs(1),
@@ -129,8 +131,9 @@ func newAppleScreenshotsDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete --locale <l> --device <d> [--version <v>]",
 		Short: "Delete the screenshot set of one locale and device",
-		Long: "Deletes the whole set. A set that does not exist is an error. Result: {locale, device, deleted};\n" +
-			"with --dry-run the planned change.",
+		Long: "Deletes the whole set. A set that does not exist is an error. With --dry-run the result is\n" +
+			"the planned Plan.\n" +
+			"Result: ScreenshotsDeleted",
 		Example: "  store apple screenshots delete --locale en-US --device iphone-6.5",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {

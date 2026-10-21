@@ -9,7 +9,8 @@ into <dir>. A field without a value in the store is written as an empty file, so
 in the store stays cleared on the next push. Overwrites the files it writes and touches nothing
 else. Does not download screenshots (Apple re-encodes them, so they would never match the
 originals). Without --version: the editable version if there is one, else the live one.
-Result: {locales: [string], files: int}.
+
+Result: ApplePullResult
 
 ```
 store apple pull <dir> [--version <v>] [flags]

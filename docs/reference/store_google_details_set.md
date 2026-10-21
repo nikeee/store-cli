@@ -6,8 +6,9 @@ Change the app contact details
 
 Changes the given fields; fields not given stay as they are. An empty value clears a field. A text
 starting with @ is read from that file. --default-locale takes an App Store style locale and is
-sent as the Play language code. Result: {email, website, phone, defaultLocale}; with --dry-run
-the details as they would be.
+sent as the Play language code. With --dry-run the details are shown as they would be.
+
+Result: Details
 
 ```
 store google details set [--email <s>] [--website <s>] [--phone <s>] [--default-locale <l>] [flags]

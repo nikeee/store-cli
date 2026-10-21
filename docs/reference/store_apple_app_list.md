@@ -4,7 +4,9 @@ List all apps of the team
 
 ### Synopsis
 
-All apps of the team. Result: [App].
+Lists all apps of the team.
+
+Result: [App]
 
 ```
 store apple app list [flags]

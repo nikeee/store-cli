@@ -6,7 +6,9 @@ Set What's New of a version
 
 Sets "What's New". --dir reads <locale>.txt per locale. A locale without a localization on the
 version is an error that suggests `listing locale add`. App Store Connect accepts What's New only
-after the first release. Result: [{locale, whatsNew}].
+after the first release.
+
+Result: [WhatsNew]
 
 ```
 store apple release-notes set <version> (--dir <dir> | --locale <l> --text <text>) [flags]

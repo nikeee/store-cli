@@ -6,8 +6,10 @@ Change the App Review information
 
 Changes the given fields; fields not given stay as they are. An empty value clears a field, except
 --demo-required, which cannot be cleared. A text starting with @ is read from that file.
---attachment (repeatable) replaces all existing attachments with the given files. Result: the
-review information as in show (password masked); with --dry-run the planned changes.
+--attachment (repeatable) replaces all existing attachments with the given files. The
+password is masked as in show; with --dry-run the result is the planned Plan.
+
+Result: ReviewInfo
 
 ```
 store apple review-info set [--version <v>] [field flags] [--attachment <file>]... [flags]

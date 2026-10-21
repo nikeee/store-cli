@@ -4,7 +4,9 @@ Release to all users now, ending the phased release
 
 ### Synopsis
 
-Sets the phased release of the version to COMPLETE. Result: {version, state, currentDayNumber}.
+Sets the phased release of the version to COMPLETE.
+
+Result: PhasedRelease
 
 ```
 store apple version phased complete <version> [flags]

@@ -5,7 +5,8 @@ Create a new App Store version
 ### Synopsis
 
 Creates the version. Fails if the version exists. --release scheduled needs --release-date.
-Result: Version.
+
+Result: Version
 
 ```
 store apple version create <version> [flags]

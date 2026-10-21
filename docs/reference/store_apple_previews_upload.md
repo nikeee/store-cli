@@ -11,7 +11,9 @@ appended to the set (max 3 per set). With --replace: if the set already holds ex
 this order (MD5), nothing happens; otherwise the set is emptied and the files are uploaded in order.
 --poster-frame is the timecode of the poster frame (e.g. 00:00:05:00), sent for every file. Each file
 is reserved, uploaded, committed with its MD5 and polled until Apple processed it; --timeout is the
-time per file. Result: PreviewSet; with --dry-run the planned change.
+time per file. With --dry-run the result is the planned Plan.
+
+Result: PreviewSet
 
 ```
 store apple previews upload --locale <l> --device <d> [--version <v>] [--replace] [--poster-frame <timecode>] <video>... [flags]

@@ -4,7 +4,9 @@ Add a locale to the version and the app info
 
 ### Synopsis
 
-Creates the localization on the version and the app info where it is missing. Result: {locale, action}.
+Creates the localization on the version and the app info where it is missing.
+
+Result: LocaleResult
 
 ```
 store apple listing locale add <locale> [flags]

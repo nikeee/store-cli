@@ -6,7 +6,9 @@ List the images of a locale
 
 Lists the images of one locale in Play's order with their ID, SHA-256 and preview URL. Without
 --type every image type that holds images is listed. --locale takes an App Store style locale,
-sent as the Play language code. Types: phone, tablet-7, tablet-10, tv, wear, feature-graphic, icon, promo-graphic, tv-banner. Result: [ImageSet].
+sent as the Play language code. Types: phone, tablet-7, tablet-10, tv, wear, feature-graphic, icon, promo-graphic, tv-banner.
+
+Result: [ImageSet]
 
 ```
 store google images list --locale <l> [--type <t>] [flags]

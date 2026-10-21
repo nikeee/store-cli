@@ -41,8 +41,9 @@ func newAppleBuildUploadCmd() *cobra.Command {
 			"--notes sets the TestFlight \"What to Test\" text and --uses-non-exempt-encryption the export\n" +
 			"compliance answer as soon as the build exists. --wait additionally waits until the build is\n" +
 			"processed (VALID). --timeout bounds the whole command.\n" +
-			"Result: {app, appId, version, build, buildUploadId, buildId, state}. buildId is empty when\n" +
-			"neither --wait, --notes nor --uses-non-exempt-encryption made the command wait for the build.",
+			"buildId of the result is empty when neither --wait, --notes nor --uses-non-exempt-encryption\n" +
+			"made the command wait for the build.\n" +
+			"Result: BuildUpload",
 		Example: "  store apple build upload app.ipa --notes @whats-new.txt --uses-non-exempt-encryption false",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -99,7 +100,7 @@ func newAppleBuildListCmd() *cobra.Command {
 		Use:     "list",
 		Short:   "List builds, newest first",
 		Example: "  store apple build list --version 1.4.0 --state valid --limit 5",
-		Long:    "Newest first. Result: [Build].",
+		Long:    "Lists the builds of the app, newest first.\nResult: [Build]",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			version, _ := cmd.Flags().GetString("version")
@@ -133,7 +134,7 @@ func newAppleBuildShowCmd() *cobra.Command {
 		Use:     "show <build>",
 		Short:   "Show one build",
 		Example: "  store apple build show 45 --version 1.4.0",
-		Long:    "Result: Build.",
+		Long:    "Shows one build.\nResult: Build",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			svc, app, err := appleService(cmd)
@@ -157,7 +158,7 @@ func newAppleBuildWaitCmd() *cobra.Command {
 		Short:   "Wait until a build exists and is processed",
 		Example: "  store apple build wait 45 --timeout 20m",
 		Long: "Waits until the build exists and is processed. VALID exits 0; FAILED or INVALID exits 1.\n" +
-			"Result: Build.",
+			"Result: Build",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			timeout, _ := cmd.Flags().GetDuration("timeout")
@@ -185,7 +186,7 @@ func newAppleBuildSetEncryptionCmd() *cobra.Command {
 		Use:     "set-encryption <build> <true|false>",
 		Short:   "Set the export compliance answer of a build",
 		Example: "  store apple build set-encryption 45 false",
-		Long:    "Sets usesNonExemptEncryption (export compliance). Result: Build.",
+		Long:    "Sets usesNonExemptEncryption (export compliance).\nResult: Build",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uses, err := parseBoolArg("value", args[1])
@@ -221,7 +222,7 @@ func newAppleBuildExpireCmd() *cobra.Command {
 		Use:     "expire <build>",
 		Short:   "Expire a build in TestFlight",
 		Example: "  store apple build expire 45",
-		Long:    "Expires the build in TestFlight. Result: Build.",
+		Long:    "Expires the build in TestFlight.\nResult: Build",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			svc, app, err := appleService(cmd)

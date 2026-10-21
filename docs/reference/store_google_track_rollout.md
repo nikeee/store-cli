@@ -6,7 +6,9 @@ Change the rollout fraction of a track
 
 Sets the user fraction of the track's staged (in progress) release. The fraction must be greater
 than 0 and less than 1; use `track complete` to reach everyone. A track without a staged release
-is an error. Result: Track.
+is an error.
+
+Result: Track
 
 ```
 store google track rollout <track> <fraction> [flags]

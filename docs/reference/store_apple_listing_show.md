@@ -5,7 +5,9 @@ Show the listing texts per locale
 ### Synopsis
 
 Shows the app info and version texts per locale. Without --version: the editable version if there
-is one, else the live one. Result: [Localization].
+is one, else the live one.
+
+Result: [Localization]
 
 ```
 store apple listing show [flags]

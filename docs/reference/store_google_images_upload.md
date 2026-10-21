@@ -12,7 +12,9 @@ and the files uploaded in order. Single-image types (feature-graphic, icon, prom
 tv-banner) take exactly one file and always replace their image; phone needs 2 to 8 screenshots.
 If an upload fails after images were deleted, the whole edit is discarded, so nothing is published;
 run the command again. --locale takes an App Store style locale. Types: phone, tablet-7, tablet-10, tv, wear, feature-graphic, icon, promo-graphic, tv-banner.
-Result: ImageSet; with --dry-run the planned change.
+With --dry-run the result is the planned Plan.
+
+Result: ImageSet
 
 ```
 store google images upload --locale <l> --type <t> [--replace] <image>... [flags]

@@ -9,8 +9,9 @@ images/ folders of the image type table. Same rules as store apple init: never t
 files, so it can be re-run to add a locale; works offline, needs no credentials. For an app that
 already has a listing, use pull instead (an empty file clears its field on push). --locale takes
 an App Store style locale or a Play code; locales are written as Play codes.
-Result: {created: [path], existing: [path]}. Text mode also prints each created file with its
-character limit.
+Text mode also prints each created file with its character limit.
+
+Result: InitResult
 
 ```
 store google init <dir> --locale <l> [--locale <l>]... [flags]

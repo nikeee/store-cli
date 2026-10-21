@@ -34,7 +34,7 @@ func newAppleVersionListCmd() *cobra.Command {
 		Use:     "list",
 		Short:   "List the versions of the app, newest first",
 		Example: "  store apple version list --limit 5",
-		Long:    "Lists the versions of the app on --platform, newest first. Result: [Version].",
+		Long:    "Lists the versions of the app on --platform, newest first.\nResult: [Version]",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			limit, _ := cmd.Flags().GetInt("limit")
@@ -61,7 +61,7 @@ func newAppleVersionShowCmd() *cobra.Command {
 		Use:     "show <version>",
 		Short:   "Show one version",
 		Example: "  store apple version show 1.4.0",
-		Long:    "Result: Version.",
+		Long:    "Shows one version.\nResult: Version",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			svc, app, err := appleService(cmd)
@@ -98,7 +98,7 @@ func newAppleVersionCreateCmd() *cobra.Command {
 		Use:   "create <version>",
 		Short: "Create a new App Store version",
 		Long: "Creates the version. Fails if the version exists. --release scheduled needs --release-date.\n" +
-			"Result: Version.",
+			"Result: Version",
 		Example: "  store apple version create 1.4.0 --release scheduled --release-date 2026-12-01T09:00:00Z",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -144,7 +144,8 @@ func newAppleVersionSetBuildCmd() *cobra.Command {
 		Use:   "set-build <version> <build>",
 		Short: "Attach a build to an editable version",
 		Long: "Attaches a processed (VALID) build to an editable version. The build is looked up under the\n" +
-			"version's own number. Result: Version.",
+			"version's own number.\n" +
+			"Result: Version",
 		Example: "  store apple version set-build 1.4.0 45\n  store apple version set-build 1.4.0 latest",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -200,7 +201,7 @@ func newAppleVersionSubmitCmd() *cobra.Command {
 		Long: "Submits the version for App Review. An open, unsubmitted review submission of the app is reused\n" +
 			"together with its other items (Apple only accepts e.g. a first subscription group together with an\n" +
 			"app version). If that open submission holds a different version, the command fails and names it.\n" +
-			"Result: {version, submissionId, state, items}.",
+			"Result: SubmissionResult",
 		Example: "  store apple version submit 1.4.0",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -231,7 +232,7 @@ func newAppleVersionCancelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cancel <version>",
 		Short:   "Withdraw the review submission of a version",
-		Long:    "Withdraws the version's review submission. Result: {version, submissionId, state}.",
+		Long:    "Withdraws the version's review submission.\nResult: SubmissionResult",
 		Example: "  store apple version cancel 1.4.0",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -262,7 +263,7 @@ func newAppleVersionReleaseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "release <version>",
 		Short:   "Release a version that waits for the developer release",
-		Long:    "Releases a version in PENDING_DEVELOPER_RELEASE. Result: Version.",
+		Long:    "Releases a version in PENDING_DEVELOPER_RELEASE.\nResult: Version",
 		Example: "  store apple version release 1.4.0",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -306,7 +307,7 @@ func newAppleVersionPhasedStartCmd() *cobra.Command {
 		Short: "Enable phased release for a version",
 		Long: "Enables phased release for a version that is not live yet. It starts with the release. For a version\n" +
 			"that is live it starts at once. A version that has a phased release is left as it is.\n" +
-			"Result: {version, state, currentDayNumber}.",
+			"Result: PhasedRelease",
 		Example: "  store apple version phased start 1.4.0",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -333,7 +334,7 @@ func newAppleVersionPhasedStateCmd(name string, state asc.PhasedReleaseState, sh
 	cmd := &cobra.Command{
 		Use:     name + " <version>",
 		Short:   short,
-		Long:    "Sets the phased release of the version to " + string(state) + ". Result: {version, state, currentDayNumber}.",
+		Long:    "Sets the phased release of the version to " + string(state) + ".\nResult: PhasedRelease",
 		Example: "  store apple version phased " + name + " 1.4.0",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -26,7 +26,8 @@ func newApplePreviewsListCmd() *cobra.Command {
 		Use:   "list [--locale <l>] [--device <d>] [--version <v>]",
 		Short: "List the app preview sets of a version",
 		Long: "Lists the app preview sets per locale and device with their previews in order. Without --version:\n" +
-			"the editable version if there is one, else the live one. Result: [PreviewSet].",
+			"the editable version if there is one, else the live one.\n" +
+			"Result: [PreviewSet]",
 		Example: "  store apple previews list --locale en-US --device iphone-6.9",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -71,7 +72,8 @@ func newApplePreviewsUploadCmd() *cobra.Command {
 			"this order (MD5), nothing happens; otherwise the set is emptied and the files are uploaded in order.\n" +
 			"--poster-frame is the timecode of the poster frame (e.g. 00:00:05:00), sent for every file. Each file\n" +
 			"is reserved, uploaded, committed with its MD5 and polled until Apple processed it; --timeout is the\n" +
-			"time per file. Result: PreviewSet; with --dry-run the planned change.",
+			"time per file. With --dry-run the result is the planned Plan.\n" +
+			"Result: PreviewSet",
 		Example: "  store apple previews upload --locale en-US --device iphone-6.9 --replace previews/en-US.mp4\n" +
 			"  store apple previews upload --locale de-DE --device ipad-13 --poster-frame 00:00:05:00 --timeout 30m tour.mov",
 		Args: cobra.MinimumNArgs(1),
@@ -129,8 +131,9 @@ func newApplePreviewsDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete --locale <l> --device <d> [--version <v>]",
 		Short: "Delete the app preview set of one locale and device",
-		Long: "Deletes the whole set. A set that does not exist is an error. Result: {locale, device, deleted};\n" +
-			"with --dry-run the planned change.",
+		Long: "Deletes the whole set. A set that does not exist is an error. With --dry-run the result is\n" +
+			"the planned Plan.\n" +
+			"Result: PreviewsDeleted",
 		Example: "  store apple previews delete --locale en-US --device iphone-6.5",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {

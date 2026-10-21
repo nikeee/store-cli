@@ -12,8 +12,10 @@ Apple's errors and exits 1; Apple's warnings go to stderr.
 --notes sets the TestFlight "What to Test" text and --uses-non-exempt-encryption the export
 compliance answer as soon as the build exists. --wait additionally waits until the build is
 processed (VALID). --timeout bounds the whole command.
-Result: {app, appId, version, build, buildUploadId, buildId, state}. buildId is empty when
-neither --wait, --notes nor --uses-non-exempt-encryption made the command wait for the build.
+buildId of the result is empty when neither --wait, --notes nor --uses-non-exempt-encryption
+made the command wait for the build.
+
+Result: BuildUpload
 
 ```
 store apple build upload <ipa> [flags]

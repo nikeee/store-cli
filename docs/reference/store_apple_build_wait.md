@@ -5,7 +5,8 @@ Wait until a build exists and is processed
 ### Synopsis
 
 Waits until the build exists and is processed. VALID exits 0; FAILED or INVALID exits 1.
-Result: Build.
+
+Result: Build
 
 ```
 store apple build wait <build> [flags]

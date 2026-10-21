@@ -4,7 +4,9 @@ Show one build
 
 ### Synopsis
 
-Result: Build.
+Shows one build.
+
+Result: Build
 
 ```
 store apple build show <build> [flags]

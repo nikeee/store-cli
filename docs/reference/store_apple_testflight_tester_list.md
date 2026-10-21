@@ -4,7 +4,9 @@ List the testers of the app
 
 ### Synopsis
 
-Lists the testers of the app, optionally only those of one group. Result: [{id, email, firstName, lastName, inviteType, state}].
+Lists the testers of the app, optionally only those of one group.
+
+Result: [Tester]
 
 ```
 store apple testflight tester list [flags]

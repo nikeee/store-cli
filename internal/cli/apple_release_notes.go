@@ -24,7 +24,8 @@ func newAppleReleaseNotesSetCmd() *cobra.Command {
 		Short: "Set What's New of a version",
 		Long: "Sets \"What's New\". --dir reads <locale>.txt per locale. A locale without a localization on the\n" +
 			"version is an error that suggests `listing locale add`. App Store Connect accepts What's New only\n" +
-			"after the first release. Result: [{locale, whatsNew}].",
+			"after the first release.\n" +
+			"Result: [WhatsNew]",
 		Example: "  store apple release-notes set 1.4.0 --locale en-US --text \"Bug fixes\"\n" +
 			"  store apple release-notes set 1.4.0 --dir release-notes",
 		Args: cobra.ExactArgs(1),

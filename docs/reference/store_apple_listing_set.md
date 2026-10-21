@@ -7,7 +7,9 @@ Change listing texts of one locale
 Changes the given fields of one locale; fields not given stay as they are. A locale that does not
 exist yet is created. An empty value clears a field. Lengths are checked before any API call.
 App info fields (name, subtitle, privacy URLs) need an editable app info. A text starting with @
-is read from that file. Result: Localization; with --dry-run the planned changes.
+is read from that file. With --dry-run the result is the planned Plan.
+
+Result: Localization
 
 ```
 store apple listing set --locale <l> [--version <v>] [field flags] [flags]

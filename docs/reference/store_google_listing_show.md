@@ -5,7 +5,9 @@ Show the listing texts per locale
 ### Synopsis
 
 Shows the title, short and full description and promo video per listing language. --locale takes an
-App Store style locale, sent as the Play language code. Result: [Listing].
+App Store style locale, sent as the Play language code.
+
+Result: [Listing]
 
 ```
 store google listing show [flags]

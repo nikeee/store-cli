@@ -22,18 +22,19 @@ func newGoogleTrackCmd(Deps) *cobra.Command {
 		newGoogleTrackListCmd(), newGoogleTrackShowCmd(), newGoogleTrackPromoteCmd(),
 		newGoogleTrackRolloutCmd(), newGoogleTrackTestersCmd(),
 		newGoogleTrackStageCmd("halt", "Halt the staged rollout of a track",
-			"Halts the track's staged release (status halted, user fraction kept). Result: Track.",
+			"Halts the track's staged release (status halted, user fraction kept).\nResult: Track",
 			func(s *google.Service, ctx context.Context, track string, c google.CommitOptions) (google.Track, error) {
 				return s.Halt(ctx, track, c)
 			}),
 		newGoogleTrackStageCmd("resume", "Resume the halted rollout of a track",
-			"Resumes the track's halted release (status in progress, user fraction kept). Result: Track.",
+			"Resumes the track's halted release (status in progress, user fraction kept).\nResult: Track",
 			func(s *google.Service, ctx context.Context, track string, c google.CommitOptions) (google.Track, error) {
 				return s.Resume(ctx, track, c)
 			}),
 		newGoogleTrackStageCmd("complete", "Roll the staged release of a track out to everyone",
 			"Completes the track's staged or halted release (status completed, no user fraction). It replaces\n"+
-				"the other releases of the track. Result: Track.",
+				"the other releases of the track.\n"+
+				"Result: Track",
 			func(s *google.Service, ctx context.Context, track string, c google.CommitOptions) (google.Track, error) {
 				return s.CompleteRollout(ctx, track, c)
 			}),
@@ -46,7 +47,8 @@ func newGoogleTrackListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the tracks and their releases",
 		Long: "Lists the tracks: internal, alpha, beta, production and custom closed testing tracks, with their\n" +
-			"releases. Result: [Track].",
+			"releases.\n" +
+			"Result: [Track]",
 		Example: "  store google track list",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -67,7 +69,7 @@ func newGoogleTrackShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "show <track>",
 		Short:   "Show a track and its releases",
-		Long:    "Shows one track with its releases. Result: Track.",
+		Long:    "Shows one track with its releases.\nResult: Track",
 		Example: "  store google track show production",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,7 +95,8 @@ func newGoogleTrackPromoteCmd() *cobra.Command {
 			"--release-notes, else from the source release; languages the listing does not have are dropped\n" +
 			"with a warning. A release that is already completed on the target is a no-op. Without a match,\n" +
 			"the error lists the release names of the source track. --status in-progress and halted need\n" +
-			"--rollout. Result: Track (the target).",
+			"--rollout. The result is the target track.\n" +
+			"Result: Track",
 		Example: "  store google track promote --from internal --to production --rollout 0.1\n" +
 			"  store google track promote v1.4.0 --from beta --to production",
 		Args: cobra.MaximumNArgs(1),
@@ -148,7 +151,8 @@ func newGoogleTrackRolloutCmd() *cobra.Command {
 		Short: "Change the rollout fraction of a track",
 		Long: "Sets the user fraction of the track's staged (in progress) release. The fraction must be greater\n" +
 			"than 0 and less than 1; use `track complete` to reach everyone. A track without a staged release\n" +
-			"is an error. Result: Track.",
+			"is an error.\n" +
+			"Result: Track",
 		Example: "  store google track rollout production 0.5",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -210,7 +214,7 @@ func newGoogleTrackTestersCmd() *cobra.Command {
 	show := &cobra.Command{
 		Use:     "show <track>",
 		Short:   "Show the tester groups of a track",
-		Long:    "Shows the Google Groups that test a track. Result: {track, googleGroups: [string]}.",
+		Long:    "Shows the Google Groups that test a track.\nResult: Testers",
 		Example: "  store google track testers show internal",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -229,7 +233,8 @@ func newGoogleTrackTestersCmd() *cobra.Command {
 		Use:   "set <track> --group <google-group-email>...",
 		Short: "Replace the tester groups of a track",
 		Long: "Replaces the Google Groups that test a track with the given --group addresses (repeatable, at\n" +
-			"least one). Result: {track, googleGroups: [string]}; with --dry-run what would be stored.",
+			"least one). With --dry-run the result shows what would be stored.\n" +
+			"Result: Testers",
 		Example: "  store google track testers set internal --group qa@googlegroups.com --group beta@example.com",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

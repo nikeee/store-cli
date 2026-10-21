@@ -33,7 +33,8 @@ func newGoogleListingShowCmd() *cobra.Command {
 		Use:   "show",
 		Short: "Show the listing texts per locale",
 		Long: "Shows the title, short and full description and promo video per listing language. --locale takes an\n" +
-			"App Store style locale, sent as the Play language code. Result: [Listing].",
+			"App Store style locale, sent as the Play language code.\n" +
+			"Result: [Listing]",
 		Example: "  store google listing show --locale de-DE",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -67,7 +68,8 @@ func newGoogleListingSetCmd() *cobra.Command {
 		Long: "Changes the given fields of one locale; fields not given stay as they are (including the promo video).\n" +
 			"A locale that does not exist yet is created. An empty value clears a field. Lengths are checked\n" +
 			"before any API call. --locale takes an App Store style locale, sent as the Play language code. A text\n" +
-			"starting with @ is read from that file. Result: Listing; with --dry-run the listing as it would be.",
+			"starting with @ is read from that file. With --dry-run the listing is shown as it would be.\n" +
+			"Result: Listing",
 		Example: "  store google listing set --locale en-US --short-description \"Fast and small\" --full-description @full.txt",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {

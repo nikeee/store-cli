@@ -5,7 +5,9 @@ Roll the staged release of a track out to everyone
 ### Synopsis
 
 Completes the track's staged or halted release (status completed, no user fraction). It replaces
-the other releases of the track. Result: Track.
+the other releases of the track.
+
+Result: Track
 
 ```
 store google track complete <track> [flags]

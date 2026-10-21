@@ -9,7 +9,9 @@ becomes completed on the target, or in-progress with --rollout. Release notes co
 --release-notes, else from the source release; languages the listing does not have are dropped
 with a warning. A release that is already completed on the target is a no-op. Without a match,
 the error lists the release names of the source track. --status in-progress and halted need
---rollout. Result: Track (the target).
+--rollout. The result is the target track.
+
+Result: Track
 
 ```
 store google track promote [<release-name>] --from <track> --to <track> [flags]

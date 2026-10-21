@@ -4,8 +4,10 @@ Delete the screenshot set of one locale and device
 
 ### Synopsis
 
-Deletes the whole set. A set that does not exist is an error. Result: {locale, device, deleted};
-with --dry-run the planned change.
+Deletes the whole set. A set that does not exist is an error. With --dry-run the result is
+the planned Plan.
+
+Result: ScreenshotsDeleted
 
 ```
 store apple screenshots delete --locale <l> --device <d> [--version <v>] [flags]

@@ -26,7 +26,8 @@ func newGoogleReleaseNotesSetCmd() *cobra.Command {
 		Long: "Sets the release notes of a release on a track, by --release-name or, by default, the newest\n" +
 			"release by version code. --dir reads <locale>.txt per locale. The notes of other languages stay.\n" +
 			"Max 500 characters per locale; locales the listing does not have are dropped with a warning.\n" +
-			"The other releases of the track are not changed. Result: Release.",
+			"The other releases of the track are not changed.\n" +
+			"Result: Release",
 		Example: "  store google release-notes set production --locale en-US --text \"Bug fixes\"\n" +
 			"  store google release-notes set internal --release-name v1.4.0 --dir release-notes",
 		Args: cobra.ExactArgs(1),

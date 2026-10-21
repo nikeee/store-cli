@@ -6,7 +6,8 @@ Enable phased release for a version
 
 Enables phased release for a version that is not live yet. It starts with the release. For a version
 that is live it starts at once. A version that has a phased release is left as it is.
-Result: {version, state, currentDayNumber}.
+
+Result: PhasedRelease
 
 ```
 store apple version phased start <version> [flags]

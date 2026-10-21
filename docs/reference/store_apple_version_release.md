@@ -4,7 +4,9 @@ Release a version that waits for the developer release
 
 ### Synopsis
 
-Releases a version in PENDING_DEVELOPER_RELEASE. Result: Version.
+Releases a version in PENDING_DEVELOPER_RELEASE.
+
+Result: Version
 
 ```
 store apple version release <version> [flags]

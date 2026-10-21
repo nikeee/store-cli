@@ -4,7 +4,9 @@ List builds, newest first
 
 ### Synopsis
 
-Newest first. Result: [Build].
+Lists the builds of the app, newest first.
+
+Result: [Build]
 
 ```
 store apple build list [flags]

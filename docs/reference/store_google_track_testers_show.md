@@ -4,7 +4,9 @@ Show the tester groups of a track
 
 ### Synopsis
 
-Shows the Google Groups that test a track. Result: {track, googleGroups: [string]}.
+Shows the Google Groups that test a track.
+
+Result: Testers
 
 ```
 store google track testers show <track> [flags]

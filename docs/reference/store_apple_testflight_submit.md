@@ -5,7 +5,8 @@ Submit a build to Beta App Review
 ### Synopsis
 
 Submits the build to Beta App Review (needed for external testing). Already submitted is a no-op.
-Result: {build, state}.
+
+Result: BetaReview
 
 ```
 store apple testflight submit <build> [flags]

@@ -5,7 +5,9 @@ Replace the tester groups of a track
 ### Synopsis
 
 Replaces the Google Groups that test a track with the given --group addresses (repeatable, at
-least one). Result: {track, googleGroups: [string]}; with --dry-run what would be stored.
+least one). With --dry-run the result shows what would be stored.
+
+Result: Testers
 
 ```
 store google track testers set <track> --group <google-group-email>... [flags]

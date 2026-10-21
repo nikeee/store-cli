@@ -5,7 +5,9 @@ List the screenshot sets of a version
 ### Synopsis
 
 Lists the screenshot sets per locale and device with their screenshots in order. Without --version:
-the editable version if there is one, else the live one. Result: [ScreenshotSet].
+the editable version if there is one, else the live one.
+
+Result: [ScreenshotSet]
 
 ```
 store apple screenshots list [--locale <l>] [--device <d>] [--version <v>] [flags]

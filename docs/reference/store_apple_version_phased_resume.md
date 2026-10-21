@@ -4,7 +4,9 @@ Resume a paused phased release
 
 ### Synopsis
 
-Sets the phased release of the version to ACTIVE. Result: {version, state, currentDayNumber}.
+Sets the phased release of the version to ACTIVE.
+
+Result: PhasedRelease
 
 ```
 store apple version phased resume <version> [flags]

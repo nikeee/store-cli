@@ -5,7 +5,8 @@ Remove a locale from the version and the app info
 ### Synopsis
 
 Deletes the localization from the version and the app info. The primary locale cannot be removed.
-Result: {locale, action}.
+
+Result: LocaleResult
 
 ```
 store apple listing locale remove <locale> [flags]

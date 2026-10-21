@@ -5,7 +5,9 @@ List the app preview sets of a version
 ### Synopsis
 
 Lists the app preview sets per locale and device with their previews in order. Without --version:
-the editable version if there is one, else the live one. Result: [PreviewSet].
+the editable version if there is one, else the live one.
+
+Result: [PreviewSet]
 
 ```
 store apple previews list [--locale <l>] [--device <d>] [--version <v>] [flags]

@@ -4,7 +4,9 @@ List the beta groups of the app
 
 ### Synopsis
 
-Lists the beta groups of the app. Result: [{id, name, internal, publicLinkEnabled, publicLink}].
+Lists the beta groups of the app.
+
+Result: [BetaGroup]
 
 ```
 store apple testflight group list [flags]

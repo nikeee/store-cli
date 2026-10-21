@@ -37,7 +37,8 @@ func newAppleListingShowCmd() *cobra.Command {
 		Use:   "show",
 		Short: "Show the listing texts per locale",
 		Long: "Shows the app info and version texts per locale. Without --version: the editable version if there\n" +
-			"is one, else the live one. Result: [Localization].",
+			"is one, else the live one.\n" +
+			"Result: [Localization]",
 		Example: "  store apple listing show --locale de-DE",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -70,7 +71,8 @@ func newAppleListingSetCmd() *cobra.Command {
 		Long: "Changes the given fields of one locale; fields not given stay as they are. A locale that does not\n" +
 			"exist yet is created. An empty value clears a field. Lengths are checked before any API call.\n" +
 			"App info fields (name, subtitle, privacy URLs) need an editable app info. A text starting with @\n" +
-			"is read from that file. Result: Localization; with --dry-run the planned changes.",
+			"is read from that file. With --dry-run the result is the planned Plan.\n" +
+			"Result: Localization",
 		Example: "  store apple listing set --locale en-US --subtitle \"Fast and small\" --keywords @keywords.txt",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -129,10 +131,10 @@ func newAppleListingLocaleCmd() *cobra.Command {
 	makeGroup(cmd)
 	cmd.AddCommand(
 		newAppleListingLocaleChangeCmd("add", "Add a locale to the version and the app info",
-			"Creates the localization on the version and the app info where it is missing. Result: {locale, action}.",
+			"Creates the localization on the version and the app info where it is missing.\nResult: LocaleResult",
 			(*apple.Service).AddLocale),
 		newAppleListingLocaleChangeCmd("remove", "Remove a locale from the version and the app info",
-			"Deletes the localization from the version and the app info. The primary locale cannot be removed.\nResult: {locale, action}.",
+			"Deletes the localization from the version and the app info. The primary locale cannot be removed.\nResult: LocaleResult",
 			(*apple.Service).RemoveLocale),
 	)
 	return cmd

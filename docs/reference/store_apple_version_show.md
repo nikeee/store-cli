@@ -4,7 +4,9 @@ Show one version
 
 ### Synopsis
 
-Result: Version.
+Shows one version.
+
+Result: Version
 
 ```
 store apple version show <version> [flags]

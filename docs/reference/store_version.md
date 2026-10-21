@@ -7,6 +7,8 @@ Print the version
 Prints the version, commit and build date of this binary as {version, commit, date}.
 Local builds report dev.
 
+Result: VersionInfo
+
 ```
 store version [flags]
 ```

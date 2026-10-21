@@ -5,7 +5,9 @@ Add a build to a beta group
 ### Synopsis
 
 Adds a build (number or latest) to a beta group, given by name or ID. External groups need a build
-that passed Beta App Review (see testflight submit). Result: {group, build}.
+that passed Beta App Review (see testflight submit).
+
+Result: GroupBuild
 
 ```
 store apple testflight group add-build <group> <build> [flags]

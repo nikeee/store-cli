@@ -22,7 +22,7 @@ func newGoogleDetailsShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "show",
 		Short:   "Show the app contact details",
-		Long:    "Shows the contact email, website, phone and the default language. Result: {email, website, phone, defaultLocale}.",
+		Long:    "Shows the contact email, website, phone and the default language.\nResult: Details",
 		Example: "  store google details show",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -46,8 +46,8 @@ func newGoogleDetailsSetCmd() *cobra.Command {
 		Short: "Change the app contact details",
 		Long: "Changes the given fields; fields not given stay as they are. An empty value clears a field. A text\n" +
 			"starting with @ is read from that file. --default-locale takes an App Store style locale and is\n" +
-			"sent as the Play language code. Result: {email, website, phone, defaultLocale}; with --dry-run\n" +
-			"the details as they would be.",
+			"sent as the Play language code. With --dry-run the details are shown as they would be.\n" +
+			"Result: Details",
 		Example: "  store google details set --email support@example.com --website https://example.com\n" +
 			"  store google details set --default-locale en-US",
 		Args: cobra.NoArgs,

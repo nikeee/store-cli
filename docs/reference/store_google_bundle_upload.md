@@ -13,7 +13,8 @@ A completed release replaces the track's releases. An in-progress or halted rele
 completed one beside it. A draft keeps the releases that are not drafts.
 With --dry-run the edit is created and deleted; nothing is uploaded or changed. The result then
 has versionCode 0 and releases without versionCodes.
-Result: {versionCode, tracks: [Track]}.
+
+Result: BundleUploadResult
 
 ```
 store google bundle upload <aab> [flags]

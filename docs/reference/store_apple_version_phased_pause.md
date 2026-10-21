@@ -4,7 +4,9 @@ Pause the running phased release
 
 ### Synopsis
 
-Sets the phased release of the version to PAUSED. Result: {version, state, currentDayNumber}.
+Sets the phased release of the version to PAUSED.
+
+Result: PhasedRelease
 
 ```
 store apple version phased pause <version> [flags]

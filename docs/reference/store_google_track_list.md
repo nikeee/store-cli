@@ -5,7 +5,9 @@ List the tracks and their releases
 ### Synopsis
 
 Lists the tracks: internal, alpha, beta, production and custom closed testing tracks, with their
-releases. Result: [Track].
+releases.
+
+Result: [Track]
 
 ```
 store google track list [flags]

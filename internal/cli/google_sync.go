@@ -20,8 +20,8 @@ func newGoogleInitCmd() *cobra.Command {
 			"files, so it can be re-run to add a locale; works offline, needs no credentials. For an app that\n" +
 			"already has a listing, use pull instead (an empty file clears its field on push). --locale takes\n" +
 			"an App Store style locale or a Play code; locales are written as Play codes.\n" +
-			"Result: {created: [path], existing: [path]}. Text mode also prints each created file with its\n" +
-			"character limit.",
+			"Text mode also prints each created file with its character limit.\n" +
+			"Result: InitResult",
 		Example: "  store google init fastlane/metadata --locale en-US --locale de-DE",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,7 +62,8 @@ func newGooglePushCmd() *cobra.Command {
 			"is computed and printed (stderr in text mode), then the listings and the images are changed and the\n" +
 			"edit is committed; --dry-run stops after the plan. With nothing to change nothing is committed.\n" +
 			"When anything fails, the edit is deleted, so nothing is published: push exits 1 and the plan shows\n" +
-			"which changes had been staged (skip for the others). Result: Plan.",
+			"which changes had been staged (skip for the others).\n" +
+			"Result: Plan",
 		Example: "  store google push fastlane/metadata --dry-run\n" +
 			"  store google push fastlane/metadata --only texts",
 		Args: cobra.ExactArgs(1),
@@ -108,7 +109,7 @@ func newGooglePullCmd() *cobra.Command {
 		Long: "Writes the text files of every Play listing locale into <dir>/android/<locale>/ (Play codes). A\n" +
 			"field without a value in Play is written as an empty file, so a value cleared in Play stays cleared\n" +
 			"on the next push. Overwrites the files it writes and touches nothing else. No images in v1.\n" +
-			"Result: {locales: [string], files: int}.",
+			"Result: GooglePullResult",
 		Example: "  store google pull fastlane/metadata",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

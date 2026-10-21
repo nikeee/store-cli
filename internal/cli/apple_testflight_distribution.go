@@ -22,7 +22,7 @@ func newAppleTestflightGroupListCmd() *cobra.Command {
 		Use:     "list",
 		Short:   "List the beta groups of the app",
 		Example: "  store apple testflight group list",
-		Long:    "Lists the beta groups of the app. Result: [{id, name, internal, publicLinkEnabled, publicLink}].",
+		Long:    "Lists the beta groups of the app.\nResult: [BetaGroup]",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			svc, app, err := appleService(cmd)
@@ -42,7 +42,7 @@ func newAppleTestflightGroupCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create <name>",
 		Short:   "Create a beta group",
-		Long:    "Creates a beta group, optionally internal or with a public link. Result: the group.",
+		Long:    "Creates a beta group, optionally internal or with a public link.\nResult: BetaGroup",
 		Example: "  store apple testflight group create Friends --public-link --public-link-limit 100",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -81,7 +81,8 @@ func newAppleTestflightGroupAddBuildCmd() *cobra.Command {
 		Use:   "add-build <group> <build>",
 		Short: "Add a build to a beta group",
 		Long: "Adds a build (number or latest) to a beta group, given by name or ID. External groups need a build\n" +
-			"that passed Beta App Review (see testflight submit). Result: {group, build}.",
+			"that passed Beta App Review (see testflight submit).\n" +
+			"Result: GroupBuild",
 		Example: "  store apple testflight group add-build Beta latest",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -124,7 +125,7 @@ func newAppleTestflightTesterListCmd() *cobra.Command {
 		Use:     "list",
 		Short:   "List the testers of the app",
 		Example: "  store apple testflight tester list --group Beta",
-		Long:    "Lists the testers of the app, optionally only those of one group. Result: [{id, email, firstName, lastName, inviteType, state}].",
+		Long:    "Lists the testers of the app, optionally only those of one group.\nResult: [Tester]",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			svc, app, err := appleService(cmd)
@@ -155,7 +156,7 @@ func newAppleTestflightTesterAddCmd() *cobra.Command {
 		Use:   "add <email>",
 		Short: "Add a tester to a beta group",
 		Long: "Creates the tester if needed and adds them to the group; already a member is a no-op.\n" +
-			"Result: the tester.",
+			"Result: Tester",
 		Example: "  store apple testflight tester add ada@example.com --group Beta --first-name Ada",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -183,7 +184,7 @@ func newAppleTestflightTesterRemoveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove <email>",
 		Short:   "Remove a tester from a beta group",
-		Long:    "Removes the tester from the group only. Result: the tester.",
+		Long:    "Removes the tester from the group only.\nResult: Tester",
 		Example: "  store apple testflight tester remove ada@example.com --group Beta",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -226,7 +227,7 @@ func newAppleTestflightSubmitCmd() *cobra.Command {
 		Use:   "submit <build>",
 		Short: "Submit a build to Beta App Review",
 		Long: "Submits the build to Beta App Review (needed for external testing). Already submitted is a no-op.\n" +
-			"Result: {build, state}.",
+			"Result: BetaReview",
 		Example: "  store apple testflight submit latest",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
