@@ -12,10 +12,10 @@ import (
 	"github.com/nikeee/store-cli/internal/clierr"
 )
 
-const (
-	reviewDir  = "review_information"
-	androidDir = "android"
-)
+// ReviewDir is the folder of the App Review files (AppleReviewFields).
+const ReviewDir = "review_information"
+
+const androidDir = "android"
 
 var localeRe = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
 
@@ -52,7 +52,7 @@ func readLocales(dir string, fields []Field) (map[string]Texts, error) {
 		if !e.IsDir() || !localeRe.MatchString(name) {
 			continue
 		}
-		if name == reviewDir || name == androidDir {
+		if name == ReviewDir || name == androidDir {
 			continue
 		}
 		t, err := readTexts(filepath.Join(dir, name), fields)
@@ -71,7 +71,7 @@ func ReadAppleTexts(dir string) (locales map[string]Texts, review Texts, err err
 	if err != nil {
 		return nil, nil, err
 	}
-	review, err = readTexts(filepath.Join(dir, reviewDir), AppleReviewFields)
+	review, err = readTexts(filepath.Join(dir, ReviewDir), AppleReviewFields)
 	if err != nil {
 		return nil, nil, err
 	}
