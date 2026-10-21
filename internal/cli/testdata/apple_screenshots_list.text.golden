@@ -1,25 +1,19 @@
-LOCALE  DEVICE      DISPLAYTYPE
-de-DE   iphone-6.9  APP_IPHONE_67
-de-DE   ipad-13     APP_IPAD_PRO_3GEN_129
-en-US   iphone-6.9  APP_IPHONE_67
-en-US   ipad-13     APP_IPAD_PRO_3GEN_129
+de-DE iphone-6.9 (APP_IPHONE_67): 2 screenshots
+  POS  FILE           STATE            CHECKSUM                          ID
+  1    01-home.png    COMPLETE         0cc175b9c0f1b6a831c399e269772661  shot-a
+  2    02-detail.png  UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  shot-b
 
-de-DE screenshots:
-  ID      FILENAME       POSITION  CHECKSUM                          STATE
-  shot-a  01-home.png    1         0cc175b9c0f1b6a831c399e269772661  COMPLETE
-  shot-b  02-detail.png  2         92eb5ffee6ae2fec3ad71c777531578f  UPLOAD_COMPLETE
+de-DE ipad-13 (APP_IPAD_PRO_3GEN_129): 2 screenshots
+  POS  FILE           STATE            CHECKSUM                          ID
+  1    01-home.png    COMPLETE         0cc175b9c0f1b6a831c399e269772661  shot-a
+  2    02-detail.png  UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  shot-b
 
-de-DE screenshots:
-  ID      FILENAME       POSITION  CHECKSUM                          STATE
-  shot-a  01-home.png    1         0cc175b9c0f1b6a831c399e269772661  COMPLETE
-  shot-b  02-detail.png  2         92eb5ffee6ae2fec3ad71c777531578f  UPLOAD_COMPLETE
+en-US iphone-6.9 (APP_IPHONE_67): 2 screenshots
+  POS  FILE           STATE            CHECKSUM                          ID
+  1    01-home.png    COMPLETE         0cc175b9c0f1b6a831c399e269772661  shot-a
+  2    02-detail.png  UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  shot-b
 
-en-US screenshots:
-  ID      FILENAME       POSITION  CHECKSUM                          STATE
-  shot-a  01-home.png    1         0cc175b9c0f1b6a831c399e269772661  COMPLETE
-  shot-b  02-detail.png  2         92eb5ffee6ae2fec3ad71c777531578f  UPLOAD_COMPLETE
-
-en-US screenshots:
-  ID      FILENAME       POSITION  CHECKSUM                          STATE
-  shot-a  01-home.png    1         0cc175b9c0f1b6a831c399e269772661  COMPLETE
-  shot-b  02-detail.png  2         92eb5ffee6ae2fec3ad71c777531578f  UPLOAD_COMPLETE
+en-US ipad-13 (APP_IPAD_PRO_3GEN_129): 2 screenshots
+  POS  FILE           STATE            CHECKSUM                          ID
+  1    01-home.png    COMPLETE         0cc175b9c0f1b6a831c399e269772661  shot-a
+  2    02-detail.png  UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  shot-b

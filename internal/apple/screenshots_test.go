@@ -16,6 +16,7 @@ import (
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/media"
 	"github.com/nikeee/store-cli/internal/metadata"
+	"github.com/nikeee/store-cli/internal/output"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 	"github.com/nikeee/store-cli/internal/testutil/golden"
 	"github.com/nikeee/store-cli/internal/testutil/pngfake"
@@ -55,6 +56,8 @@ type shotServer struct {
 	mu     sync.Mutex
 	nextID int
 	polls  map[string]int
+	// remoteState is the delivery state of listed screenshots (default COMPLETE).
+	remoteState string
 }
 
 func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n int) (string, []map[string]string)) *shotServer {
@@ -70,7 +73,7 @@ func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n 
 		data := []any{}
 		for _, r := range remote {
 			data = append(data, map[string]any{"type": "appScreenshots", "id": r.id,
-				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": "COMPLETE"}}})
+				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": ss.state()}}})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"data": data, "links": map[string]any{"self": "x"}})
 	})
@@ -114,6 +117,13 @@ func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n 
 			"attributes": map[string]any{"assetDeliveryState": ds}}, "links": map[string]any{"self": "x"}})
 	})
 	return ss
+}
+
+func (ss *shotServer) state() string {
+	if ss.remoteState == "" {
+		return "COMPLETE"
+	}
+	return ss.remoteState
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -496,4 +506,37 @@ func TestDeviceForScreenshots(t *testing.T) {
 	if _, err := DeviceForScreenshots("ios", "", []string{odd}); err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "accepted sizes") {
 		t.Errorf("unknown size: %v", err)
 	}
+}
+
+// A screenshot that an earlier upload left FAILED or unprocessed keeps its
+// checksum; the same files must not be treated as in sync.
+func TestSyncScreenshotsNotCompleteIsReplaced(t *testing.T) {
+	paths := shotFiles(t, 1)
+	sm := sums(t, paths)
+	for _, state := range []string{"FAILED", "UPLOAD_COMPLETE", "AWAITING_UPLOAD"} {
+		t.Run(state, func(t *testing.T) {
+			srv := newShotServer(t, "appScreenshotSets_two.json", []remoteShot{{"a", "01.png", sm[0]}}, instantly)
+			srv.remoteState = state
+			svc, _ := uploadService(t, srv.Server)
+			ch, err := svc.SyncScreenshots(t.Context(), "vl-en", "en-US", iphone69, paths, false)
+			if err != nil || ch.Action != metadata.ActionReplace {
+				t.Fatalf("change=%+v err=%v", ch, err)
+			}
+			if m := mutations(srv.Server); len(m) == 0 || m[0] != "DELETE /v1/appScreenshots/a" {
+				t.Errorf("mutations = %v", m)
+			}
+		})
+	}
+}
+
+func TestScreenshotSetsRenderText(t *testing.T) {
+	sets := ScreenshotSets{
+		{Locale: "en-US", Device: "iphone-6.9", DisplayType: "APP_IPHONE_67", Screenshots: []Screenshot{{ID: "a", FileName: "01.png", Position: 1, Checksum: "c1", State: "COMPLETE"}}},
+		{Locale: "en-US", Device: "ipad-13", DisplayType: "APP_IPAD_PRO_3GEN_129", Screenshots: []Screenshot{}},
+	}
+	var b strings.Builder
+	if err := sets.RenderText(&b, output.NewStyles(false)); err != nil {
+		t.Fatal(err)
+	}
+	golden.Assert(t, "screenshot_sets.text", []byte(b.String()))
 }

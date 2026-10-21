@@ -3,8 +3,10 @@ package apple
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
@@ -12,6 +14,7 @@ import (
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/media"
 	"github.com/nikeee/store-cli/internal/metadata"
+	"github.com/nikeee/store-cli/internal/output"
 )
 
 // maxScreenshots is the most screenshots App Store Connect keeps in one set.
@@ -37,6 +40,41 @@ type ScreenshotSet struct {
 	Device      string       `json:"device"`
 	DisplayType string       `json:"displayType"`
 	Screenshots []Screenshot `json:"screenshots"`
+}
+
+// ScreenshotSets is the result of ListScreenshots. Its text form names locale,
+// device and screenshot count of every set.
+type ScreenshotSets []ScreenshotSet
+
+// RenderText implements output.TextRenderer.
+func (l ScreenshotSets) RenderText(w io.Writer, s output.Styles) error {
+	if len(l) == 0 {
+		_, err := io.WriteString(w, s.Dim.Render("(none)")+"\n")
+		return err
+	}
+	for i, set := range l {
+		if i > 0 {
+			if _, err := io.WriteString(w, "\n"); err != nil {
+				return err
+			}
+		}
+		head := fmt.Sprintf("%s %s (%s): %s", set.Locale, set.Device, set.DisplayType, countScreenshots(len(set.Screenshots)))
+		if _, err := io.WriteString(w, s.Key.Render(head)+"\n"); err != nil {
+			return err
+		}
+		if len(set.Screenshots) == 0 {
+			continue
+		}
+		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+		_, _ = fmt.Fprintln(tw, "  POS\tFILE\tSTATE\tCHECKSUM\tID")
+		for _, sh := range set.Screenshots {
+			_, _ = fmt.Fprintf(tw, "  %d\t%s\t%s\t%s\t%s\n", sh.Position, sh.FileName, sh.State, sh.Checksum, sh.ID)
+		}
+		if err := tw.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ScreenshotsDeleted is the result of deleting a screenshot set.
@@ -104,7 +142,7 @@ func CheckScreenshotFiles(d media.Device, paths []string) error {
 // ListScreenshots returns the screenshot sets of v, per locale (sorted) and
 // device (in device table order). locale "" means all locales, device nil all
 // devices. A locale the version does not have is an error.
-func (s *Service) ListScreenshots(ctx context.Context, v Version, locale string, device *media.Device) ([]ScreenshotSet, error) {
+func (s *Service) ListScreenshots(ctx context.Context, v Version, locale string, device *media.Device) (ScreenshotSets, error) {
 	ids, err := s.VersionLocalizationIDs(ctx, v)
 	if err != nil {
 		return nil, err
@@ -125,7 +163,7 @@ func (s *Service) ListScreenshots(ctx context.Context, v Version, locale string,
 	if device != nil {
 		displayType = device.DisplayType
 	}
-	out := []ScreenshotSet{}
+	out := ScreenshotSets{}
 	for _, l := range locales {
 		sets, err := s.screenshotSets(ctx, ids[l], displayType)
 		if err != nil {
@@ -307,12 +345,16 @@ func (s *Service) syncScreenshots(ctx context.Context, o screenshotSync) (metada
 	}
 	change.Old = countScreenshots(len(remote))
 
+	// A screenshot Apple rejected or still processes after an earlier failed
+	// upload keeps its checksum, so only COMPLETE screenshots count as done.
 	remoteSums := make([]string, len(remote))
+	allComplete := true
 	for i, r := range remote {
 		remoteSums[i] = r.Checksum
+		allComplete = allComplete && r.State == string(asc.AppMediaAssetStateStateComplete)
 	}
 	switch {
-	case o.replace && slices.Equal(remoteSums, local):
+	case o.replace && allComplete && slices.Equal(remoteSums, local):
 		change.Action, change.New = metadata.ActionSkip, change.Old
 		return change, setID, nil
 	case o.replace:

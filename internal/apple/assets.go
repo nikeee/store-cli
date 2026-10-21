@@ -151,21 +151,18 @@ func (s *Service) waitForAsset(ctx context.Context, kind assetKind, id, name str
 	}
 }
 
-// assetOperations converts the upload operations of an asset reservation.
+// assetOperations converts the upload operations of an asset reservation; it
+// shares the conversion (and its checks) with the build upload files.
 func assetOperations(in []asc.UploadOperation) ([]ascclient.UploadOperation, error) {
-	if len(in) == 0 {
-		return nil, clierr.New("App Store Connect returned no upload operations")
-	}
-	ops := make([]ascclient.UploadOperation, len(in))
+	conv := make([]asc.DeliveryFileUploadOperation, len(in))
 	for i, op := range in {
-		if op.URL == nil || op.Method == nil || op.Offset == nil || op.Length == nil {
-			return nil, clierr.New("App Store Connect returned an incomplete upload operation (part %d)", i+1)
+		conv[i] = asc.DeliveryFileUploadOperation{Method: op.Method, URL: op.URL, RequestHeaders: op.RequestHeaders}
+		if op.Offset != nil {
+			conv[i].Offset = new(int64(*op.Offset))
 		}
-		h := map[string]string{}
-		for _, hh := range op.RequestHeaders {
-			h[deref(hh.Name)] = deref(hh.Value)
+		if op.Length != nil {
+			conv[i].Length = new(int64(*op.Length))
 		}
-		ops[i] = ascclient.UploadOperation{Method: *op.Method, URL: *op.URL, Offset: int64(*op.Offset), Length: int64(*op.Length), Headers: h}
 	}
-	return ops, nil
+	return uploadOperations(conv)
 }
