@@ -13,33 +13,21 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/nikeee/store-cli/internal/testutil/fakeroute"
 )
 
 // HandlerFunc answers one request. Path placeholders are available through
-// r.PathValue, e.g. r.PathValue("editId") for ".../edits/{editId}".
-type HandlerFunc func(w http.ResponseWriter, r *http.Request)
+// r.PathValue, e.g. r.PathValue("editId") for ".../edits/{editId}" or
+// ".../edits/{editId}:commit".
+type HandlerFunc = fakeroute.HandlerFunc
 
 // Request is a request the server received.
-type Request struct {
-	Method string
-	Path   string
-	Query  url.Values
-	Body   []byte
-	Header http.Header
-}
-
-type route struct {
-	method string
-	path   string
-	parts  []string
-	h      HandlerFunc
-}
+type Request = fakeroute.Request
 
 // Server is a fake Google Play Developer API. POST /token issues
 // AccessToken; every other request must carry it as bearer token.
@@ -51,13 +39,16 @@ type route struct {
 // X-HTTP-Status-Code-Override: 308 when the request sets X-GUploader-No-308).
 // When the media is complete, the route registered for the upload's method
 // and path answers, with the media as request body.
+//
+// Handle registers routes, Requests returns every API and upload request
+// received so far (token requests are not included).
 type Server struct {
+	fakeroute.Router
+
 	URL string
 
 	t        testing.TB
-	mu       sync.Mutex
-	routes   []route
-	requests []Request
+	mu       sync.Mutex // guards sessions and nextID
 	sessions map[string]*session
 	nextID   int
 }
@@ -88,39 +79,15 @@ func New(t testing.TB) *Server {
 	return s
 }
 
-// Handle registers h for method and path. A path segment "{name}" matches
-// any one segment. When several routes match, the last registered wins.
-func (s *Server) Handle(method, path string, h HandlerFunc) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.routes = append(s.routes, route{method: method, path: path, parts: splitPath(path), h: h})
-}
-
-// Requests returns every API and upload request received so far, in order.
-// Token requests are not included.
-func (s *Server) Requests() []Request {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return slices.Clone(s.requests)
-}
-
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		s.t.Errorf("playfake: read body of %s %s: %v", r.Method, r.URL.Path, err)
-	}
-	r.Body = io.NopCloser(bytes.NewReader(body))
 	if r.Method == http.MethodPost && r.URL.Path == tokenPath {
 		s.token(w, r)
 		return
 	}
-
-	s.mu.Lock()
-	s.requests = append(s.requests, Request{
-		Method: r.Method, Path: r.URL.Path, Query: r.URL.Query(), Body: body, Header: r.Header.Clone(),
-	})
-	s.mu.Unlock()
-
+	body, err := s.Record(r)
+	if err != nil {
+		s.t.Errorf("playfake: read body of %s %s: %v", r.Method, r.URL.Path, err)
+	}
 	if r.Header.Get("Authorization") != "Bearer "+AccessToken {
 		s.t.Errorf("playfake: %s %s without the fake access token", r.Method, r.URL.Path)
 		w.WriteHeader(http.StatusUnauthorized)
@@ -245,11 +212,9 @@ func (s *Server) complete(w http.ResponseWriter, r *http.Request, method string,
 
 // answer runs the route matching r.
 func (s *Server) answer(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	h := s.match(r)
-	s.mu.Unlock()
+	h := s.Match(r)
 	if h == nil {
-		s.t.Errorf("playfake: no handler for %s %s; registered: %s", r.Method, r.URL.Path, s.registered())
+		s.t.Errorf("playfake: no handler for %s %s; registered: %s", r.Method, r.URL.Path, s.Registered())
 		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
@@ -300,51 +265,4 @@ func lastPart(contentType string, body []byte) ([]byte, error) {
 			return nil, err
 		}
 	}
-}
-
-// match returns the handler of the last registered route matching r and sets
-// r's path values. The caller holds s.mu.
-func (s *Server) match(r *http.Request) HandlerFunc {
-	parts := splitPath(r.URL.Path)
-	for i := len(s.routes) - 1; i >= 0; i-- {
-		rt := s.routes[i]
-		if rt.method != r.Method || len(rt.parts) != len(parts) {
-			continue
-		}
-		values := map[string]string{}
-		ok := true
-		for j, p := range rt.parts {
-			if name, isVar := strings.CutPrefix(p, "{"); isVar {
-				values[strings.TrimSuffix(name, "}")] = parts[j]
-			} else if p != parts[j] {
-				ok = false
-				break
-			}
-		}
-		if ok {
-			for k, v := range values {
-				r.SetPathValue(k, v)
-			}
-			return rt.h
-		}
-	}
-	return nil
-}
-
-// registered lists the routes for error messages.
-func (s *Server) registered() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if len(s.routes) == 0 {
-		return "(none)"
-	}
-	list := make([]string, len(s.routes))
-	for i, rt := range s.routes {
-		list[i] = rt.method + " " + rt.path
-	}
-	return strings.Join(list, ", ")
-}
-
-func splitPath(p string) []string {
-	return strings.Split(strings.Trim(p, "/"), "/")
 }
