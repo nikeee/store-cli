@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"errors"
 	"net/url"
 	"strings"
 )
@@ -52,4 +53,21 @@ func redactedURL(u *url.URL) string {
 		}
 	}
 	return b.String()
+}
+
+// RedactError returns err, the error of http.Client.Do, with the query values
+// of its URL hidden, so presigned signatures never reach the user. Call it
+// before wrapping err: a wrapper's message is fixed when it is created.
+func RedactError(err error) error {
+	var ue *url.Error
+	if !errors.As(err, &ue) {
+		return err
+	}
+	redacted := *ue
+	if u, perr := url.Parse(ue.URL); perr == nil {
+		redacted.URL = redactedURL(u)
+	} else {
+		redacted.URL = "***"
+	}
+	return &redacted
 }
