@@ -1,0 +1,4 @@
+{"data": [
+    {"type": "appPreviews", "id": "prev-a", "attributes": {"fileName": "intro.mp4", "fileSize": 1200, "sourceFileChecksum": "0cc175b9c0f1b6a831c399e269772661", "mimeType": "video/mp4", "assetDeliveryState": {"state": "COMPLETE"}}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appPreviews/prev-a"}},
+    {"type": "appPreviews", "id": "prev-b", "attributes": {"fileName": "tour.mov", "fileSize": 1300, "sourceFileChecksum": "92eb5ffee6ae2fec3ad71c777531578f", "mimeType": "video/quicktime", "assetDeliveryState": {"state": "UPLOAD_COMPLETE"}}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appPreviews/prev-b"}}
+], "links": {"self": "https://api.appstoreconnect.apple.com/v1/appPreviewSets/pset-1/appPreviews"}, "meta": {"paging": {"total": 2, "limit": 50}}}
