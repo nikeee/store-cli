@@ -103,6 +103,17 @@ func (c *Client) AppPreviewSetsCreateInstance(ctx context.Context, body AppPrevi
 	return out, nil
 }
 
+// AppPreviewSetsDeleteInstanceParams holds the parameters of AppPreviewSetsDeleteInstance.
+type AppPreviewSetsDeleteInstanceParams struct {
+	ID string // path id, required
+}
+
+// AppPreviewSetsDeleteInstance sends DELETE /v1/appPreviewSets/{id} (appPreviewSets_deleteInstance).
+func (c *Client) AppPreviewSetsDeleteInstance(ctx context.Context, params AppPreviewSetsDeleteInstanceParams) error {
+	u := c.url("/v1/appPreviewSets/"+url.PathEscape(params.ID), nil)
+	return c.do(ctx, "DELETE", u, nil, nil)
+}
+
 // AppPreviewsCreateInstance sends POST /v1/appPreviews (appPreviews_createInstance).
 func (c *Client) AppPreviewsCreateInstance(ctx context.Context, body AppPreviewCreateRequest) (*AppPreviewResponse, error) {
 	u := c.url("/v1/appPreviews", nil)

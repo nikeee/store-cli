@@ -369,6 +369,81 @@
         }
       }
     },
+    "/v1/appPreviewSets/{id}": {
+      "delete": {
+        "tags": [
+          "AppPreviewSets"
+        ],
+        "operationId": "appPreviewSets_deleteInstance",
+        "responses": {
+          "400": {
+            "description": "Parameter error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success (no content)"
+          },
+          "429": {
+            "description": "Rate limit exceeded error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "the id of the requested resource",
+          "schema": {
+            "type": "string"
+          },
+          "style": "simple",
+          "required": true
+        }
+      ]
+    },
     "/v1/appPreviews": {
       "post": {
         "tags": [
