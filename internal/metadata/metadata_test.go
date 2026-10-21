@@ -197,3 +197,15 @@ func TestMaskSecrets(t *testing.T) {
 		t.Error("input modified")
 	}
 }
+
+func TestReadReleaseNotesDirNoFiles(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range []string{t.TempDir(), dir} {
+		if _, err := ReadReleaseNotesDir(d); err == nil || !strings.Contains(err.Error(), "no release notes (<locale>.txt files) in "+d) {
+			t.Errorf("%s: err = %v", d, err)
+		}
+	}
+}

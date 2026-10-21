@@ -9,7 +9,8 @@ import (
 )
 
 // ReadReleaseNotesDir reads <locale>.txt files from dir. A file whose name is
-// not a locale, or that is empty, is an error naming the file.
+// not a locale, or that is empty, is an error naming the file. A directory
+// without any <locale>.txt file is an error too.
 func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -35,6 +36,9 @@ func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 			return nil, clierr.New("%s: release notes are empty", p)
 		}
 		out[locale] = text
+	}
+	if len(out) == 0 {
+		return nil, clierr.New("no release notes (<locale>.txt files) in %s", dir)
 	}
 	return out, nil
 }

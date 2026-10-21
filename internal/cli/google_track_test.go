@@ -104,6 +104,8 @@ func TestGoogleTrackLocalValidationSendsNothing(t *testing.T) {
 		"promote bad status":           {trackArgs("promote", "--from", "a", "--to", "b", "--status", "x"), 2},
 		"promote notes dir missing":    {trackArgs("promote", "--from", "a", "--to", "b", "--release-notes", filepath.Join(long, "none")), 1},
 		"promote notes too long":       {trackArgs("promote", "--from", "a", "--to", "b", "--release-notes", long), 1},
+		"promote notes dir empty":      {trackArgs("promote", "--from", "a", "--to", "b", "--release-notes", t.TempDir()), 1},
+		"notes dir empty":              {[]string{"google", "release-notes", "set", "production", "--app", "com.example.app", "--dir", t.TempDir()}, 1},
 		"rollout zero":                 {trackArgs("rollout", "production", "0"), 2},
 		"rollout one":                  {trackArgs("rollout", "production", "1"), 2},
 		"rollout text":                 {trackArgs("rollout", "production", "half"), 2},
