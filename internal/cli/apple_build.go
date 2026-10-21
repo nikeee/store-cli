@@ -57,13 +57,11 @@ func newAppleBuildUploadCmd() *cobra.Command {
 				Notes: notes.Value, NotesLocale: locale,
 			}
 			if v, _ := cmd.Flags().GetString("uses-non-exempt-encryption"); v != "" {
-				switch v {
-				case "true", "false":
-					uses := v == "true"
-					o.Encryption = &uses
-				default:
-					return clierr.Usagef("invalid --uses-non-exempt-encryption %q (use true or false)", v)
+				uses, err := parseBoolArg("--uses-non-exempt-encryption", v)
+				if err != nil {
+					return err
 				}
+				o.Encryption = &uses
 			}
 			o.App, _ = cmd.Flags().GetString("app")
 			if o.App == "" {
@@ -186,13 +184,9 @@ func newAppleBuildSetEncryptionCmd() *cobra.Command {
 		Long:  "Sets usesNonExemptEncryption (export compliance). Result: Build.",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var uses bool
-			switch args[1] {
-			case "true":
-				uses = true
-			case "false":
-			default:
-				return clierr.Usagef("invalid value %q (use true or false)", args[1])
+			uses, err := parseBoolArg("value", args[1])
+			if err != nil {
+				return err
 			}
 			svc, app, err := appleService(cmd)
 			if err != nil {
@@ -261,4 +255,15 @@ func versionFlag(cmd *cobra.Command) string {
 func platformFlag(cmd *cobra.Command) string {
 	v, _ := cmd.Flags().GetString("platform")
 	return v
+}
+
+// parseBoolArg parses "true" or "false"; name is how the error calls the input.
+func parseBoolArg(name, value string) (bool, error) {
+	switch value {
+	case "true":
+		return true, nil
+	case "false":
+		return false, nil
+	}
+	return false, clierr.Usagef("invalid %s %q (use true or false)", name, value)
 }
