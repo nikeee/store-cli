@@ -150,7 +150,9 @@ func TestUploadBuildHappyPath(t *testing.T) {
 			ID         string
 			Attributes struct {
 				Uploaded            bool
-				SourceFileChecksums struct{ File struct{ Hash, Algorithm string } }
+				SourceFileChecksums struct {
+					File struct{ Hash, Algorithm string }
+				}
 			}
 		}
 	}
@@ -335,5 +337,37 @@ func TestPreviewUploadSendsNoChange(t *testing.T) {
 	}
 	if res.State != "dry-run" || res.App != "com.example.app" || res.AppID != "1234567890" || res.Version != "1.3.0" || res.Build != "45" {
 		t.Errorf("result = %+v", res)
+	}
+}
+
+// Review Focus 2: the build never appears / never gets processed.
+func TestUploadBuildWaitForBuildTimeout(t *testing.T) {
+	for name, tc := range map[string]struct {
+		fixture, want string
+		wait          bool
+	}{
+		"never appears":   {"builds_empty.json", "waiting for build 45 to appear", false},
+		"never processed": {"builds_processing.json", "waiting for build 45 to be processed", true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := uploadServer(t, ascfake.JSON(http.StatusOK, "buildUploads_get_complete.json"))
+			srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, tc.fixture))
+			svc, stderr := uploadService(t, srv)
+			o := opts(testIPA(t))
+			o.Timeout, o.Wait = 5*time.Minute, tc.wait
+			if !tc.wait {
+				o.Notes = "Fixed login"
+			}
+			srv.Handle("GET", "/v1/builds/{id}/betaBuildLocalizations", ascfake.JSON(http.StatusOK, "beta_build_localizations_empty.json"))
+			srv.Handle("POST", "/v1/betaBuildLocalizations", ascfake.JSON(http.StatusCreated, "beta_build_localization.json"))
+			_, err := svc.UploadBuild(t.Context(), o)
+			if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "timed out after 5m0s") ||
+				!strings.Contains(err.Error(), "build 45") || !strings.Contains(err.Error(), strings.TrimPrefix(tc.want, "waiting for build 45 ")) {
+				t.Fatalf("err = %v", err)
+			}
+			if !strings.Contains(stderr.String(), "waiting for build 45") {
+				t.Errorf("stderr = %s", stderr)
+			}
+		})
 	}
 }
