@@ -17,7 +17,7 @@ type ImageType struct {
 	AllowAlpha bool
 }
 
-// ImageTypes lists the Play image types in the order of docs/commands.md.
+// ImageTypes lists the Play image types in the order of docs/reference/tables.md.
 //
 // Limits come from Play Console help "Add preview assets to showcase your app"
 // (https://support.google.com/googleplay/android-developer/answer/9866151),

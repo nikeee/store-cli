@@ -1,0 +1,105 @@
+# store - command reference
+
+Generated from the command help by `go generate ./...`; do not edit.
+Lookup tables (fields, devices, image types, locales, environment variables) are in [tables.md](tables.md).
+Conventions, output formats and exit codes are in [../commands.md](../commands.md).
+
+- [store](store.md) - Manage App Store Connect and Google Play from the command line
+  - [store apple](store_apple.md) - Manage apps in App Store Connect
+    - [store apple app](store_apple_app.md) - Show the apps of the team
+      - [store apple app list](store_apple_app_list.md) - List all apps of the team
+      - [store apple app show](store_apple_app_show.md) - Show the app given by --app
+    - [store apple auth](store_apple_auth.md) - Check the App Store Connect credentials
+      - [store apple auth check](store_apple_auth_check.md) - Verify the credentials with one read call
+    - [store apple build](store_apple_build.md) - List, inspect and update builds
+      - [store apple build expire](store_apple_build_expire.md) - Expire a build in TestFlight
+      - [store apple build list](store_apple_build_list.md) - List builds, newest first
+      - [store apple build set-encryption](store_apple_build_set-encryption.md) - Set the export compliance answer of a build
+      - [store apple build show](store_apple_build_show.md) - Show one build
+      - [store apple build upload](store_apple_build_upload.md) - Upload an IPA to App Store Connect
+      - [store apple build wait](store_apple_build_wait.md) - Wait until a build exists and is processed
+    - [store apple init](store_apple_init.md) - Scaffold the metadata directory for a new app
+    - [store apple listing](store_apple_listing.md) - Show and change the store listing texts
+      - [store apple listing locale](store_apple_listing_locale.md) - Add or remove a locale
+        - [store apple listing locale add](store_apple_listing_locale_add.md) - Add a locale to the version and the app info
+        - [store apple listing locale remove](store_apple_listing_locale_remove.md) - Remove a locale from the version and the app info
+      - [store apple listing set](store_apple_listing_set.md) - Change listing texts of one locale
+      - [store apple listing show](store_apple_listing_show.md) - Show the listing texts per locale
+    - [store apple previews](store_apple_previews.md) - List, upload and delete app previews
+      - [store apple previews delete](store_apple_previews_delete.md) - Delete the app preview set of one locale and device
+      - [store apple previews list](store_apple_previews_list.md) - List the app preview sets of a version
+      - [store apple previews upload](store_apple_previews_upload.md) - Upload app previews to the set of one locale and device
+    - [store apple pull](store_apple_pull.md) - Write the store listing into a metadata directory
+    - [store apple push](store_apple_push.md) - Make App Store Connect match a metadata directory
+    - [store apple release-notes](store_apple_release-notes.md) - Set the What's New text
+      - [store apple release-notes set](store_apple_release-notes_set.md) - Set What's New of a version
+    - [store apple review-info](store_apple_review-info.md) - Show or change the App Review information
+      - [store apple review-info set](store_apple_review-info_set.md) - Change the App Review information
+      - [store apple review-info show](store_apple_review-info_show.md) - Show the App Review information
+    - [store apple screenshots](store_apple_screenshots.md) - List, upload and delete screenshots
+      - [store apple screenshots delete](store_apple_screenshots_delete.md) - Delete the screenshot set of one locale and device
+      - [store apple screenshots list](store_apple_screenshots_list.md) - List the screenshot sets of a version
+      - [store apple screenshots upload](store_apple_screenshots_upload.md) - Upload screenshots to the set of one locale and device
+    - [store apple submit](store_apple_submit.md) - Do the whole App Store submission of a version
+    - [store apple testflight](store_apple_testflight.md) - Manage TestFlight
+      - [store apple testflight group](store_apple_testflight_group.md) - Manage TestFlight beta groups
+        - [store apple testflight group add-build](store_apple_testflight_group_add-build.md) - Add a build to a beta group
+        - [store apple testflight group create](store_apple_testflight_group_create.md) - Create a beta group
+        - [store apple testflight group list](store_apple_testflight_group_list.md) - List the beta groups of the app
+      - [store apple testflight notes](store_apple_testflight_notes.md) - Manage the What to Test notes of builds
+        - [store apple testflight notes set](store_apple_testflight_notes_set.md) - Set the What to Test text of a build
+      - [store apple testflight submit](store_apple_testflight_submit.md) - Submit a build to Beta App Review
+      - [store apple testflight tester](store_apple_testflight_tester.md) - Manage TestFlight testers
+        - [store apple testflight tester add](store_apple_testflight_tester_add.md) - Add a tester to a beta group
+        - [store apple testflight tester list](store_apple_testflight_tester_list.md) - List the testers of the app
+        - [store apple testflight tester remove](store_apple_testflight_tester_remove.md) - Remove a tester from a beta group
+    - [store apple version](store_apple_version.md) - Manage App Store versions
+      - [store apple version cancel](store_apple_version_cancel.md) - Withdraw the review submission of a version
+      - [store apple version create](store_apple_version_create.md) - Create a new App Store version
+      - [store apple version list](store_apple_version_list.md) - List the versions of the app, newest first
+      - [store apple version phased](store_apple_version_phased.md) - Manage the phased release of a version
+        - [store apple version phased complete](store_apple_version_phased_complete.md) - Release to all users now, ending the phased release
+        - [store apple version phased pause](store_apple_version_phased_pause.md) - Pause the running phased release
+        - [store apple version phased resume](store_apple_version_phased_resume.md) - Resume a paused phased release
+        - [store apple version phased start](store_apple_version_phased_start.md) - Enable phased release for a version
+      - [store apple version release](store_apple_version_release.md) - Release a version that waits for the developer release
+      - [store apple version set-build](store_apple_version_set-build.md) - Attach a build to an editable version
+      - [store apple version show](store_apple_version_show.md) - Show one version
+      - [store apple version submit](store_apple_version_submit.md) - Submit a version for App Review
+  - [store completion](store_completion.md) - Generate the autocompletion script for the specified shell
+    - [store completion bash](store_completion_bash.md) - Generate the autocompletion script for bash
+    - [store completion fish](store_completion_fish.md) - Generate the autocompletion script for fish
+    - [store completion powershell](store_completion_powershell.md) - Generate the autocompletion script for powershell
+    - [store completion zsh](store_completion_zsh.md) - Generate the autocompletion script for zsh
+  - [store google](store_google.md) - Manage apps in Google Play
+    - [store google auth](store_google_auth.md) - Check the Google Play credentials
+      - [store google auth check](store_google_auth_check.md) - Verify the credentials by creating and deleting an edit
+    - [store google bundle](store_google_bundle.md) - Upload app bundles
+      - [store google bundle upload](store_google_bundle_upload.md) - Upload an AAB and release it on tracks
+    - [store google details](store_google_details.md) - Show or change the app contact details
+      - [store google details set](store_google_details_set.md) - Change the app contact details
+      - [store google details show](store_google_details_show.md) - Show the app contact details
+    - [store google images](store_google_images.md) - List, upload and delete listing images
+      - [store google images delete](store_google_images_delete.md) - Delete all images of one locale and type
+      - [store google images list](store_google_images_list.md) - List the images of a locale
+      - [store google images upload](store_google_images_upload.md) - Upload images of one locale and type
+    - [store google init](store_google_init.md) - Scaffold the Play listing directory for a new app
+    - [store google listing](store_google_listing.md) - Show and change the store listing texts
+      - [store google listing set](store_google_listing_set.md) - Change listing texts of one locale
+      - [store google listing show](store_google_listing_show.md) - Show the listing texts per locale
+    - [store google pull](store_google_pull.md) - Write the Play listing into a metadata directory
+    - [store google push](store_google_push.md) - Make the Play listing match a metadata directory
+    - [store google release-notes](store_google_release-notes.md) - Set the release notes of a release
+      - [store google release-notes set](store_google_release-notes_set.md) - Set the release notes of a release on a track
+    - [store google track](store_google_track.md) - Inspect and promote release tracks
+      - [store google track complete](store_google_track_complete.md) - Roll the staged release of a track out to everyone
+      - [store google track halt](store_google_track_halt.md) - Halt the staged rollout of a track
+      - [store google track list](store_google_track_list.md) - List the tracks and their releases
+      - [store google track promote](store_google_track_promote.md) - Copy a release from one track to another
+      - [store google track resume](store_google_track_resume.md) - Resume the halted rollout of a track
+      - [store google track rollout](store_google_track_rollout.md) - Change the rollout fraction of a track
+      - [store google track show](store_google_track_show.md) - Show a track and its releases
+      - [store google track testers](store_google_track_testers.md) - Show or set the tester groups of a track
+        - [store google track testers set](store_google_track_testers_set.md) - Replace the tester groups of a track
+        - [store google track testers show](store_google_track_testers_show.md) - Show the tester groups of a track
+  - [store version](store_version.md) - Print the version

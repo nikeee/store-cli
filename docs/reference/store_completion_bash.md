@@ -1,0 +1,50 @@
+## store completion bash
+
+Generate the autocompletion script for bash
+
+### Synopsis
+
+Generate the autocompletion script for the bash shell.
+
+This script depends on the 'bash-completion' package.
+If it is not installed already, you can install it via your OS's package manager.
+
+To load completions in your current shell session:
+
+	source <(store completion bash)
+
+To load completions for every new session, execute once:
+
+#### Linux:
+
+	store completion bash > /etc/bash_completion.d/store
+
+#### macOS:
+
+	store completion bash > $(brew --prefix)/etc/bash_completion.d/store
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+store completion bash
+```
+
+### Options
+
+```
+  -h, --help              help for bash
+      --no-descriptions   disable completion descriptions
+```
+
+### Options inherited from parent commands
+
+```
+  -o, --output string   output format: text, json or toon (default: auto)
+  -v, --verbose         log every HTTP request to stderr
+```
+
+### SEE ALSO
+
+* [store completion](store_completion.md)	 - Generate the autocompletion script for the specified shell
+

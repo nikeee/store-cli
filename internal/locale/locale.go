@@ -1,6 +1,11 @@
 // Package locale maps App Store locales to Google Play listing languages.
 package locale
 
+import (
+	"maps"
+	"slices"
+)
+
 // toPlay holds the App Store locales whose Play language code differs; every
 // other locale is the same in both stores. Sources:
 // App Store: https://developer.apple.com/documentation/appstoreconnectapi/managing-metadata-in-your-app-by-using-locale-shortcodes
@@ -58,4 +63,19 @@ func FromPlay(language string) string {
 		return l
 	}
 	return language
+}
+
+// Mapping is one App Store locale and its differing Play language code.
+type Mapping struct {
+	AppStore, Play string
+}
+
+// Mappings returns every App Store locale whose Play language code differs,
+// sorted by App Store locale. Locales not listed are the same in both stores.
+func Mappings() []Mapping {
+	out := make([]Mapping, 0, len(toPlay))
+	for _, k := range slices.Sorted(maps.Keys(toPlay)) {
+		out = append(out, Mapping{AppStore: k, Play: toPlay[k]})
+	}
+	return out
 }

@@ -24,7 +24,7 @@ const ActionDelete metadata.Action = "delete"
 // scopeImages is the metadata.Change scope of image changes.
 const scopeImages = "images"
 
-// phoneMinImages is the fewest phone screenshots Play accepts (docs/commands.md).
+// phoneMinImages is the fewest phone screenshots Play accepts (docs/reference/tables.md).
 const phoneMinImages = 2
 
 // Image is one image of a listing as Play stores it.

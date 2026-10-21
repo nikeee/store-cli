@@ -31,3 +31,18 @@ func TestFromPlayInverse(t *testing.T) {
 		}
 	}
 }
+
+func TestMappingsSortedAndComplete(t *testing.T) {
+	got := Mappings()
+	if len(got) != len(toPlay) {
+		t.Fatalf("len = %d, want %d", len(got), len(toPlay))
+	}
+	for i, m := range got {
+		if toPlay[m.AppStore] != m.Play {
+			t.Errorf("%+v differs from the table", m)
+		}
+		if i > 0 && got[i-1].AppStore >= m.AppStore {
+			t.Errorf("not sorted at %d", i)
+		}
+	}
+}
