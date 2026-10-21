@@ -47,9 +47,6 @@ func newAppleSubmitCmd() *cobra.Command {
 				}
 				o.ReleaseDate = &t
 			}
-			if o.ReleaseType == "SCHEDULED" && o.ReleaseDate == nil {
-				return clierr.Usagef("--release scheduled needs --release-date")
-			}
 			if dir, _ := cmd.Flags().GetString("release-notes"); dir != "" {
 				notes, err := metadata.ReadReleaseNotesDir(dir)
 				if err != nil {
@@ -57,12 +54,9 @@ func newAppleSubmitCmd() *cobra.Command {
 				}
 				o.Notes = notes
 			}
-			if o.MetadataDir != "" {
-				// Check the directory before the first API call, even the app lookup.
-				po := apple.PushOptions{Dir: o.MetadataDir, ScreenshotsDir: o.ScreenshotsDir, Version: o.Version, Platform: o.Platform}
-				if _, err := apple.ReadPushDir(po); err != nil {
-					return err
-				}
+			// All local inputs are checked before the first API call, even the app lookup.
+			if err := apple.CheckSubmitInputs(o); err != nil {
+				return err
 			}
 			svc, app, err := appleService(cmd)
 			if err != nil {

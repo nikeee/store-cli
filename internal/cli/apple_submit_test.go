@@ -74,3 +74,18 @@ func TestAppleSubmitInvalidInputSendsNothing(t *testing.T) {
 		t.Errorf("requests = %d", n)
 	}
 }
+
+func TestAppleSubmitTooLongNotesSendsNothing(t *testing.T) {
+	srv := submitAllServer(t, "app_appStoreVersions.json")
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "en-US.txt"), []byte(strings.Repeat("x", 4001)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "submit", "1.3.0", "--release-notes", dir)
+	if code != 1 || !strings.Contains(stderr, "limit 4000") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+	if n := len(srv.Requests()); n != 0 {
+		t.Errorf("requests = %d", n)
+	}
+}

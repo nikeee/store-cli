@@ -223,3 +223,46 @@ func TestSubmitScheduledNeedsDate(t *testing.T) {
 	}
 }
 
+func TestSubmitFailureNamesDoneStepsAndSkipsRest(t *testing.T) {
+	srv := submitServer(t, "versions_live_only.json", "builds_valid.json")
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreReviewDetail", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": nil, "links": map[string]any{"self": "x"}})
+	})
+	srv.Handle("PATCH", "/v1/appStoreVersionLocalizations/{id}", ascfake.JSON(http.StatusConflict, "error_409.json"))
+	// the created version is listed once it exists, for push
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", func(w http.ResponseWriter, r *http.Request) {
+		if len(submitMutations(srv)) == 0 {
+			ascfake.JSON(http.StatusOK, "versions_live_only.json")(w, r)
+			return
+		}
+		ascfake.JSON(http.StatusOK, "app_appStoreVersions.json")(w, r)
+	})
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{
+		"metadata/en-US/description.txt":                "Changed.",
+		"metadata/review_information/first_name.txt":    "Ada",
+		"metadata/review_information/demo_password.txt": "secret",
+	})
+	o := SubmitOptions{Version: "1.3.0", Platform: "ios", MetadataDir: filepath.Join(root, "metadata"), Notes: map[string]string{"en-US": "Fixes"}}
+	res, err := newService(t, srv).Submit(t.Context(), listingApp, o)
+	if err == nil {
+		t.Fatal("no error")
+	}
+	if !strings.Contains(err.Error(), "done: create version 1.3.0, attach build 45; not done: push metadata, set release notes, submit; run the command again to continue") {
+		t.Errorf("err = %v", err)
+	}
+	got := changeLines(res.Plan.Changes)
+	want := []string{
+		"create version  create version", "update version  attach build",
+		"skip version en-US description", "skip review  contactFirstName", "skip review  demoAccountPassword",
+		"skip version en-US set release notes", "skip submission  submit",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("plan = %v", got)
+	}
+	for _, c := range res.Plan.Changes {
+		if c.New == "secret" {
+			t.Errorf("secret in plan: %+v", c)
+		}
+	}
+}
