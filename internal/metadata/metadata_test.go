@@ -182,3 +182,18 @@ func TestReadReleaseNotesDir(t *testing.T) {
 		t.Errorf("empty: %v", err)
 	}
 }
+
+func TestMaskSecrets(t *testing.T) {
+	in := []Change{
+		{Field: "demoAccountPassword", Old: "old", New: "new"},
+		{Field: "demoAccountPassword", Old: "", New: ""},
+		{Field: "notes", Old: "a", New: "b"},
+	}
+	got := MaskSecrets(AppleReviewFields, in)
+	if got[0].Old != "***" || got[0].New != "***" || got[1].Old != "" || got[1].New != "" || got[2].Old != "a" || got[2].New != "b" {
+		t.Errorf("got = %+v", got)
+	}
+	if in[0].New != "new" {
+		t.Error("input modified")
+	}
+}
