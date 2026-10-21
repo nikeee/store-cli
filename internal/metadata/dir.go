@@ -19,7 +19,13 @@ const androidDir = "android"
 
 var localeRe = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
 
-func trimValue(s string) string { return strings.TrimRightFunc(s, unicode.IsSpace) }
+// IsLocale reports whether s has the form of a locale folder name (en-US,
+// de-DE, zh-Hans). Folders that do not are not read as locales.
+func IsLocale(s string) bool { return localeRe.MatchString(s) }
+
+// TrimValue is how a text read from a file is cleaned: trailing whitespace
+// (including the final newline) is removed.
+func TrimValue(s string) string { return strings.TrimRightFunc(s, unicode.IsSpace) }
 
 // readTexts reads the files of fields from dir. Missing files are absent.
 func readTexts(dir string, fields []Field) (Texts, error) {
@@ -32,7 +38,7 @@ func readTexts(dir string, fields []Field) (Texts, error) {
 		if err != nil {
 			return nil, clierr.New("read %s: %v", filepath.Join(dir, f.File), err)
 		}
-		t[f.API] = trimValue(string(b))
+		t[f.API] = TrimValue(string(b))
 	}
 	return t, nil
 }
@@ -49,7 +55,7 @@ func readLocales(dir string, fields []Field) (map[string]Texts, error) {
 	out := map[string]Texts{}
 	for _, e := range entries {
 		name := e.Name()
-		if !e.IsDir() || !localeRe.MatchString(name) {
+		if !e.IsDir() || !IsLocale(name) {
 			continue
 		}
 		if name == ReviewDir || name == androidDir {

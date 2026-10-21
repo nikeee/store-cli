@@ -23,14 +23,14 @@ func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 		}
 		p := filepath.Join(dir, name)
 		locale := strings.TrimSuffix(name, ".txt")
-		if !localeRe.MatchString(locale) {
+		if !IsLocale(locale) {
 			return nil, clierr.New("%s: %q is not a locale name", p, locale)
 		}
 		b, err := os.ReadFile(p)
 		if err != nil {
 			return nil, clierr.New("read %s: %v", p, err)
 		}
-		text := trimValue(string(b))
+		text := TrimValue(string(b))
 		if text == "" {
 			return nil, clierr.New("%s: release notes are empty", p)
 		}

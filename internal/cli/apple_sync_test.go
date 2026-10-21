@@ -341,8 +341,8 @@ func TestApplePullWritesFiles(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
-	// en-US: 10 fields, de-DE: 5, review: 7 of 8 (no password)
-	if want := "{\n  \"locales\": [\n    \"de-DE\",\n    \"en-US\"\n  ],\n  \"files\": 22\n}\n"; stdout != want {
+	// every field of both locales (10 each), review: 7 of 8 (no password)
+	if want := "{\n  \"locales\": [\n    \"de-DE\",\n    \"en-US\"\n  ],\n  \"files\": 27\n}\n"; stdout != want {
 		t.Errorf("stdout = %s", stdout)
 	}
 	for p, want := range map[string]string{
@@ -351,16 +351,16 @@ func TestApplePullWritesFiles(t *testing.T) {
 		filepath.Join(dir, "de-DE", "keywords.txt"):                   "beispiel,app\n",
 		filepath.Join(dir, "review_information", "first_name.txt"):    "Ada\n",
 		filepath.Join(dir, "review_information", "demo_required.txt"): "true\n",
+		// empty in the store: a file that reads as empty, which push reads as "clear"
+		filepath.Join(dir, "de-DE", "marketing_url.txt"): "\n",
 		mine: "mine\n",
 	} {
 		if got := readFile(t, p); got != want {
 			t.Errorf("%s = %q, want %q", p, got, want)
 		}
 	}
-	for _, p := range []string{filepath.Join(dir, "review_information", "demo_password.txt"), filepath.Join(dir, "de-DE", "marketing_url.txt")} {
-		if _, err := os.Stat(p); !os.IsNotExist(err) {
-			t.Errorf("%s written (err=%v)", p, err)
-		}
+	if p := filepath.Join(dir, "review_information", "demo_password.txt"); !os.IsNotExist(statErr(p)) {
+		t.Errorf("%s written", p)
 	}
 	if strings.Contains(stdout+stderr, "s3cret") {
 		t.Errorf("password in output")
@@ -372,7 +372,25 @@ func TestApplePullWritesFiles(t *testing.T) {
 
 func TestApplePullThenPushIsEmptyPlan(t *testing.T) {
 	srv := pushCLIServer(t)
+	// the store has no notes and no de-DE marketing URL (cleared there)
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreReviewDetail", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"type":"appStoreReviewDetails","id":"rd-1","attributes":{"contactFirstName":"Ada","demoAccountRequired":false}},"links":{"self":"x"}}`))
+	})
 	dir := filepath.Join(t.TempDir(), "metadata")
+	// files of an earlier pull, with values the store no longer has
+	stale := map[string]string{
+		filepath.Join(dir, "de-DE", "marketing_url.txt"):      "https://old.example.com\n",
+		filepath.Join(dir, "review_information", "notes.txt"): "Old notes\n",
+	}
+	for p, c := range stale {
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(c), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	if code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "pull", dir); code != 0 {
 		t.Fatalf("pull: code=%d stderr=%q", code, stderr)
 	}
@@ -383,6 +401,16 @@ func TestApplePullThenPushIsEmptyPlan(t *testing.T) {
 	if got := apiRequests(srv, true); len(got) != 0 {
 		t.Errorf("push sent %v", got)
 	}
+	for p := range stale {
+		if got := readFile(t, p); got != "\n" {
+			t.Errorf("%s = %q, want empty", p, got)
+		}
+	}
+}
+
+func statErr(path string) error {
+	_, err := os.Stat(path)
+	return err
 }
 
 func TestAppleInitOffline(t *testing.T) {
@@ -446,5 +474,66 @@ func TestAppleInitKeepsExisting(t *testing.T) {
 	code, stdout, _ = runEnv(t, nil, false, "apple", "init", dir, "--locale", "en-US", "--locale", "fr-FR", "--screenshots", shots, "-o", "json")
 	if err := json.Unmarshal([]byte(stdout), &res); code != 0 || err != nil || len(res.Created) != 0 || len(res.Existing) != 2*10+8+2 {
 		t.Errorf("code=%d result=%+v err=%v", code, res, err)
+	}
+}
+
+func TestApplePushIncompleteScreenshotSet(t *testing.T) {
+	conflict := func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		_, _ = w.Write([]byte(`{"errors":[{"status":"409","code":"STATE_ERROR","title":"The request cannot be fulfilled."}]}`))
+	}
+	cases := []struct {
+		name, route string
+		requests    []string
+		action, msg string
+	}{
+		// the old screenshots are gone, the new one never arrived: not "skip"
+		{"upload after the deletes fails", "POST /v1/appScreenshots",
+			[]string{"DELETE /v1/appScreenshots/shot-a", "DELETE /v1/appScreenshots/shot-b", "POST /v1/appScreenshots"},
+			"replace", "applied 0 of 1 changes, 1 incomplete: screenshots en-US iphone-6.9: set incomplete, run push again: "},
+		// nothing was changed: "skip" is the truth
+		{"first delete fails", "DELETE /v1/appScreenshots/{id}",
+			[]string{"DELETE /v1/appScreenshots/shot-a"},
+			"skip", "applied 0 of 1 changes: delete screenshot 01-home.png: "},
+	}
+	for _, c := range cases {
+		for _, mode := range []string{"text", "json"} {
+			t.Run(c.name+"/"+mode, func(t *testing.T) {
+				srv := pushCLIServer(t)
+				method, path, _ := strings.Cut(c.route, " ")
+				srv.Handle(method, path, conflict)
+				code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "push", pushDir("changes"), "--screenshots", pushShots(t), "--only", "screenshots", "-o", mode)
+				if code != 1 || !strings.Contains(stderr, c.msg) {
+					t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+				}
+				assertRequests(t, apiRequests(srv, true), c.requests)
+				if mode == "text" {
+					_, result, _ := strings.Cut(stderr, "result (skip = not applied): 1 change\n")
+					if want := "  " + c.action + " screenshots en-US iphone-6.9\n"; !strings.Contains(result, want) {
+						t.Errorf("result lacks %q:\n%s", want, stderr)
+					}
+					return
+				}
+				if p := decodePlan(t, stdout); len(p.Changes) != 1 || p.Changes[0].Action != c.action {
+					t.Errorf("plan = %s", stdout)
+				}
+			})
+		}
+	}
+}
+
+func TestAppleInitRejectsBadLocale(t *testing.T) {
+	for _, l := range []string{"en_US", "EN-US", "../x", ""} {
+		t.Run(l, func(t *testing.T) {
+			tmp := t.TempDir()
+			code, _, stderr := runEnv(t, nil, false, "apple", "init", filepath.Join(tmp, "metadata"), "--locale", "en-US", "--locale", l)
+			if code != 2 || !strings.Contains(stderr, "--locale") {
+				t.Fatalf("code=%d stderr=%q", code, stderr)
+			}
+			if entries, err := os.ReadDir(tmp); err != nil || len(entries) != 0 {
+				t.Errorf("created %v (err=%v)", entries, err)
+			}
+		})
 	}
 }

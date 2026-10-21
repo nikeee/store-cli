@@ -217,3 +217,64 @@ func TestInitScaffolds(t *testing.T) {
 		}
 	}
 }
+
+func TestPushSkipsWhatsNewBeforeFirstRelease(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{"metadata/en-US/release_notes.txt": "Fixes", "metadata/en-US/description.txt": "Changed."})
+	o := PushOptions{Dir: filepath.Join(root, "metadata"), Platform: "ios", Version: "1.3.0", DryRun: true}
+	cases := []struct {
+		versions string
+		want     []string
+		warned   bool
+	}{
+		{"versions_two_editable.json", []string{"update version en-US description"}, true},
+		{"app_appStoreVersions.json", []string{"update version en-US description", "update version en-US whatsNew"}, false},
+	}
+	for _, c := range cases {
+		t.Run(c.versions, func(t *testing.T) {
+			srv := listingServer(t, "app_appInfos.json", "appInfo_localizations_full.json", "version_localizations.json")
+			srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", ascfake.JSON(http.StatusOK, c.versions))
+			svc, stderr := uploadService(t, srv)
+			plan, err := svc.Push(t.Context(), listingApp, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := changeLines(plan.Changes); !slices.Equal(got, c.want) {
+				t.Errorf("plan = %v, want %v", got, c.want)
+			}
+			const warning = "warning: skipping What's New: App Store Connect accepts it only after the first release\n"
+			if got := stderr.String(); (got == warning) != c.warned {
+				t.Errorf("stderr = %q", got)
+			}
+		})
+	}
+}
+
+func TestPushIgnoresTrailingWhitespace(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", ascfake.JSON(http.StatusOK, "app_appStoreVersions.json"))
+	srv.Handle("GET", "/v1/apps/{id}/appInfos", ascfake.JSON(http.StatusOK, "app_appInfos.json"))
+	srv.Handle("GET", "/v1/appInfos/{id}/appInfoLocalizations", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": []any{map[string]any{"type": "appInfoLocalizations", "id": "il-en",
+			"attributes": map[string]any{"locale": "en-US", "name": "Example App", "subtitle": "Do things \t"}}}, "links": map[string]any{"self": "x"}})
+	})
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionLocalizations", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": []any{map[string]any{"type": "appStoreVersionLocalizations", "id": "vl-en",
+			"attributes": map[string]any{"locale": "en-US", "description": "An app.\n\n"}}}, "links": map[string]any{"self": "x"}})
+	})
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreReviewDetail", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appStoreReviewDetails", "id": "rd-1",
+			"attributes": map[string]any{"notes": "Use the demo.\r\n"}}, "links": map[string]any{"self": "x"}})
+	})
+	// files as pull writes them: value plus a newline, trimmed when read
+	root := t.TempDir()
+	writeTree(t, root, map[string]string{
+		"metadata/en-US/subtitle.txt":           "Do things \t\n",
+		"metadata/en-US/description.txt":        "An app.\n\n\n",
+		"metadata/review_information/notes.txt": "Use the demo.\r\n\n",
+	})
+	plan, err := newService(t, srv).Push(t.Context(), listingApp, PushOptions{Dir: filepath.Join(root, "metadata"), Platform: "ios"})
+	if err != nil || len(plan.Changes) != 0 {
+		t.Fatalf("plan=%v err=%v", plan, err)
+	}
+}

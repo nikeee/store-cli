@@ -190,8 +190,17 @@ type mediaSync struct {
 	mediaUpload
 }
 
+// setChangedError wraps an error of syncMedia after it changed the set
+// (created it, deleted or reserved an item): the set no longer holds what it
+// held before, nor what was asked for. The message is that of the wrapped error.
+type setChangedError struct{ err error }
+
+func (e setChangedError) Error() string { return e.err.Error() }
+func (e setChangedError) Unwrap() error { return e.err }
+
 // syncMedia returns the change and the ID of the set ("" when a dry run would
-// create it). The files are already validated.
+// create it). The files are already validated. An error after the set was
+// changed is a setChangedError.
 func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (metadata.Change, string, error) {
 	local, err := media.MD5List(o.paths)
 	if err != nil {
@@ -245,22 +254,34 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 		return change, setID, nil
 	}
 
+	changed := false
+	fail := func(err error) error {
+		if changed {
+			return setChangedError{err}
+		}
+		return err
+	}
 	if setID == "" {
 		if setID, err = k.createSet(ctx, s.client, o.localizationID, o.device); err != nil {
 			return change, "", fmt.Errorf("create %s %s set of %s: %w", o.device.Alias, k.name, o.locale, err)
 		}
+		changed = true
 	}
 	if o.replace {
 		for _, r := range remote {
 			if err := k.deleteItem(ctx, s.client, r.ID); err != nil {
-				return change, setID, fmt.Errorf("delete %s %s: %w", k.name, r.FileName, err)
+				return change, setID, fail(fmt.Errorf("delete %s %s: %w", k.name, r.FileName, err))
 			}
+			changed = true
 		}
 	}
 	for i, p := range o.paths {
 		s.report.Progressf("%s %s: %s %d of %d", o.locale, o.device.Alias, k.name, i+1, len(o.paths))
-		if _, err := s.uploadAsset(ctx, o.asset, setID, p, o.timeout); err != nil {
-			return change, setID, err
+		id, err := s.uploadAsset(ctx, o.asset, setID, p, o.timeout)
+		// a reserved item stays in the set even when its upload failed
+		changed = changed || id != ""
+		if err != nil {
+			return change, setID, fail(err)
 		}
 	}
 	return change, setID, nil

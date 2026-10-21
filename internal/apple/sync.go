@@ -195,7 +195,8 @@ func (s *Service) pushVersion(ctx context.Context, app App, o PushOptions) (Vers
 
 // planTexts diffs the local texts with the listing of v: the app info level
 // of every locale first, then the version level, as ApplyTextChanges sends
-// them. A locale missing on the store is created.
+// them. A locale missing on the store is created. What's New is left out
+// with a warning while the app has never been released (Apple rejects it).
 func (s *Service) planTexts(ctx context.Context, app App, v Version, local map[string]metadata.Texts) ([]metadata.Change, error) {
 	if len(local) == 0 {
 		return nil, nil
@@ -208,8 +209,11 @@ func (s *Service) planTexts(ctx context.Context, app App, v Version, local map[s
 	var changes []metadata.Change
 	for _, level := range []metadata.Level{metadata.LevelAppInfo, metadata.LevelVersion} {
 		for _, l := range locales {
-			changes = append(changes, metadata.DiffTexts(level, l, metadata.AppleFields, local[l], remote[l])...)
+			changes = append(changes, metadata.DiffTexts(level, l, metadata.AppleFields, local[l], trimmed(remote[l]))...)
 		}
+	}
+	if changes, err = s.dropWhatsNewBeforeRelease(ctx, app, v, changes); err != nil {
+		return nil, err
 	}
 	// App info texts change only while the app info is editable; checked here
 	// so that a dry run reports it too.
@@ -219,6 +223,40 @@ func (s *Service) planTexts(ctx context.Context, app App, v Version, local map[s
 		}
 	}
 	return changes, nil
+}
+
+// dropWhatsNewBeforeRelease removes the What's New changes, with a warning,
+// when app has never had a released version on the platform of v; App Store
+// Connect accepts the field only after the first release (as in submit).
+func (s *Service) dropWhatsNewBeforeRelease(ctx context.Context, app App, v Version, changes []metadata.Change) ([]metadata.Change, error) {
+	f, ok := metadata.FieldByFile(metadata.AppleFields, releaseNotesFile)
+	if !ok {
+		return nil, clierr.New("internal error: no release notes field")
+	}
+	isWhatsNew := func(c metadata.Change) bool { return c.Field == f.API }
+	if !slices.ContainsFunc(changes, isWhatsNew) {
+		return changes, nil
+	}
+	released, err := s.HasReleasedVersion(ctx, app, v.Platform)
+	if err != nil || released {
+		return changes, err
+	}
+	s.report.Warnf("skipping What's New: App Store Connect accepts it only after the first release")
+	return slices.DeleteFunc(changes, isWhatsNew), nil
+}
+
+// trimmed returns t with every value trimmed like a value read from a file,
+// so that a remote value with trailing whitespace equals its pulled file; nil
+// (no such localization) stays nil.
+func trimmed(t metadata.Texts) metadata.Texts {
+	if t == nil {
+		return nil
+	}
+	out := make(metadata.Texts, len(t))
+	for k, v := range t {
+		out[k] = metadata.TrimValue(v)
+	}
+	return out
 }
 
 // planReview diffs the local App Review texts with those of v. An empty
@@ -232,6 +270,7 @@ func (s *Service) planReview(ctx context.Context, v Version, local metadata.Text
 	if err != nil {
 		return nil, err
 	}
+	remote = trimmed(remote)
 	local = maps.Clone(local)
 	maps.DeleteFunc(local, func(api, val string) bool { return val == "" && (api == apiDemoRequired || remote == nil) })
 	return metadata.DiffTexts(metadata.LevelReview, "", metadata.AppleReviewFields, local, remote), nil
@@ -285,9 +324,10 @@ func keyOf(c metadata.Change) changeKey { return changeKey{c.Scope, c.Locale, c.
 // ApplyPush sends the changes of p in this order: app info texts, version
 // texts, App Review information, screenshots. It returns the plan with the
 // action of every applied change and skip for the others. On an error it
-// stops; the error says how many changes were applied.
+// stops; the error says how many changes were applied. A screenshot set that
+// was changed before the error keeps its action and is reported incomplete.
 func (s *Service) ApplyPush(ctx context.Context, p *PushPlan) (metadata.Plan, error) {
-	applied, err := s.applyPush(ctx, p)
+	applied, incomplete, err := s.applyPush(ctx, p)
 	done := map[changeKey]bool{}
 	for _, c := range applied {
 		done[keyOf(c)] = true
@@ -295,55 +335,64 @@ func (s *Service) ApplyPush(ctx context.Context, p *PushPlan) (metadata.Plan, er
 	out := metadata.Plan{Changes: make([]metadata.Change, len(p.Plan.Changes))}
 	n := 0
 	for i, c := range p.Plan.Changes {
-		if done[keyOf(c)] {
+		switch {
+		case done[keyOf(c)]:
 			n++
-		} else {
+		case incomplete != nil && keyOf(c) == keyOf(*incomplete):
+		default:
 			c.Action = metadata.ActionSkip
 		}
 		out.Changes[i] = c
 	}
-	if err != nil {
-		return out, fmt.Errorf("applied %d of %d changes: %w", n, len(out.Changes), err)
+	if err == nil {
+		return out, nil
 	}
-	return out, nil
+	if incomplete != nil {
+		return out, fmt.Errorf("applied %d of %d changes, 1 incomplete: %w", n, len(out.Changes), err)
+	}
+	return out, fmt.Errorf("applied %d of %d changes: %w", n, len(out.Changes), err)
 }
 
-// applyPush returns the changes applied, also on error.
-func (s *Service) applyPush(ctx context.Context, p *PushPlan) ([]metadata.Change, error) {
-	var applied []metadata.Change
+// applyPush returns the changes applied, also on error, and the screenshot
+// change that was started but not finished (nil if none).
+func (s *Service) applyPush(ctx context.Context, p *PushPlan) (applied []metadata.Change, incomplete *metadata.Change, err error) {
 	if len(p.texts) > 0 {
 		a, err := s.ApplyTextChanges(ctx, p.app, p.version, p.texts)
 		applied = append(applied, a...)
 		if err != nil {
-			return applied, err
+			return applied, nil, err
 		}
 	}
 	if len(p.review) > 0 {
 		a, err := s.ApplyReviewChanges(ctx, p.version, p.review)
 		if err != nil {
-			return applied, err
+			return applied, nil, err
 		}
 		applied = append(applied, a...)
 	}
 	if len(p.shots) == 0 {
-		return applied, nil
+		return applied, nil, nil
 	}
 	// Read again: the texts may have created localizations.
 	ids, err := s.VersionLocalizationIDs(ctx, p.version)
 	if err != nil {
-		return applied, err
+		return applied, nil, err
 	}
 	for _, sh := range p.shots {
-		id, ok := ids[sh.change.Locale]
+		c := sh.change
+		id, ok := ids[c.Locale]
 		if !ok {
-			return applied, noLocalization(p.version, sh.change.Locale)
+			return applied, nil, noLocalization(p.version, c.Locale)
 		}
-		if _, err := s.SyncScreenshots(ctx, id, sh.change.Locale, sh.device, sh.paths, false); err != nil {
-			return applied, err
+		if _, err := s.SyncScreenshots(ctx, id, c.Locale, sh.device, sh.paths, false); err != nil {
+			if errors.As(err, new(setChangedError)) {
+				return applied, &c, fmt.Errorf("%s %s %s: set incomplete, run push again: %w", c.Scope, c.Locale, c.Field, err)
+			}
+			return applied, nil, err
 		}
-		applied = append(applied, sh.change)
+		applied = append(applied, c)
 	}
-	return applied, nil
+	return applied, nil, nil
 }
 
 // Push makes App Store Connect match the metadata directory of o: it reads
@@ -392,25 +441,52 @@ func (s *Service) Pull(ctx context.Context, app App, v Version, dir string) (Pul
 		res.Files += len(written)
 		return err
 	}
+	// A field the store has no value for is written empty, so a value cleared
+	// in the store does not come back with the next push. The name is never
+	// empty: without one there is no app info localization to mirror.
+	clearable := slices.DeleteFunc(slices.Clone(metadata.AppleFields), func(f metadata.Field) bool { return f.File == nameFile })
 	for _, l := range res.Locales {
-		if err := write(l, metadata.AppleFields, listing[l]); err != nil {
+		if err := write(l, metadata.AppleFields, withEmpty(clearable, listing[l])); err != nil {
 			return res, err
 		}
 	}
-	if len(review) > 0 {
+	// Without review information on v the files are left alone.
+	if review != nil {
 		public := slices.DeleteFunc(slices.Clone(metadata.AppleReviewFields), func(f metadata.Field) bool { return f.Secret })
-		if err := write(metadata.ReviewDir, public, review); err != nil {
+		if err := write(metadata.ReviewDir, public, withEmpty(public, review)); err != nil {
 			return res, err
 		}
 	}
 	return res, nil
 }
 
+// withEmpty returns a copy of t with "" for every field of fields it lacks.
+func withEmpty(fields []metadata.Field, t metadata.Texts) metadata.Texts {
+	out := maps.Clone(t)
+	if out == nil {
+		out = metadata.Texts{}
+	}
+	for _, f := range fields {
+		if _, ok := out[f.API]; !ok {
+			out[f.API] = ""
+		}
+	}
+	return out
+}
+
 // Init scaffolds a metadata directory offline: per locale one empty file per
 // AppleFields row, review_information/ with its files and
 // <screenshotsDir>/<locale>/ (screenshotsDir "" means <dir>/../screenshots).
-// Existing files and folders are left alone and reported in Existing.
+// Existing files and folders are left alone and reported in Existing. A
+// locale that is not a locale folder name is a usage error; nothing is written
+// then.
 func Init(dir, screenshotsDir string, locales []string) (metadata.InitResult, error) {
+	for _, l := range locales {
+		if !metadata.IsLocale(l) {
+			return metadata.InitResult{Created: []string{}, Existing: []string{}},
+				clierr.Usagef("invalid --locale %q (use a locale like en-US, de-DE or zh-Hans)", l)
+		}
+	}
 	res, err := metadata.Scaffold(dir, metadata.AppleFields, locales)
 	if err != nil {
 		return res, err

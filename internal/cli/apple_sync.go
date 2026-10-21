@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"slices"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
-	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/output"
 )
@@ -37,9 +35,6 @@ func newAppleInitCmd() *cobra.Command {
 				return err
 			}
 			locales, _ := cmd.Flags().GetStringArray("locale")
-			if slices.Contains(locales, "") {
-				return clierr.Usagef("--locale must not be empty")
-			}
 			shots, _ := cmd.Flags().GetString("screenshots")
 			res, err := apple.Init(args[0], shots, locales)
 			if err != nil {
@@ -107,10 +102,12 @@ func newApplePushCmd() *cobra.Command {
 			"- Screenshots (default <dir>/../screenshots): per locale and device, the ordered MD5 list is\n" +
 			"  compared; any difference replaces the whole set. Devices without local files are left alone.\n" +
 			"- review_information/ sets the App Review details.\n" +
+			"- What's New (release_notes.txt) is skipped with a warning while the app was never released.\n" +
 			"All texts and images are checked before any API call. First the plan is computed and printed\n" +
 			"(stderr in text mode), then applied; --dry-run stops after the plan. Unchanged values cause no\n" +
 			"API call. When a change fails, push stops with exit 1 and the plan shows which changes were\n" +
-			"applied (skip for the others). Result: Plan (with action showing what was done).",
+			"applied (skip for the others); a screenshot set changed only partly is reported incomplete, run\n" +
+			"push again. Result: Plan (with action showing what was done).",
 		Example: "  store apple push fastlane/metadata --dry-run\n" +
 			"  store apple push fastlane/metadata --only texts,review",
 		Args: cobra.ExactArgs(1),
@@ -182,9 +179,11 @@ func newApplePullCmd() *cobra.Command {
 		Use:   "pull <dir> [--version <v>]",
 		Short: "Write the store listing into a metadata directory",
 		Long: "Writes the text files of every store locale and review_information/ (without the demo password)\n" +
-			"into <dir>. Overwrites the files it writes and touches nothing else. Does not download\n" +
-			"screenshots (Apple re-encodes them, so they would never match the originals). Without --version:\n" +
-			"the editable version if there is one, else the live one. Result: {locales: [string], files: int}.",
+			"into <dir>. A field without a value in the store is written as an empty file, so a value cleared\n" +
+			"in the store stays cleared on the next push. Overwrites the files it writes and touches nothing\n" +
+			"else. Does not download screenshots (Apple re-encodes them, so they would never match the\n" +
+			"originals). Without --version: the editable version if there is one, else the live one.\n" +
+			"Result: {locales: [string], files: int}.",
 		Example: "  store apple pull fastlane/metadata",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
