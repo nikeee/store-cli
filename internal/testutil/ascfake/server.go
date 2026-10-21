@@ -89,7 +89,6 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		Method: r.Method, Path: r.URL.Path, Query: r.URL.Query(), Body: body, Header: r.Header.Clone(),
 	})
 	h := s.match(r)
-	registered := s.registered()
 	s.mu.Unlock()
 
 	if strings.HasPrefix(r.URL.Path, uploadPrefix) {
@@ -105,7 +104,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h == nil {
-		s.t.Errorf("ascfake: no handler for %s %s; registered: %s", r.Method, r.URL.Path, registered)
+		s.t.Errorf("ascfake: no handler for %s %s; registered: %s", r.Method, r.URL.Path, s.registered())
 		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
@@ -141,8 +140,10 @@ func (s *Server) match(r *http.Request) HandlerFunc {
 	return nil
 }
 
-// registered lists the routes for error messages. The caller holds s.mu.
+// registered lists the routes for error messages.
 func (s *Server) registered() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if len(s.routes) == 0 {
 		return "(none)"
 	}

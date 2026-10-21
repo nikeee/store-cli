@@ -1,13 +1,17 @@
 package ascclient_test
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/nikeee/store-cli/internal/apple/ascclient"
+	"github.com/nikeee/store-cli/internal/httpx"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 )
 
@@ -59,5 +63,34 @@ func TestUploadPartsErrorHidesSignature(t *testing.T) {
 				t.Fatalf("err = %v", err)
 			}
 		})
+	}
+}
+
+// A part that fails with 503 is sent again by the httpx client, with the
+// same bytes.
+func TestUploadPartsRetries(t *testing.T) {
+	var mu sync.Mutex
+	var bodies []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		defer mu.Unlock()
+		bodies = append(bodies, string(b))
+		if len(bodies) == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	noSleep := func(context.Context, time.Duration) error { return nil }
+	c, err := ascclient.New(ascfake.Credentials(), httpx.NewClient(httpx.Options{Sleep: noSleep}), srv.URL, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op := ascclient.UploadOperation{Method: "PUT", URL: srv.URL + "/upload/part2", Offset: 5, Length: 3}
+	if err := c.UploadParts(t.Context(), []ascclient.UploadOperation{op}, strings.NewReader("helloabc")); err != nil {
+		t.Fatal(err)
+	}
+	if len(bodies) != 2 || bodies[0] != "abc" || bodies[1] != "abc" {
+		t.Errorf("bodies = %q", bodies)
 	}
 }
