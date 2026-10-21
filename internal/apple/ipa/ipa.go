@@ -39,7 +39,7 @@ func Read(ipaPath string) (Info, error) {
 		}
 		return Info{}, fmt.Errorf("open %s: %w", ipaPath, err)
 	}
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found []*zip.File
 	for _, f := range zr.File {
@@ -96,7 +96,7 @@ func readFile(f *zip.File) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	return io.ReadAll(rc)
 }
 
