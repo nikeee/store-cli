@@ -1,0 +1,26 @@
+{
+  "data": {
+    "type": "appStoreVersions",
+    "id": "8c1d2e3f-0000-4000-8000-000000000140",
+    "attributes": {
+      "platform": "IOS",
+      "versionString": "1.4.0",
+      "appStoreState": "PREPARE_FOR_SUBMISSION",
+      "appVersionState": "PREPARE_FOR_SUBMISSION",
+      "copyright": "2026 Example GmbH",
+      "releaseType": "SCHEDULED",
+      "earliestReleaseDate": "2026-12-01T09:00:00Z"
+    },
+    "relationships": {
+      "build": {
+        "data": null
+      }
+    },
+    "links": {
+      "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/8c1d2e3f-0000-4000-8000-000000000140"
+    }
+  },
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/8c1d2e3f-0000-4000-8000-000000000140"
+  }
+}

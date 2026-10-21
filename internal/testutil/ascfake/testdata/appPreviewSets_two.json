@@ -1,0 +1,4 @@
+{"data": [
+    {"type": "appPreviewSets", "id": "pset-1", "attributes": {"previewType": "IPHONE_67"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appPreviewSets/pset-1"}},
+    {"type": "appPreviewSets", "id": "pset-2", "attributes": {"previewType": "IPAD_PRO_3GEN_129"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appPreviewSets/pset-2"}}
+], "links": {"self": "https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/vl-en/appPreviewSets"}, "meta": {"paging": {"total": 2, "limit": 50}}}

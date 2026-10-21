@@ -1,0 +1,19 @@
+de-DE iphone-6.9 (IPHONE_67): 2 previews
+  POS  FILE       STATE            CHECKSUM                          ID
+  1    intro.mp4  COMPLETE         0cc175b9c0f1b6a831c399e269772661  prev-a
+  2    tour.mov   UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  prev-b
+
+de-DE ipad-13 (IPAD_PRO_3GEN_129): 2 previews
+  POS  FILE       STATE            CHECKSUM                          ID
+  1    intro.mp4  COMPLETE         0cc175b9c0f1b6a831c399e269772661  prev-a
+  2    tour.mov   UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  prev-b
+
+en-US iphone-6.9 (IPHONE_67): 2 previews
+  POS  FILE       STATE            CHECKSUM                          ID
+  1    intro.mp4  COMPLETE         0cc175b9c0f1b6a831c399e269772661  prev-a
+  2    tour.mov   UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  prev-b
+
+en-US ipad-13 (IPAD_PRO_3GEN_129): 2 previews
+  POS  FILE       STATE            CHECKSUM                          ID
+  1    intro.mp4  COMPLETE         0cc175b9c0f1b6a831c399e269772661  prev-a
+  2    tour.mov   UPLOAD_COMPLETE  92eb5ffee6ae2fec3ad71c777531578f  prev-b

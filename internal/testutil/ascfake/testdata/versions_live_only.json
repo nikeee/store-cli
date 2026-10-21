@@ -1,0 +1,82 @@
+{
+  "data": [
+    {
+      "type": "appStoreVersions",
+      "id": "2b8e6c1d-9a07-4f3e-8d52-6e0f1b7a0120",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "1.2.0",
+        "appStoreState": "READY_FOR_SALE",
+        "appVersionState": "READY_FOR_DISTRIBUTION",
+        "copyright": "2026 Example GmbH",
+        "reviewType": "APP_STORE",
+        "releaseType": "MANUAL",
+        "downloadable": true,
+        "createdDate": "2026-09-01T08:30:00-07:00"
+      },
+      "relationships": {
+        "build": {
+          "links": {
+            "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/2b8e6c1d-9a07-4f3e-8d52-6e0f1b7a0120/relationships/build",
+            "related": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/2b8e6c1d-9a07-4f3e-8d52-6e0f1b7a0120/build"
+          },
+          "data": {
+            "type": "builds",
+            "id": "9b8e1f22-0d7a-4c3e-8f61-5a2b3c4d5e42"
+          }
+        }
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/2b8e6c1d-9a07-4f3e-8d52-6e0f1b7a0120"
+      }
+    },
+    {
+      "type": "appStoreVersions",
+      "id": "c3a1d7f4-5e28-4b6a-a9c0-8f2d4e6b0110",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "1.1.0",
+        "appStoreState": "REPLACED_WITH_NEW_VERSION",
+        "appVersionState": "REPLACED_WITH_NEW_VERSION",
+        "copyright": "2025 Example GmbH",
+        "reviewType": "APP_STORE",
+        "releaseType": "AFTER_APPROVAL",
+        "downloadable": true,
+        "createdDate": "2026-06-15T11:00:00-07:00"
+      },
+      "relationships": {
+        "build": {
+          "links": {
+            "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/c3a1d7f4-5e28-4b6a-a9c0-8f2d4e6b0110/relationships/build",
+            "related": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/c3a1d7f4-5e28-4b6a-a9c0-8f2d4e6b0110/build"
+          },
+          "data": null
+        }
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/c3a1d7f4-5e28-4b6a-a9c0-8f2d4e6b0110"
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "builds",
+      "id": "9b8e1f22-0d7a-4c3e-8f61-5a2b3c4d5e42",
+      "attributes": {
+        "version": "42"
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/builds/9b8e1f22-0d7a-4c3e-8f61-5a2b3c4d5e42"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/apps/1234567890/appStoreVersions?filter%5Bplatform%5D=IOS&include=build&limit=5"
+  },
+  "meta": {
+    "paging": {
+      "total": 3,
+      "limit": 5
+    }
+  }
+}

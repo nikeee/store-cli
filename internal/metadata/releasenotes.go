@@ -1,0 +1,40 @@
+package metadata
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/nikeee/store-cli/internal/clierr"
+)
+
+// ReadReleaseNotesDir reads <locale>.txt files from dir. A file whose name is
+// not a locale, or that is empty, is an error naming the file.
+func ReadReleaseNotesDir(dir string) (map[string]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, clierr.New("read release notes directory %s: %v", dir, err)
+	}
+	out := map[string]string{}
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".txt") {
+			continue
+		}
+		p := filepath.Join(dir, name)
+		locale := strings.TrimSuffix(name, ".txt")
+		if !localeRe.MatchString(locale) {
+			return nil, clierr.New("%s: %q is not a locale name", p, locale)
+		}
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return nil, clierr.New("read %s: %v", p, err)
+		}
+		text := trimValue(string(b))
+		if text == "" {
+			return nil, clierr.New("%s: release notes are empty", p)
+		}
+		out[locale] = text
+	}
+	return out, nil
+}

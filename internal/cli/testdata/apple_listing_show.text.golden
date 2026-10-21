@@ -1,0 +1,3 @@
+LOCALE  NAME          SUBTITLE   PRIVACYURL                   PRIVACYCHOICESURL            DESCRIPTION         KEYWORDS      PROMOTIONALTEXT  MARKETINGURL         SUPPORTURL                   WHATSNEW
+de-DE   Beispiel App  Dinge tun                                                            Eine Beispiel-App.  beispiel,app                                        https://example.com/support
+en-US   Example App   Do things  https://example.com/privacy  https://example.com/choices  An example app.     example,app   New!             https://example.com  https://example.com/support  Bug fixes.

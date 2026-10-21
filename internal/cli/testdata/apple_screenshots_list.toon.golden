@@ -1,0 +1,25 @@
+[4]:
+  - locale: de-DE
+    device: iphone-6.9
+    displayType: APP_IPHONE_67
+    screenshots[2]{id,fileName,position,checksum,state}:
+      shot-a,01-home.png,1,0cc175b9c0f1b6a831c399e269772661,COMPLETE
+      shot-b,02-detail.png,2,92eb5ffee6ae2fec3ad71c777531578f,UPLOAD_COMPLETE
+  - locale: de-DE
+    device: ipad-13
+    displayType: APP_IPAD_PRO_3GEN_129
+    screenshots[2]{id,fileName,position,checksum,state}:
+      shot-a,01-home.png,1,0cc175b9c0f1b6a831c399e269772661,COMPLETE
+      shot-b,02-detail.png,2,92eb5ffee6ae2fec3ad71c777531578f,UPLOAD_COMPLETE
+  - locale: en-US
+    device: iphone-6.9
+    displayType: APP_IPHONE_67
+    screenshots[2]{id,fileName,position,checksum,state}:
+      shot-a,01-home.png,1,0cc175b9c0f1b6a831c399e269772661,COMPLETE
+      shot-b,02-detail.png,2,92eb5ffee6ae2fec3ad71c777531578f,UPLOAD_COMPLETE
+  - locale: en-US
+    device: ipad-13
+    displayType: APP_IPAD_PRO_3GEN_129
+    screenshots[2]{id,fileName,position,checksum,state}:
+      shot-a,01-home.png,1,0cc175b9c0f1b6a831c399e269772661,COMPLETE
+      shot-b,02-detail.png,2,92eb5ffee6ae2fec3ad71c777531578f,UPLOAD_COMPLETE

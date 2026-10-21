@@ -1,0 +1,16 @@
+[
+  {
+    "locale": "de-DE",
+    "device": "iphone-6.9",
+    "previewType": "IPHONE_67",
+    "previews": [
+      {
+        "id": "a",
+        "fileName": "01.mp4",
+        "position": 1,
+        "checksum": "s1",
+        "state": "COMPLETE"
+      }
+    ]
+  }
+]

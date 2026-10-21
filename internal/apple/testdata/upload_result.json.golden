@@ -1,0 +1,9 @@
+{
+  "app": "com.example.app",
+  "appId": "1234567890",
+  "version": "1.3.0",
+  "build": "45",
+  "buildUploadId": "bu-1",
+  "buildId": "",
+  "state": "complete"
+}

@@ -1,0 +1,5 @@
+{"data": [
+    {"type": "appInfoLocalizations", "id": "il-en", "attributes": {"locale": "en-US", "name": "Example App", "subtitle": "Do things", "privacyPolicyUrl": "https://example.com/privacy", "privacyChoicesUrl": "https://example.com/choices"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/il-en"}}
+,
+    {"type": "appInfoLocalizations", "id": "il-de", "attributes": {"locale": "de-DE", "name": "Beispiel App", "subtitle": "Dinge tun"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/il-de"}}
+], "links": {"self": "https://api.appstoreconnect.apple.com/v1/appInfos/b7d3f1a0-edit-4c2d-9b4e-000000000002/appInfoLocalizations"}, "meta": {"paging": {"total": 2, "limit": 200}}}

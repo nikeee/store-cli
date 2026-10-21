@@ -1,0 +1,8 @@
+{
+  "data": [
+    {"type": "betaBuildLocalizations", "id": "loc-de", "attributes": {"locale": "de-DE", "whatsNew": "Alt"}},
+    {"type": "betaBuildLocalizations", "id": "loc-en", "attributes": {"locale": "en-US", "whatsNew": "Old"}}
+  ],
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/builds/b3f1c2d4-0000-4a11-9c01-000000000044/betaBuildLocalizations"},
+  "meta": {"paging": {"total": 2, "limit": 200}}
+}

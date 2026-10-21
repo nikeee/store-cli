@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"type": "betaGroups", "id": "grp-internal", "attributes": {"name": "Team", "isInternalGroup": true, "publicLinkEnabled": false}},
+    {"type": "betaGroups", "id": "grp-beta", "attributes": {"name": "Beta", "isInternalGroup": false, "publicLinkEnabled": true, "publicLink": "https://testflight.apple.com/join/AbCdEf"}}
+  ],
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/apps/1234567890/betaGroups"}
+}

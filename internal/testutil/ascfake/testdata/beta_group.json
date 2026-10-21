@@ -1,0 +1,4 @@
+{
+  "data": {"type": "betaGroups", "id": "grp-new", "attributes": {"name": "Friends", "isInternalGroup": false, "publicLinkEnabled": true, "publicLink": "https://testflight.apple.com/join/NewLnk"}},
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/betaGroups/grp-new"}
+}

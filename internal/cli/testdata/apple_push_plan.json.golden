@@ -1,0 +1,71 @@
+{
+  "changes": [
+    {
+      "action": "update",
+      "scope": "app-info",
+      "locale": "en-US",
+      "field": "subtitle",
+      "old": "Do things",
+      "new": "Do more things"
+    },
+    {
+      "action": "create",
+      "scope": "app-info",
+      "locale": "fr-FR",
+      "field": "name",
+      "new": "Mon App"
+    },
+    {
+      "action": "update",
+      "scope": "version",
+      "locale": "de-DE",
+      "field": "description",
+      "old": "Eine Beispiel-App.",
+      "new": "Eine neue Beispiel-App."
+    },
+    {
+      "action": "update",
+      "scope": "version",
+      "locale": "en-US",
+      "field": "keywords",
+      "old": "example,app",
+      "new": "example,app,new"
+    },
+    {
+      "action": "update",
+      "scope": "version",
+      "locale": "en-US",
+      "field": "marketingUrl",
+      "old": "https://example.com"
+    },
+    {
+      "action": "create",
+      "scope": "version",
+      "locale": "fr-FR",
+      "field": "description",
+      "new": "Une app d'exemple."
+    },
+    {
+      "action": "update",
+      "scope": "review",
+      "field": "contactFirstName",
+      "old": "Ada",
+      "new": "Grace"
+    },
+    {
+      "action": "update",
+      "scope": "review",
+      "field": "demoAccountPassword",
+      "old": "***",
+      "new": "***"
+    },
+    {
+      "action": "replace",
+      "scope": "screenshots",
+      "locale": "en-US",
+      "field": "iphone-6.9",
+      "old": "2 screenshots",
+      "new": "1 screenshot"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "locale": "de-DE",
+    "device": "iphone-6.9",
+    "displayType": "APP_IPHONE_67",
+    "screenshots": [
+      {
+        "id": "a",
+        "fileName": "01.png",
+        "position": 1,
+        "checksum": "s1",
+        "state": "COMPLETE"
+      },
+      {
+        "id": "b",
+        "fileName": "02.png",
+        "position": 2,
+        "checksum": "s2",
+        "state": "COMPLETE"
+      }
+    ]
+  }
+]

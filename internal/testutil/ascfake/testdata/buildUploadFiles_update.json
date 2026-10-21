@@ -1,0 +1,4 @@
+{
+  "data": {"type": "buildUploadFiles", "id": "buf-1", "attributes": {"fileName": "app.ipa", "fileSize": 2000}},
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/buildUploadFiles/buf-1"}
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "locale": "de-DE",
+    "device": "iphone-6.9",
+    "previewType": "IPHONE_67",
+    "previews": [
+      {
+        "id": "prev-a",
+        "fileName": "intro.mp4",
+        "position": 1,
+        "checksum": "0cc175b9c0f1b6a831c399e269772661",
+        "state": "COMPLETE"
+      },
+      {
+        "id": "prev-b",
+        "fileName": "tour.mov",
+        "position": 2,
+        "checksum": "92eb5ffee6ae2fec3ad71c777531578f",
+        "state": "UPLOAD_COMPLETE"
+      }
+    ]
+  },
+  {
+    "locale": "de-DE",
+    "device": "ipad-13",
+    "previewType": "IPAD_PRO_3GEN_129",
+    "previews": [
+      {
+        "id": "prev-a",
+        "fileName": "intro.mp4",
+        "position": 1,
+        "checksum": "0cc175b9c0f1b6a831c399e269772661",
+        "state": "COMPLETE"
+      },
+      {
+        "id": "prev-b",
+        "fileName": "tour.mov",
+        "position": 2,
+        "checksum": "92eb5ffee6ae2fec3ad71c777531578f",
+        "state": "UPLOAD_COMPLETE"
+      }
+    ]
+  },
+  {
+    "locale": "en-US",
+    "device": "iphone-6.9",
+    "previewType": "IPHONE_67",
+    "previews": [
+      {
+        "id": "prev-a",
+        "fileName": "intro.mp4",
+        "position": 1,
+        "checksum": "0cc175b9c0f1b6a831c399e269772661",
+        "state": "COMPLETE"
+      },
+      {
+        "id": "prev-b",
+        "fileName": "tour.mov",
+        "position": 2,
+        "checksum": "92eb5ffee6ae2fec3ad71c777531578f",
+        "state": "UPLOAD_COMPLETE"
+      }
+    ]
+  },
+  {
+    "locale": "en-US",
+    "device": "ipad-13",
+    "previewType": "IPAD_PRO_3GEN_129",
+    "previews": [
+      {
+        "id": "prev-a",
+        "fileName": "intro.mp4",
+        "position": 1,
+        "checksum": "0cc175b9c0f1b6a831c399e269772661",
+        "state": "COMPLETE"
+      },
+      {
+        "id": "prev-b",
+        "fileName": "tour.mov",
+        "position": 2,
+        "checksum": "92eb5ffee6ae2fec3ad71c777531578f",
+        "state": "UPLOAD_COMPLETE"
+      }
+    ]
+  }
+]

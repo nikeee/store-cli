@@ -1,0 +1,4 @@
+{
+  "data": {"type": "betaBuildLocalizations", "id": "loc-en", "attributes": {"locale": "en-US", "whatsNew": "Fixed login"}},
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations/loc-en"}
+}

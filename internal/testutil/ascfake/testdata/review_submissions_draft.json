@@ -1,0 +1,51 @@
+{
+  "data": [
+    {
+      "type": "reviewSubmissions",
+      "id": "5c1b7e30-0a42-4d9f-8e11-3b6f2a9d7c01",
+      "attributes": {
+        "platform": "IOS",
+        "state": "READY_FOR_REVIEW"
+      },
+      "relationships": {
+        "items": {
+          "data": [
+            {
+              "type": "reviewSubmissionItems",
+              "id": "e1a2b3c4-1111-4a5b-9c6d-7e8f90a1b2c3"
+            }
+          ]
+        },
+        "appStoreVersionForReview": {
+          "data": null
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "reviewSubmissionItems",
+      "id": "e1a2b3c4-1111-4a5b-9c6d-7e8f90a1b2c3",
+      "attributes": {
+        "state": "READY_FOR_REVIEW"
+      },
+      "relationships": {
+        "subscriptionVersion": {
+          "data": {
+            "type": "subscriptionVersions",
+            "id": "9f8e7d6c-2222-4b5a-8c4d-1a2b3c4d5e6f"
+          }
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "{{baseURL}}/v1/apps/1234567890/reviewSubmissions"
+  },
+  "meta": {
+    "paging": {
+      "total": 1,
+      "limit": 50
+    }
+  }
+}

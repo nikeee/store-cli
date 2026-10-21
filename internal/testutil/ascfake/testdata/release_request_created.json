@@ -1,0 +1,7 @@
+{
+  "data": {
+    "type": "appStoreVersionReleaseRequests",
+    "id": "6a8c0e22-3d5f-4a7c-8e9b-4f6a8c0e2d33"
+  },
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/appStoreVersionReleaseRequests/6a8c0e22-3d5f-4a7c-8e9b-4f6a8c0e2d33"}
+}

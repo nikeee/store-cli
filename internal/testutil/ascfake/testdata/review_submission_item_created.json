@@ -1,0 +1,12 @@
+{
+  "data": {
+    "type": "reviewSubmissionItems",
+    "id": "e1a2b3c4-3333-4a5b-9c6d-7e8f90a1b2c3",
+    "attributes": {
+      "state": "READY_FOR_REVIEW"
+    }
+  },
+  "links": {
+    "self": "{{baseURL}}/v1/reviewSubmissionItems/e1a2b3c4-3333-4a5b-9c6d-7e8f90a1b2c3"
+  }
+}

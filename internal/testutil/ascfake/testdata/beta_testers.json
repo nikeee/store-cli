@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"type": "betaTesters", "id": "tester-1", "attributes": {"firstName": "Ada", "lastName": "Lovelace", "email": "ada@example.com", "inviteType": "EMAIL", "state": "ACCEPTED"}},
+    {"type": "betaTesters", "id": "tester-2", "attributes": {"firstName": "Alan", "lastName": "Turing", "email": "alan@example.com", "inviteType": "PUBLIC_LINK", "state": "INSTALLED"}}
+  ],
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/betaTesters"}
+}

@@ -1,0 +1,9 @@
+firstName: Ada
+lastName: Lovelace
+phone: +1 555 0100
+email: ada@example.com
+demoRequired: true
+demoUser: demo
+demoPassword: ***
+notes: Use the demo.
+attachments[1]: login.pdf

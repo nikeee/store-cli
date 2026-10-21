@@ -1,0 +1,3 @@
+ID            NAME  INTERNAL  PUBLICLINKENABLED  PUBLICLINK
+grp-internal  Team  true      false
+grp-beta      Beta  false     true               https://testflight.apple.com/join/AbCdEf

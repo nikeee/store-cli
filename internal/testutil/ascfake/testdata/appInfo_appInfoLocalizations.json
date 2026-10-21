@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "type": "appInfoLocalizations",
+      "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a01",
+      "attributes": {
+        "locale": "en-US"
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a01"
+      }
+    },
+    {
+      "type": "appInfoLocalizations",
+      "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a02",
+      "attributes": {
+        "locale": "de-DE"
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a02"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appInfos/b7d3f1a0-edit-4c2d-9b4e-000000000002/appInfoLocalizations?fields%5BappInfoLocalizations%5D=locale&limit=200"
+  },
+  "meta": {
+    "paging": {
+      "total": 2,
+      "limit": 200
+    }
+  }
+}

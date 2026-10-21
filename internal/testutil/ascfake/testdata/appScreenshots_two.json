@@ -1,0 +1,4 @@
+{"data": [
+    {"type": "appScreenshots", "id": "shot-a", "attributes": {"fileName": "01-home.png", "fileSize": 1200, "sourceFileChecksum": "0cc175b9c0f1b6a831c399e269772661", "assetDeliveryState": {"state": "COMPLETE"}}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshots/shot-a"}},
+    {"type": "appScreenshots", "id": "shot-b", "attributes": {"fileName": "02-detail.png", "fileSize": 1300, "sourceFileChecksum": "92eb5ffee6ae2fec3ad71c777531578f", "assetDeliveryState": {"state": "UPLOAD_COMPLETE"}}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshots/shot-b"}}
+], "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/set-1/appScreenshots"}, "meta": {"paging": {"total": 2, "limit": 50}}}

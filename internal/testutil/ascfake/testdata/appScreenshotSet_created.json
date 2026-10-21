@@ -1,0 +1,2 @@
+{"data": {"type": "appScreenshotSets", "id": "set-new", "attributes": {"screenshotDisplayType": "APP_IPHONE_67"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/set-new"}},
+ "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/set-new"}}
