@@ -1,0 +1,44 @@
+version: 2
+
+builds:
+  - id: store
+    binary: store
+    main: ./cmd/store
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/nikeee/store-cli/internal/cli.version={{.Version}}
+      - -X github.com/nikeee/store-cli/internal/cli.commit={{.ShortCommit}}
+      - -X github.com/nikeee/store-cli/internal/cli.date={{.Date}}
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "store_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
