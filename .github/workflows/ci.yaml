@@ -17,6 +17,8 @@ jobs:
           go-version: "1.27"
       - name: Generated code is up to date
         run: go generate ./... && git diff --exit-code
+      - name: No en or em dashes in the docs
+        run: "! grep -rnP '[\\x{2013}\\x{2014}]' docs README.md"
       - run: go vet ./...
       - uses: golangci/golangci-lint-action@v8
         with:
