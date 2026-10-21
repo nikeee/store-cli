@@ -1,12 +1,17 @@
 package apple
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/output"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 )
 
@@ -71,12 +76,21 @@ func TestSubmitCreatesSubmission(t *testing.T) {
 
 func TestSubmitReusesDraftWithSubscription(t *testing.T) {
 	srv := submissionServer(t, "review_submissions_draft.json")
-	res, err := newService(t, srv).SubmitVersion(t.Context(), versionsApp, editableV)
+	c, err := ascclient.New(ascfake.Credentials(), &http.Client{}, srv.URL, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var progress bytes.Buffer
+	svc := NewService(c, output.NewPrinter(output.ModeText, io.Discard, &progress, false), Poll{}, time.Now)
+	res, err := svc.SubmitVersion(t.Context(), versionsApp, editableV)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if res.SubmissionID != submissionID || res.Items != 2 {
 		t.Errorf("res = %+v", res)
+	}
+	if !strings.Contains(progress.String(), "reusing the open review submission with 1 item(s)") {
+		t.Errorf("progress = %q", progress.String())
 	}
 	want := "GET /v1/apps/1234567890/reviewSubmissions\nPOST /v1/reviewSubmissionItems\nPATCH /v1/reviewSubmissions/" + submissionID
 	if got := strings.Join(requestLines(srv), "\n"); got != want {
@@ -167,5 +181,16 @@ func TestCancelNoSubmission(t *testing.T) {
 	_, err := newService(t, srv).CancelVersion(t.Context(), versionsApp, editableV)
 	if err == nil || clierr.ExitCode(err) != 1 || len(srv.Requests()) != 1 {
 		t.Fatalf("err=%v requests=%v", err, requestLines(srv))
+	}
+}
+
+func TestReviewSubmissionsCountItemsPerSubmission(t *testing.T) {
+	srv := submissionServer(t, "review_submissions_two.json")
+	subs, err := newService(t, srv).listReviewSubmissions(t.Context(), versionsApp, "ios", []string{"READY_FOR_REVIEW", "WAITING_FOR_REVIEW"})
+	if err != nil || len(subs) != 2 {
+		t.Fatalf("subs=%+v err=%v", subs, err)
+	}
+	if subs[0].items != 2 || subs[1].items != 0 {
+		t.Errorf("items = %d and %d, want 2 and 0", subs[0].items, subs[1].items)
 	}
 }

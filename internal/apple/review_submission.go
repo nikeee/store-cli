@@ -51,7 +51,7 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 		return nil, err
 	}
 	names := map[string]string{} // version ID -> version string
-	includedItems := 0
+	includedItems := map[string]bool{} // IDs of the included review submission items
 	for _, inc := range resp.Included {
 		switch inc.Type {
 		case asc.ResourceTypeAppStoreVersions:
@@ -63,12 +63,12 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 				names[v.ID] = deref(v.Attributes.VersionString)
 			}
 		case asc.ResourceTypeReviewSubmissionItems:
-			includedItems++
+			includedItems[inc.ID] = true
 		}
 	}
 	subs := make([]reviewSubmission, 0, len(resp.Data))
 	for _, d := range resp.Data {
-		sub := reviewSubmission{id: d.ID, items: includedItems}
+		sub := reviewSubmission{id: d.ID}
 		if a := d.Attributes; a != nil {
 			sub.state = string(deref(a.State))
 		}
@@ -77,9 +77,18 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 				sub.versionID = r.AppStoreVersionForReview.Data.ID
 				sub.versionName = names[sub.versionID]
 			}
-			if r.Items != nil && len(r.Items.Data) > 0 {
-				sub.items = len(r.Items.Data)
+			if r.Items != nil {
+				for _, it := range r.Items.Data {
+					if includedItems[it.ID] {
+						sub.items++
+					}
+				}
 			}
+		}
+		if len(resp.Data) == 1 && sub.items == 0 {
+			// Without a usable items relationship, a lone submission owns
+			// every included item.
+			sub.items = len(includedItems)
 		}
 		subs = append(subs, sub)
 	}
