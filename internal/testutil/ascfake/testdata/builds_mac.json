@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "type": "builds",
+      "id": "b-mac-45",
+      "attributes": {"version": "45", "uploadedDate": "2026-10-20T09:30:00-07:00", "expired": false, "processingState": "VALID"},
+      "relationships": {"preReleaseVersion": {"data": {"type": "preReleaseVersions", "id": "pre-13"}}}
+    }
+  ],
+  "included": [{"type": "preReleaseVersions", "id": "pre-13", "attributes": {"version": "1.4.0", "platform": "MAC_OS"}}],
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/builds"}
+}

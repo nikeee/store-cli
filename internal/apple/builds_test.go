@@ -93,7 +93,7 @@ func TestListBuildsInvalidState(t *testing.T) {
 func TestResolveBuildLatest(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_list.json"))
-	b, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "latest", "1.3.0")
+	b, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "latest", "1.3.0", "ios")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestResolveBuildLatest(t *testing.T) {
 func TestResolveBuildByNumber(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_valid.json"))
-	b, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "45", "")
+	b, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "45", "", "ios")
 	if err != nil || b.Build != "45" || b.State != "valid" {
 		t.Fatalf("b=%+v err=%v", b, err)
 	}
@@ -121,7 +121,7 @@ func TestResolveBuildByNumber(t *testing.T) {
 func TestResolveBuildAmbiguous(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_ambiguous.json"))
-	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "")
+	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "", "ios")
 	if clierr.ExitCode(err) != 2 || err.Error() != "build 42 exists for versions 1.0, 1.1; pass --version" {
 		t.Fatalf("err = %v (exit %d)", err, clierr.ExitCode(err))
 	}
@@ -130,7 +130,7 @@ func TestResolveBuildAmbiguous(t *testing.T) {
 func TestResolveBuildNotFound(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_empty.json"))
-	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "")
+	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "", "ios")
 	var ce *clierr.Error
 	if !errors.As(err, &ce) || clierr.ExitCode(err) != 1 || ce.Hint != "store apple build list" || !strings.Contains(ce.Message, "build 42") {
 		t.Fatalf("err = %#v", err)
@@ -153,7 +153,7 @@ func TestWaitForBuildProcessed(t *testing.T) {
 		}
 	})
 	var sleeps atomic.Int32
-	b, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", BuildProcessed, 30*time.Minute)
+	b, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", "ios", BuildProcessed, 30*time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func TestWaitForBuildExists(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_processing.json"))
 	var sleeps atomic.Int32
-	b, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", BuildExists, time.Hour)
+	b, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", "ios", BuildExists, time.Hour)
 	if err != nil || b.State != "processing" || sleeps.Load() != 0 {
 		t.Fatalf("b=%+v err=%v sleeps=%d", b, err, sleeps.Load())
 	}
@@ -176,7 +176,7 @@ func TestWaitForBuildFailed(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_failed.json"))
 	var sleeps atomic.Int32
-	_, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", BuildProcessed, time.Hour)
+	_, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", "ios", BuildProcessed, time.Hour)
 	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "build 45") || !strings.Contains(err.Error(), "failed") {
 		t.Fatalf("err = %v", err)
 	}
@@ -186,7 +186,7 @@ func TestWaitForBuildTimeout(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_processing.json"))
 	var sleeps atomic.Int32
-	_, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", BuildProcessed, 30*time.Minute)
+	_, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "", "ios", BuildProcessed, 30*time.Minute)
 	want := "timed out after 30m0s waiting for build 45 to be processed"
 	if err == nil || err.Error() != want || clierr.ExitCode(err) != 1 {
 		t.Fatalf("err = %v", err)
@@ -234,5 +234,43 @@ func TestExpireBuildPatchBody(t *testing.T) {
 	}
 	if !strings.Contains(string(srv.Requests()[0].Body), `"attributes":{"expired":true}`) || !out.Expired || out.Version != "1.3.0" {
 		t.Errorf("body=%s out=%+v", srv.Requests()[0].Body, out)
+	}
+}
+
+func TestResolveBuildFiltersPlatform(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_valid.json"))
+	svc := newService(t, srv)
+	if _, err := svc.ResolveBuild(t.Context(), testApp, "45", "", "macos"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.ResolveBuild(t.Context(), testApp, "latest", "", "ios"); err != nil {
+		t.Fatal(err)
+	}
+	for i, want := range []string{"MAC_OS", "IOS"} {
+		if got := srv.Requests()[i].Query.Get("filter[preReleaseVersion.platform]"); got != want {
+			t.Errorf("request %d platform filter = %q, want %q", i, got, want)
+		}
+	}
+	if _, err := svc.ResolveBuild(t.Context(), testApp, "45", "", ""); err == nil {
+		t.Error("empty platform accepted")
+	}
+}
+
+// The same build number under iOS 1.2 and macOS 1.3 is not ambiguous once
+// the platform is given: the API only returns the requested platform.
+func TestResolveBuildSharedNumberAcrossPlatforms(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, r *http.Request) {
+		fixture := "builds_valid.json"
+		if r.URL.Query().Get("filter[preReleaseVersion.platform]") == "MAC_OS" {
+			fixture = "builds_mac.json"
+		}
+		ascfake.JSON(http.StatusOK, fixture)(w, r)
+	})
+	svc := newService(t, srv)
+	mac, err := svc.ResolveBuild(t.Context(), testApp, "45", "", "macos")
+	if err != nil || mac.Platform != "macos" || mac.Version != "1.4.0" {
+		t.Fatalf("mac=%+v err=%v", mac, err)
 	}
 }

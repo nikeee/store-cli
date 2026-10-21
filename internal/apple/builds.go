@@ -136,10 +136,10 @@ func buildQuery(app App, f BuildFilter) (asc.BuildsGetCollectionParams, error) {
 }
 
 // ResolveBuild returns the build ref ("latest" or a build number) of app.
-// version narrows it to one app version; a number that exists under several
+// platform is a --platform value. version narrows it to one app version; a number that exists under several
 // versions needs it.
-func (s *Service) ResolveBuild(ctx context.Context, app App, ref, version string) (Build, error) {
-	b, found, err := s.findBuild(ctx, app, ref, version)
+func (s *Service) ResolveBuild(ctx context.Context, app App, ref, version, platform string) (Build, error) {
+	b, found, err := s.findBuild(ctx, app, ref, version, platform)
 	if err != nil {
 		return Build{}, err
 	}
@@ -160,8 +160,11 @@ func notFound(ref, version string) *clierr.Error {
 }
 
 // findBuild looks ref up; found is false when no such build exists (yet).
-func (s *Service) findBuild(ctx context.Context, app App, ref, version string) (b Build, found bool, err error) {
-	p, err := buildQuery(app, BuildFilter{Version: version})
+func (s *Service) findBuild(ctx context.Context, app App, ref, version, platform string) (b Build, found bool, err error) {
+	if platform == "" {
+		return Build{}, false, clierr.New("internal error: no platform given to find build %s", ref)
+	}
+	p, err := buildQuery(app, BuildFilter{Version: version, Platform: platform})
 	if err != nil {
 		return Build{}, false, err
 	}
@@ -194,13 +197,14 @@ func (s *Service) findBuild(ctx context.Context, app App, ref, version string) (
 	return builds[0], true, nil
 }
 
-// WaitForBuild polls until build buildNumber (under version, if given)
+// WaitForBuild polls until build buildNumber (under version, if given, on
+// platform, a --platform value)
 // satisfies until. A build that ends FAILED or INVALID is an error when
 // waiting for BuildProcessed. It gives up after timeout.
-func (s *Service) WaitForBuild(ctx context.Context, app App, buildNumber, version string, until BuildCondition, timeout time.Duration) (Build, error) {
+func (s *Service) WaitForBuild(ctx context.Context, app App, buildNumber, version, platform string, until BuildCondition, timeout time.Duration) (Build, error) {
 	start := s.now()
 	for {
-		b, found, err := s.findBuild(ctx, app, buildNumber, version)
+		b, found, err := s.findBuild(ctx, app, buildNumber, version, platform)
 		if err != nil {
 			return Build{}, err
 		}

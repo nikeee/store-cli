@@ -69,7 +69,7 @@ func newAppleBuildShowCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd))
+			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd), platformFlag(cmd))
 			if err != nil {
 				return err
 			}
@@ -96,7 +96,7 @@ func newAppleBuildWaitCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b, err := svc.WaitForBuild(cmd.Context(), app, args[0], versionFlag(cmd), apple.BuildProcessed, timeout)
+			b, err := svc.WaitForBuild(cmd.Context(), app, args[0], versionFlag(cmd), platformFlag(cmd), apple.BuildProcessed, timeout)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func newAppleBuildSetEncryptionCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd))
+			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd), platformFlag(cmd))
 			if err != nil {
 				return err
 			}
@@ -158,7 +158,7 @@ func newAppleBuildExpireCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd))
+			b, err := svc.ResolveBuild(cmd.Context(), app, args[0], versionFlag(cmd), platformFlag(cmd))
 			if err != nil {
 				return err
 			}
@@ -184,5 +184,10 @@ func addBuildVersionFlag(cmd *cobra.Command) {
 
 func versionFlag(cmd *cobra.Command) string {
 	v, _ := cmd.Flags().GetString("version")
+	return v
+}
+
+func platformFlag(cmd *cobra.Command) string {
+	v, _ := cmd.Flags().GetString("platform")
 	return v
 }
