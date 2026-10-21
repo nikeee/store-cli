@@ -31,10 +31,11 @@ func newAppleVersionCmd(Deps) *cobra.Command {
 
 func newAppleVersionListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List the versions of the app, newest first",
-		Long:  "Lists the versions of the app on --platform, newest first. Result: [Version].",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "List the versions of the app, newest first",
+		Example: "  store apple version list --limit 5",
+		Long:    "Lists the versions of the app on --platform, newest first. Result: [Version].",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			limit, _ := cmd.Flags().GetInt("limit")
 			if limit < 1 || limit > 200 {
@@ -57,10 +58,11 @@ func newAppleVersionListCmd() *cobra.Command {
 
 func newAppleVersionShowCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "show <version>",
-		Short: "Show one version",
-		Long:  "Result: Version.",
-		Args:  cobra.ExactArgs(1),
+		Use:     "show <version>",
+		Short:   "Show one version",
+		Example: "  store apple version show 1.4.0",
+		Long:    "Result: Version.",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			svc, app, err := appleService(cmd)
 			if err != nil {

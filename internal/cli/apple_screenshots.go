@@ -66,7 +66,8 @@ func newAppleScreenshotsUploadCmd() *cobra.Command {
 		Use:   "upload --locale <l> [--device <d>] [--version <v>] [--replace] <png>...",
 		Short: "Upload screenshots to the set of one locale and device",
 		Long: "Uploads the files in the given order. The device comes from --device or from the pixel size of the\n" +
-			"first file (all files must be the same device); an unknown size lists the accepted sizes. Files are\n" +
+			"first file (all files must be the same device); an unknown size lists the accepted sizes. Where a\n" +
+			"size fits several devices the first one in the device table wins; pass --device to choose. Files are\n" +
 			"PNG or JPEG without an alpha channel, checked locally before any API call.\n" +
 			"Without --replace the files are appended to the set (max 10 per set). With --replace: if the set\n" +
 			"already holds exactly these files in this order (MD5), nothing happens; otherwise the set is emptied\n" +

@@ -10,10 +10,11 @@ func newAppleAppCmd(Deps) *cobra.Command {
 	makeGroup(cmd)
 	cmd.AddCommand(
 		&cobra.Command{
-			Use:   "list",
-			Short: "List all apps of the team",
-			Long:  "All apps of the team. Result: [App].",
-			Args:  cobra.NoArgs,
+			Use:     "list",
+			Short:   "List all apps of the team",
+			Example: "  store apple app list",
+			Long:    "All apps of the team. Result: [App].",
+			Args:    cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
 				svc, err := appleServiceNoApp(cmd)
 				if err != nil {
@@ -27,8 +28,9 @@ func newAppleAppCmd(Deps) *cobra.Command {
 			},
 		},
 		&cobra.Command{
-			Use:   "show",
-			Short: "Show the app given by --app",
+			Use:     "show",
+			Short:   "Show the app given by --app",
+			Example: "  store apple app show --app com.example.app",
 			Long: "The app given by --app. Result: {app: App, versions: [Version], locales: [string]}.\n" +
 				"versions holds the newest versions per platform (at most 5).",
 			Args: cobra.NoArgs,

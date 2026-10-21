@@ -65,7 +65,8 @@ func newApplePreviewsUploadCmd() *cobra.Command {
 		Use:   "upload --locale <l> --device <d> [--version <v>] [--replace] [--poster-frame <timecode>] <video>...",
 		Short: "Upload app previews to the set of one locale and device",
 		Long: "Uploads the videos (.mp4, .mov or .m4v) in the given order. Unlike screenshots the device is required,\n" +
-			"as there is no size detection for videos; watches have no previews. Without --replace the files are\n" +
+			"as there is no size detection for videos; watches have no previews. The preview type is the display\n" +
+			"type without APP_ (IPHONE_67 for APP_IPHONE_67). Without --replace the files are\n" +
 			"appended to the set (max 3 per set). With --replace: if the set already holds exactly these files in\n" +
 			"this order (MD5), nothing happens; otherwise the set is emptied and the files are uploaded in order.\n" +
 			"--poster-frame is the timecode of the poster frame (e.g. 00:00:05:00), sent for every file. Each file\n" +

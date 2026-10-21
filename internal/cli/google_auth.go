@@ -16,10 +16,11 @@ func newGoogleAuthCmd(Deps) *cobra.Command {
 	}
 	makeGroup(cmd)
 	cmd.AddCommand(&cobra.Command{
-		Use:   "check",
-		Short: "Verify the credentials by creating and deleting an edit",
-		Long:  "Creates and deletes an edit for --app.\n\nResult: {clientEmail, app, ok}.",
-		Args:  cobra.NoArgs,
+		Use:     "check",
+		Short:   "Verify the credentials by creating and deleting an edit",
+		Example: "  store google auth check --app com.example.app",
+		Long:    "Creates and deletes an edit for --app.\n\nResult: {clientEmail, app, ok}.",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			svc, err := googleService(cmd)
 			if err != nil {

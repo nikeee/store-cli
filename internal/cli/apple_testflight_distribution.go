@@ -19,10 +19,11 @@ func newAppleTestflightGroupCmd() *cobra.Command {
 
 func newAppleTestflightGroupListCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List the beta groups of the app",
-		Long:  "Lists the beta groups of the app. Result: [{id, name, internal, publicLinkEnabled, publicLink}].",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "List the beta groups of the app",
+		Example: "  store apple testflight group list",
+		Long:    "Lists the beta groups of the app. Result: [{id, name, internal, publicLinkEnabled, publicLink}].",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			svc, app, err := appleService(cmd)
 			if err != nil {
@@ -120,10 +121,11 @@ func newAppleTestflightTesterCmd() *cobra.Command {
 
 func newAppleTestflightTesterListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List the testers of the app",
-		Long:  "Lists the testers of the app, optionally only those of one group. Result: [{id, email, firstName, lastName, inviteType, state}].",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "List the testers of the app",
+		Example: "  store apple testflight tester list --group Beta",
+		Long:    "Lists the testers of the app, optionally only those of one group. Result: [{id, email, firstName, lastName, inviteType, state}].",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			svc, app, err := appleService(cmd)
 			if err != nil {

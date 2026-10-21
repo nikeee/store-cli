@@ -16,10 +16,11 @@ func newAppleAuthCmd(Deps) *cobra.Command {
 	}
 	makeGroup(cmd)
 	cmd.AddCommand(&cobra.Command{
-		Use:   "check",
-		Short: "Verify the credentials with one read call",
-		Long:  "Verifies the credentials with one read call.\n\nResult: {issuerId, keyId, ok}. Never prints the key.",
-		Args:  cobra.NoArgs,
+		Use:     "check",
+		Short:   "Verify the credentials with one read call",
+		Example: "  store apple auth check",
+		Long:    "Verifies the credentials with one read call.\n\nResult: {issuerId, keyId, ok}. Never prints the key.",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			creds, err := appleCredentials(cmd)
 			if err != nil {

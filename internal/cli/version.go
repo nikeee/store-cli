@@ -20,7 +20,10 @@ func newVersionCmd(Deps) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print the version",
-		Args:  cobra.NoArgs,
+		Long: "Prints the version, commit and build date of this binary as {version, commit, date}.\n" +
+			"Local builds report dev.",
+		Example: "  store version\n  store version -o json",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return emit(cmd, versionInfo{Version: version, Commit: commit, Date: date})
 		},

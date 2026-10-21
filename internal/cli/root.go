@@ -14,8 +14,11 @@ import (
 // NewRootCmd builds the full command tree.
 func NewRootCmd(d Deps) *cobra.Command {
 	root := &cobra.Command{
-		Use:           "store",
-		Short:         "Manage App Store Connect and Google Play from the command line",
+		Use:   "store",
+		Short: "Manage App Store Connect and Google Play from the command line",
+		Long: "Manage App Store Connect and Google Play from the command line: builds, TestFlight, versions,\n" +
+			"listings, screenshots, tracks and releases, for both stores with the same verbs.\n" +
+			"Commands are called as: store <apple|google> <noun> <verb> [args] [flags].",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

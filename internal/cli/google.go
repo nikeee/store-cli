@@ -14,6 +14,11 @@ func newGoogleCmd(d Deps) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "google",
 		Short: "Manage apps in Google Play",
+		Long: "Manage apps in Google Play with a service account. The credentials come from the environment:\n" +
+			config.EnvGoogleServiceAccount + " (the service account needs access to the app in the Play Console).\n" +
+			"Every mutating command runs in its own edit: create, change, commit. If anything fails, the edit is\n" +
+			"deleted and nothing is published. Mutating commands accept --changes-not-sent-for-review (passed to\n" +
+			"the commit; needed when the Play Console requires changes to be sent for review manually).",
 	}
 	makeGroup(cmd)
 	cmd.PersistentFlags().String("app", "", "package name, e.g. com.example.app (default $GOOGLE_PLAY_PACKAGE_NAME)")
