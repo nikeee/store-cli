@@ -1,0 +1,4 @@
+{"data": [
+    {"type": "appScreenshotSets", "id": "set-1", "attributes": {"screenshotDisplayType": "APP_IPHONE_67"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/set-1"}},
+    {"type": "appScreenshotSets", "id": "set-2", "attributes": {"screenshotDisplayType": "APP_IPAD_PRO_3GEN_129"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/set-2"}}
+], "links": {"self": "https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/vl-en/appScreenshotSets"}, "meta": {"paging": {"total": 2, "limit": 50}}}
