@@ -37,8 +37,10 @@ func TestValidateTextsCountsRunes(t *testing.T) {
 	if err := ValidateTexts(AppleReviewFields, Texts{"demoAccountRequired": "yes"}); err == nil {
 		t.Fatal("demo_required yes accepted")
 	}
-	if err := ValidateTexts(AppleReviewFields, Texts{"demoAccountRequired": "true"}); err != nil {
-		t.Fatal(err)
+	for _, v := range []string{"true", "false", ""} {
+		if err := ValidateTexts(AppleReviewFields, Texts{"demoAccountRequired": v}); err != nil {
+			t.Fatalf("demoAccountRequired %q: %v", v, err)
+		}
 	}
 }
 

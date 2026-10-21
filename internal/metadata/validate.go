@@ -30,7 +30,8 @@ func ValidateLocaleTexts(locale string, fields []Field, t Texts) error {
 		if n := utf8.RuneCountInString(v); f.MaxChars > 0 && n > f.MaxChars {
 			msgs = append(msgs, fmt.Sprintf("%s: %d characters, limit %d", name, n, f.MaxChars))
 		}
-		if f.File == "demo_required.txt" && v != "true" && v != "false" {
+		// An empty demo_required.txt means "no change": the flag cannot be cleared.
+		if f.File == "demo_required.txt" && v != "" && v != "true" && v != "false" {
 			msgs = append(msgs, fmt.Sprintf("%s: must be true or false", name))
 		}
 	}
