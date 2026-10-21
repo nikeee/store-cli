@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/config"
 )
 
 func newAppleBuildCmd(Deps) *cobra.Command {
@@ -16,12 +18,81 @@ func newAppleBuildCmd(Deps) *cobra.Command {
 	}
 	makeGroup(cmd)
 	cmd.AddCommand(
+		newAppleBuildUploadCmd(),
 		newAppleBuildListCmd(),
 		newAppleBuildShowCmd(),
 		newAppleBuildWaitCmd(),
 		newAppleBuildSetEncryptionCmd(),
 		newAppleBuildExpireCmd(),
 	)
+	return cmd
+}
+
+func newAppleBuildUploadCmd() *cobra.Command {
+	var notes *TextFlag
+	cmd := &cobra.Command{
+		Use:   "upload <ipa>",
+		Short: "Upload an IPA to App Store Connect",
+		Long: "Uploads an IPA through the App Store Connect API. Needs no Xcode, altool or Transporter and runs\n" +
+			"on Linux. Reads bundle ID, version and build number from the IPA; --app is optional and must\n" +
+			"match the IPA when given. Creates a build upload, uploads the file in the parts Apple asks for,\n" +
+			"commits it with its MD5 checksum and waits until Apple accepted the upload. FAILED prints\n" +
+			"Apple's errors and exits 1; Apple's warnings go to stderr.\n" +
+			"--notes sets the TestFlight \"What to Test\" text and --uses-non-exempt-encryption the export\n" +
+			"compliance answer as soon as the build exists. --wait additionally waits until the build is\n" +
+			"processed (VALID). --timeout bounds the whole command.\n" +
+			"Result: {app, appId, version, build, buildUploadId, buildId, state}. buildId is empty when\n" +
+			"neither --wait, --notes nor --uses-non-exempt-encryption made the command wait for the build.",
+		Example: "  store apple build upload app.ipa --notes @whats-new.txt --uses-non-exempt-encryption false",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			timeout, _ := cmd.Flags().GetDuration("timeout")
+			if timeout <= 0 {
+				return clierr.Usagef("invalid --timeout %s (must be positive)", timeout)
+			}
+			locale, _ := cmd.Flags().GetString("notes-locale")
+			wait, _ := cmd.Flags().GetBool("wait")
+			o := apple.UploadOptions{
+				Path: args[0], Platform: platformFlag(cmd), Wait: wait, Timeout: timeout,
+				Notes: notes.Value, NotesLocale: locale,
+			}
+			if v, _ := cmd.Flags().GetString("uses-non-exempt-encryption"); v != "" {
+				switch v {
+				case "true", "false":
+					uses := v == "true"
+					o.Encryption = &uses
+				default:
+					return clierr.Usagef("invalid --uses-non-exempt-encryption %q (use true or false)", v)
+				}
+			}
+			o.App, _ = cmd.Flags().GetString("app")
+			if o.App == "" {
+				v, _ := cmdDeps(cmd).Env(config.EnvAppleBundleID)
+				o.App = strings.TrimSpace(v)
+			}
+			svc, err := appleServiceNoApp(cmd)
+			if err != nil {
+				return err
+			}
+			var res apple.UploadResult
+			if dryRun(cmd) {
+				res, err = svc.PreviewUpload(cmd.Context(), o)
+			} else {
+				res, err = svc.UploadBuild(cmd.Context(), o)
+			}
+			if err != nil {
+				return err
+			}
+			return emit(cmd, res)
+		},
+	}
+	notes = NewTextFlag("notes", func(p string) ([]byte, error) { return cmdDeps(cmd).ReadFile(p) })
+	cmd.Flags().Var(notes, "notes", "TestFlight What to Test text, or @file to read it from a file (max 4000 characters)")
+	cmd.Flags().String("notes-locale", "en-US", "locale of --notes")
+	cmd.Flags().String("uses-non-exempt-encryption", "", "export compliance answer: true or false")
+	cmd.Flags().Bool("wait", false, "also wait until the build is processed (VALID)")
+	cmd.Flags().Duration("timeout", 30*time.Minute, "how long the whole command may take, e.g. 90s, 10m, 1h")
+	addDryRun(cmd)
 	return cmd
 }
 

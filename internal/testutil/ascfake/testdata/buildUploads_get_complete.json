@@ -1,0 +1,11 @@
+{
+  "data": {
+    "type": "buildUploads",
+    "id": "bu-1",
+    "attributes": {
+      "cfBundleShortVersionString": "1.3.0", "cfBundleVersion": "45", "platform": "IOS",
+      "state": {"state": "COMPLETE", "warnings": [{"code": "90725", "description": "SDK version issue"}]}
+    }
+  },
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/buildUploads/bu-1"}
+}

@@ -1,0 +1,11 @@
+{
+  "data": {
+    "type": "buildUploads",
+    "id": "bu-1",
+    "attributes": {
+      "cfBundleShortVersionString": "1.3.0", "cfBundleVersion": "45", "platform": "IOS",
+      "state": {"state": "FAILED", "errors": [{"code": "90062", "description": "Invalid bundle: missing icon"}, {"code": "90189", "description": "Redundant binary upload"}]}
+    }
+  },
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/buildUploads/bu-1"}
+}
