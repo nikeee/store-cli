@@ -58,16 +58,16 @@ Config: client only (`paths/server`, `webhooks/server`, `ogen/otel` disabled).
 
 ### 3. Own generator `tools/ascgen` (chosen)
 
-Go `text/template` over the pruned spec: 626 lines of Go plus 226 lines of templates.
+Go `text/template` over the pruned spec: 641 lines of Go plus 270 lines of templates.
 
 | # | Result |
 |---|--------|
 | 1 | Pass. Compiles, `go vet` clean. The generator fails loudly on any identifier collision instead of renaming. |
 | 2 | Pass. Every enum (named schema or inline) is a typed string with constants. |
 | 3 | Pass. `TestQueryParamsEncoded`. |
-| 4 | Pass. `TestPatchOmitsUnsetAttributes` (exact byte comparison of the request body). |
+| 4 | Pass. `TestPatchOmitsUnsetAttributes` (exact byte comparison of the request body); `TestPatchSendsExplicitNull` covers clearing a field with `null`. |
 | 5 | Pass. `TestDecodeFixtures`. |
-| 6 | Pass. 8,054 lines in 3 files; `go build` of the package about 0.2 s (3.8 s with a cold cache including `net/http`). No dependencies outside the standard library. |
+| 6 | Pass. 8,098 lines in 3 files; `go build` of the package about 0.2 s (3.8 s with a cold cache including `net/http`). No dependencies outside the standard library. |
 
 ## Decision
 
@@ -94,7 +94,7 @@ CI runs `go generate ./... && git diff --exit-code`.
 - **Update the spec:** replace `api/apple/openapi.oas.json`, run `go generate ./...`, fix compile
   errors in the callers.
 
-Generated files: `client.gen.go` (client, errors, pagination, `IncludedResource`),
+Generated files: `client.gen.go` (client, errors, pagination, `IncludedResource`, `Nullable`),
 `types.gen.go` (schemas and enums), `operations.gen.go` (one method and params struct per
 operation). Never edit them.
 
@@ -119,10 +119,20 @@ operation). Never edit them.
   The `// X is generated from ...` comment of each type names its origin.
 - **Field names.** PascalCase of the JSON name, with the words `Id` and `Url` as `ID` and `URL`
   (`supportUrl` -> `SupportURL`).
-- **Optional fields.** Not in `required` (or `nullable`): pointer with `omitempty` (slices and maps
-  without pointer). Set them with Go's `new(value)`: `WhatsNew: new("text")`,
-  `Platform: new(asc.PlatformIos)`. Unset fields are not sent; there is no way to send JSON `null`.
-  Read them with a nil check: the API omits attributes not listed in `fields[...]`.
+- **Field shapes.** Which Go shape a property gets depends on `required` and `nullable`:
+
+  | Property | Go field | Tag | Set it with |
+  |----------|----------|-----|-------------|
+  | required | `T` | none | the value |
+  | optional, not nullable | `*T` (slices and maps: `[]T`, `map`) | `omitempty` | `new(value)`: `Platform: new(asc.PlatformIos)` |
+  | nullable (all are optional request attributes) | `asc.Nullable[T]` | `omitzero` | `asc.Value(v)` sends `v`, `asc.Null[T]()` sends `null` |
+
+  Unset fields (nil pointer, zero `Nullable`) are never sent. `null` is how the API clears a
+  field, so clear with `asc.Null[T]()`, never with `""` (a `time.Time` or `format: uri` field
+  cannot hold `""` anyway). The spec marks only request attributes `nullable`, so response types
+  have no `Nullable` fields; read their optional pointers with a nil check, because the API omits
+  attributes not listed in `fields[...]`. `Nullable` also decodes (`IsZero`, `IsNull`, `Get`), so
+  a fake server can read requests back.
 - **Enums.** Typed strings; constants are type name plus PascalCase value:
   `ScreenshotDisplayTypeAppIphone67`, `AppStoreVersionStatePrepareForSubmission`, `PlatformIos`.
 - **`ResourceType`.** Every single-valued `type` property shares one enum:
@@ -194,7 +204,7 @@ v, err := c.AppStoreVersionsGetInstance(ctx, asc.AppStoreVersionsGetInstancePara
 if err != nil {
 	return err
 }
-if s := v.Data.Attributes.AppVersionState; s != nil && *s == asc.AppVersionStatePrepareForSubmission {
+if a := v.Data.Attributes; a != nil && a.AppVersionState != nil && *a.AppVersionState == asc.AppVersionStatePrepareForSubmission {
 	// editable
 }
 ```
@@ -207,7 +217,7 @@ loc, err := c.AppStoreVersionLocalizationsCreateInstance(ctx, asc.AppStoreVersio
 		Type: asc.ResourceTypeAppStoreVersionLocalizations,
 		Attributes: asc.AppStoreVersionLocalizationCreateRequestDataAttributes{
 			Locale:   "de-DE",
-			WhatsNew: new("Fehlerbehebungen"),
+			WhatsNew: asc.Value("Fehlerbehebungen"),
 		},
 		Relationships: asc.AppStoreVersionLocalizationCreateRequestDataRelationships{
 			AppStoreVersion: asc.AppStoreVersionLocalizationCreateRequestDataRelationshipsAppStoreVersion{
@@ -222,7 +232,7 @@ if err != nil {
 locID := loc.Data.ID
 ```
 
-Partial update (only non-nil attributes are sent):
+Partial update and clearing a field (unset attributes are not sent, `asc.Null` sends `null`):
 
 ```go
 _, err := c.AppStoreVersionLocalizationsUpdateInstance(ctx,
@@ -231,7 +241,8 @@ _, err := c.AppStoreVersionLocalizationsUpdateInstance(ctx,
 		Type: asc.ResourceTypeAppStoreVersionLocalizations,
 		ID:   locID,
 		Attributes: &asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{
-			WhatsNew: new("Bug fixes"),
+			WhatsNew:     asc.Value("Bug fixes"),
+			MarketingURL: asc.Null[string](), // clears the field
 		},
 	}})
 ```
@@ -316,5 +327,6 @@ if errors.As(err, &re) {
   generation with an error naming the operation or schema; extend `tools/ascgen` then.
 - Names are long but mechanical; derive them from the spec path instead of guessing, or search
   `types.gen.go` for the `generated from` comment.
-- JSON `null` cannot be sent. Clearing a text field means sending `""` where the API accepts it.
+- Clearing a field means sending `null` via `asc.Null[T]()`; only `nullable` attributes can be
+  cleared, which is what the spec allows.
 - Query enum values are not checked at compile time.

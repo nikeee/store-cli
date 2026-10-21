@@ -151,7 +151,7 @@ type decl struct {
 
 type field struct {
 	Name, Type, JSONName string
-	OmitEmpty            bool
+	Omit                 string // "", "omitempty" or "omitzero"
 }
 
 type enumValue struct{ Const, Value string }
@@ -409,15 +409,27 @@ func (g *gen) structFields(d *decl, s *schema, name string) error {
 				return err
 			}
 		}
-		if (!m.required || g.resolve(m.prop.Schema).Nullable) && pointable(t) {
-			t = "*" + t
+		// Nullable fields need three states (unset, null, value): null is how
+		// the API clears a field.
+		var omit string
+		switch {
+		case m.prop.Schema.Nullable || g.resolve(m.prop.Schema).Nullable:
+			t = "Nullable[" + t + "]"
+			if !m.required {
+				omit = "omitzero"
+			}
+		case !m.required:
+			omit = "omitempty"
+			if pointable(t) {
+				t = "*" + t
+			}
 		}
 		for _, f := range d.Fields {
 			if f.Name == fname {
 				return fmt.Errorf("%s: field %s collides with %s", source, fname, f.JSONName)
 			}
 		}
-		d.Fields = append(d.Fields, field{Name: fname, Type: t, JSONName: m.prop.Name, OmitEmpty: !m.required})
+		d.Fields = append(d.Fields, field{Name: fname, Type: t, JSONName: m.prop.Name, Omit: omit})
 	}
 	return nil
 }

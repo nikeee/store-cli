@@ -21,7 +21,7 @@ const (
 {{- else if eq .Kind "struct"}}
 type {{.Name}} struct {
 {{- range .Fields}}
-	{{.Name}} {{.Type}} `json:"{{.JSONName}}{{if .OmitEmpty}},omitempty{{end}}"`
+	{{.Name}} {{.Type}} `json:"{{.JSONName}}{{if .Omit}},{{.Omit}}{{end}}"`
 {{- end}}
 }
 {{- else}}

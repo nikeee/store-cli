@@ -1,6 +1,7 @@
 package asc_test
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -147,7 +148,7 @@ func TestPatchOmitsUnsetAttributes(t *testing.T) {
 		asc.AppStoreVersionLocalizationUpdateRequest{Data: asc.AppStoreVersionLocalizationUpdateRequestData{
 			Type:       asc.ResourceTypeAppStoreVersionLocalizations,
 			ID:         "X",
-			Attributes: &asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{WhatsNew: new("Bug fixes")},
+			Attributes: &asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{WhatsNew: asc.Value("Bug fixes")},
 		}})
 	if err != nil {
 		t.Fatal(err)
@@ -155,6 +156,35 @@ func TestPatchOmitsUnsetAttributes(t *testing.T) {
 	want := `{"data":{"type":"appStoreVersionLocalizations","id":"X","attributes":{"whatsNew":"Bug fixes"}}}`
 	if got.method != http.MethodPatch || got.path != "/v1/appStoreVersionLocalizations/X" || got.body != want {
 		t.Errorf("got %s %s %s\nwant PATCH /v1/appStoreVersionLocalizations/X %s", got.method, got.path, got.body, want)
+	}
+}
+
+func TestPatchSendsExplicitNull(t *testing.T) {
+	c, got := serve(t, http.StatusOK, `{"data":{"type":"appStoreVersionLocalizations","id":"X"},"links":{"self":"x"}}`)
+	_, err := c.AppStoreVersionLocalizationsUpdateInstance(t.Context(),
+		asc.AppStoreVersionLocalizationsUpdateInstanceParams{ID: "X"},
+		asc.AppStoreVersionLocalizationUpdateRequest{Data: asc.AppStoreVersionLocalizationUpdateRequestData{
+			Type:       asc.ResourceTypeAppStoreVersionLocalizations,
+			ID:         "X",
+			Attributes: &asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{MarketingURL: asc.Null[string]()},
+		}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"data":{"type":"appStoreVersionLocalizations","id":"X","attributes":{"marketingUrl":null}}}`
+	if got.body != want {
+		t.Errorf("body = %s\nwant   %s", got.body, want)
+	}
+
+	// The body decodes back into the same three states, e.g. for a fake server.
+	var req asc.AppStoreVersionLocalizationUpdateRequest
+	if err := json.Unmarshal([]byte(`{"data":{"type":"appStoreVersionLocalizations","id":"X","attributes":{"marketingUrl":null,"whatsNew":"Bug fixes"}}}`), &req); err != nil {
+		t.Fatal(err)
+	}
+	a := req.Data.Attributes
+	whatsNew, ok := a.WhatsNew.Get()
+	if !a.MarketingURL.IsNull() || !ok || whatsNew != "Bug fixes" || !a.Keywords.IsZero() {
+		t.Errorf("decoded marketingUrl null %v, whatsNew %q %v, keywords unset %v", a.MarketingURL.IsNull(), whatsNew, ok, a.Keywords.IsZero())
 	}
 }
 

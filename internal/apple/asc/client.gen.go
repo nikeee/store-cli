@@ -82,6 +82,50 @@ func (r IncludedResource) Decode(v any) error {
 	return json.Unmarshal(r.Raw, v)
 }
 
+// Nullable is a field the API also accepts as null, which clears it. The
+// zero value is unset and omitted from requests; Value sends a value, Null
+// sends null.
+type Nullable[T any] struct {
+	value   T
+	present bool
+	null    bool
+}
+
+// Value returns a Nullable that sends v.
+func Value[T any](v T) Nullable[T] { return Nullable[T]{value: v, present: true} }
+
+// Null returns a Nullable that sends null.
+func Null[T any]() Nullable[T] { return Nullable[T]{present: true, null: true} }
+
+// IsZero reports whether the field is unset; the omitzero tag uses it.
+func (n Nullable[T]) IsZero() bool { return !n.present }
+
+// IsNull reports whether the field is set to null.
+func (n Nullable[T]) IsNull() bool { return n.present && n.null }
+
+// Get returns the value and whether there is one (neither unset nor null).
+func (n Nullable[T]) Get() (T, bool) { return n.value, n.present && !n.null }
+
+func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+	if !n.present || n.null {
+		return []byte("null"), nil
+	}
+	return json.Marshal(n.value)
+}
+
+func (n *Nullable[T]) UnmarshalJSON(b []byte) error {
+	if string(b) == "null" {
+		*n = Null[T]()
+		return nil
+	}
+	var v T
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	*n = Value(v)
+	return nil
+}
+
 // GetNext fetches the page behind the links.next URL of a collection
 // response. T is the response type of the first page. next must lie under the
 // client's base URL, so credentials are never sent to another host.

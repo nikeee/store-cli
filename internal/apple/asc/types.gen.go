@@ -1827,12 +1827,12 @@ type AppInfoLocalizationCreateRequestData struct {
 
 // AppInfoLocalizationCreateRequestDataAttributes is generated from AppInfoLocalizationCreateRequestData.attributes.
 type AppInfoLocalizationCreateRequestDataAttributes struct {
-	Locale            string  `json:"locale"`
-	Name              string  `json:"name"`
-	Subtitle          *string `json:"subtitle,omitempty"`
-	PrivacyPolicyURL  *string `json:"privacyPolicyUrl,omitempty"`
-	PrivacyChoicesURL *string `json:"privacyChoicesUrl,omitempty"`
-	PrivacyPolicyText *string `json:"privacyPolicyText,omitempty"`
+	Locale            string           `json:"locale"`
+	Name              string           `json:"name"`
+	Subtitle          Nullable[string] `json:"subtitle,omitzero"`
+	PrivacyPolicyURL  Nullable[string] `json:"privacyPolicyUrl,omitzero"`
+	PrivacyChoicesURL Nullable[string] `json:"privacyChoicesUrl,omitzero"`
+	PrivacyPolicyText Nullable[string] `json:"privacyPolicyText,omitzero"`
 }
 
 // AppInfoLocalizationCreateRequestDataRelationships is generated from AppInfoLocalizationCreateRequestData.relationships.
@@ -1866,11 +1866,11 @@ type AppInfoLocalizationUpdateRequestData struct {
 
 // AppInfoLocalizationUpdateRequestDataAttributes is generated from AppInfoLocalizationUpdateRequestData.attributes.
 type AppInfoLocalizationUpdateRequestDataAttributes struct {
-	Name              *string `json:"name,omitempty"`
-	Subtitle          *string `json:"subtitle,omitempty"`
-	PrivacyPolicyURL  *string `json:"privacyPolicyUrl,omitempty"`
-	PrivacyChoicesURL *string `json:"privacyChoicesUrl,omitempty"`
-	PrivacyPolicyText *string `json:"privacyPolicyText,omitempty"`
+	Name              Nullable[string] `json:"name,omitzero"`
+	Subtitle          Nullable[string] `json:"subtitle,omitzero"`
+	PrivacyPolicyURL  Nullable[string] `json:"privacyPolicyUrl,omitzero"`
+	PrivacyChoicesURL Nullable[string] `json:"privacyChoicesUrl,omitzero"`
+	PrivacyPolicyText Nullable[string] `json:"privacyPolicyText,omitzero"`
 }
 
 // AppInfoLocalizationsResponse is generated from components.schemas.AppInfoLocalizationsResponse.
@@ -2001,10 +2001,10 @@ type AppPreviewCreateRequestData struct {
 
 // AppPreviewCreateRequestDataAttributes is generated from AppPreviewCreateRequestData.attributes.
 type AppPreviewCreateRequestDataAttributes struct {
-	FileSize             int     `json:"fileSize"`
-	FileName             string  `json:"fileName"`
-	PreviewFrameTimeCode *string `json:"previewFrameTimeCode,omitempty"`
-	MimeType             *string `json:"mimeType,omitempty"`
+	FileSize             int              `json:"fileSize"`
+	FileName             string           `json:"fileName"`
+	PreviewFrameTimeCode Nullable[string] `json:"previewFrameTimeCode,omitzero"`
+	MimeType             Nullable[string] `json:"mimeType,omitzero"`
 }
 
 // AppPreviewCreateRequestDataRelationships is generated from AppPreviewCreateRequestData.relationships.
@@ -2136,9 +2136,9 @@ type AppPreviewUpdateRequestData struct {
 
 // AppPreviewUpdateRequestDataAttributes is generated from AppPreviewUpdateRequestData.attributes.
 type AppPreviewUpdateRequestDataAttributes struct {
-	SourceFileChecksum   *string `json:"sourceFileChecksum,omitempty"`
-	PreviewFrameTimeCode *string `json:"previewFrameTimeCode,omitempty"`
-	Uploaded             *bool   `json:"uploaded,omitempty"`
+	SourceFileChecksum   Nullable[string] `json:"sourceFileChecksum,omitzero"`
+	PreviewFrameTimeCode Nullable[string] `json:"previewFrameTimeCode,omitzero"`
+	Uploaded             Nullable[bool]   `json:"uploaded,omitzero"`
 }
 
 // AppPreviewsResponse is generated from components.schemas.AppPreviewsResponse.
@@ -2339,8 +2339,8 @@ type AppScreenshotUpdateRequestData struct {
 
 // AppScreenshotUpdateRequestDataAttributes is generated from AppScreenshotUpdateRequestData.attributes.
 type AppScreenshotUpdateRequestDataAttributes struct {
-	SourceFileChecksum *string `json:"sourceFileChecksum,omitempty"`
-	Uploaded           *bool   `json:"uploaded,omitempty"`
+	SourceFileChecksum Nullable[string] `json:"sourceFileChecksum,omitzero"`
+	Uploaded           Nullable[bool]   `json:"uploaded,omitzero"`
 }
 
 // AppScreenshotsResponse is generated from components.schemas.AppScreenshotsResponse.
@@ -2459,8 +2459,8 @@ type AppStoreReviewAttachmentUpdateRequestData struct {
 
 // AppStoreReviewAttachmentUpdateRequestDataAttributes is generated from AppStoreReviewAttachmentUpdateRequestData.attributes.
 type AppStoreReviewAttachmentUpdateRequestDataAttributes struct {
-	SourceFileChecksum *string `json:"sourceFileChecksum,omitempty"`
-	Uploaded           *bool   `json:"uploaded,omitempty"`
+	SourceFileChecksum Nullable[string] `json:"sourceFileChecksum,omitzero"`
+	Uploaded           Nullable[bool]   `json:"uploaded,omitzero"`
 }
 
 // AppStoreReviewAttachmentsResponse is generated from components.schemas.AppStoreReviewAttachmentsResponse.
@@ -2524,14 +2524,14 @@ type AppStoreReviewDetailCreateRequestData struct {
 
 // AppStoreReviewDetailCreateRequestDataAttributes is generated from AppStoreReviewDetailCreateRequestData.attributes.
 type AppStoreReviewDetailCreateRequestDataAttributes struct {
-	ContactFirstName    *string `json:"contactFirstName,omitempty"`
-	ContactLastName     *string `json:"contactLastName,omitempty"`
-	ContactPhone        *string `json:"contactPhone,omitempty"`
-	ContactEmail        *string `json:"contactEmail,omitempty"`
-	DemoAccountName     *string `json:"demoAccountName,omitempty"`
-	DemoAccountPassword *string `json:"demoAccountPassword,omitempty"`
-	DemoAccountRequired *bool   `json:"demoAccountRequired,omitempty"`
-	Notes               *string `json:"notes,omitempty"`
+	ContactFirstName    Nullable[string] `json:"contactFirstName,omitzero"`
+	ContactLastName     Nullable[string] `json:"contactLastName,omitzero"`
+	ContactPhone        Nullable[string] `json:"contactPhone,omitzero"`
+	ContactEmail        Nullable[string] `json:"contactEmail,omitzero"`
+	DemoAccountName     Nullable[string] `json:"demoAccountName,omitzero"`
+	DemoAccountPassword Nullable[string] `json:"demoAccountPassword,omitzero"`
+	DemoAccountRequired Nullable[bool]   `json:"demoAccountRequired,omitzero"`
+	Notes               Nullable[string] `json:"notes,omitzero"`
 }
 
 // AppStoreReviewDetailCreateRequestDataRelationships is generated from AppStoreReviewDetailCreateRequestData.relationships.
@@ -2565,14 +2565,14 @@ type AppStoreReviewDetailUpdateRequestData struct {
 
 // AppStoreReviewDetailUpdateRequestDataAttributes is generated from AppStoreReviewDetailUpdateRequestData.attributes.
 type AppStoreReviewDetailUpdateRequestDataAttributes struct {
-	ContactFirstName    *string `json:"contactFirstName,omitempty"`
-	ContactLastName     *string `json:"contactLastName,omitempty"`
-	ContactPhone        *string `json:"contactPhone,omitempty"`
-	ContactEmail        *string `json:"contactEmail,omitempty"`
-	DemoAccountName     *string `json:"demoAccountName,omitempty"`
-	DemoAccountPassword *string `json:"demoAccountPassword,omitempty"`
-	DemoAccountRequired *bool   `json:"demoAccountRequired,omitempty"`
-	Notes               *string `json:"notes,omitempty"`
+	ContactFirstName    Nullable[string] `json:"contactFirstName,omitzero"`
+	ContactLastName     Nullable[string] `json:"contactLastName,omitzero"`
+	ContactPhone        Nullable[string] `json:"contactPhone,omitzero"`
+	ContactEmail        Nullable[string] `json:"contactEmail,omitzero"`
+	DemoAccountName     Nullable[string] `json:"demoAccountName,omitzero"`
+	DemoAccountPassword Nullable[string] `json:"demoAccountPassword,omitzero"`
+	DemoAccountRequired Nullable[bool]   `json:"demoAccountRequired,omitzero"`
+	Notes               Nullable[string] `json:"notes,omitzero"`
 }
 
 // AppStoreVersion is generated from components.schemas.AppStoreVersion.
@@ -2731,13 +2731,13 @@ type AppStoreVersionCreateRequestData struct {
 
 // AppStoreVersionCreateRequestDataAttributes is generated from AppStoreVersionCreateRequestData.attributes.
 type AppStoreVersionCreateRequestDataAttributes struct {
-	Platform            Platform                                               `json:"platform"`
-	VersionString       string                                                 `json:"versionString"`
-	Copyright           *string                                                `json:"copyright,omitempty"`
-	ReviewType          *AppStoreVersionCreateRequestDataAttributesReviewType  `json:"reviewType,omitempty"`
-	ReleaseType         *AppStoreVersionCreateRequestDataAttributesReleaseType `json:"releaseType,omitempty"`
-	EarliestReleaseDate *time.Time                                             `json:"earliestReleaseDate,omitempty"`
-	UsesIdfa            *bool                                                  `json:"usesIdfa,omitempty"`
+	Platform            Platform                                                        `json:"platform"`
+	VersionString       string                                                          `json:"versionString"`
+	Copyright           Nullable[string]                                                `json:"copyright,omitzero"`
+	ReviewType          Nullable[AppStoreVersionCreateRequestDataAttributesReviewType]  `json:"reviewType,omitzero"`
+	ReleaseType         Nullable[AppStoreVersionCreateRequestDataAttributesReleaseType] `json:"releaseType,omitzero"`
+	EarliestReleaseDate Nullable[time.Time]                                             `json:"earliestReleaseDate,omitzero"`
+	UsesIdfa            Nullable[bool]                                                  `json:"usesIdfa,omitzero"`
 }
 
 // AppStoreVersionCreateRequestDataAttributesReviewType is generated from AppStoreVersionCreateRequestDataAttributes.reviewType.
@@ -3021,13 +3021,13 @@ type AppStoreVersionLocalizationCreateRequestData struct {
 
 // AppStoreVersionLocalizationCreateRequestDataAttributes is generated from AppStoreVersionLocalizationCreateRequestData.attributes.
 type AppStoreVersionLocalizationCreateRequestDataAttributes struct {
-	Description     *string `json:"description,omitempty"`
-	Locale          string  `json:"locale"`
-	Keywords        *string `json:"keywords,omitempty"`
-	MarketingURL    *string `json:"marketingUrl,omitempty"`
-	PromotionalText *string `json:"promotionalText,omitempty"`
-	SupportURL      *string `json:"supportUrl,omitempty"`
-	WhatsNew        *string `json:"whatsNew,omitempty"`
+	Description     Nullable[string] `json:"description,omitzero"`
+	Locale          string           `json:"locale"`
+	Keywords        Nullable[string] `json:"keywords,omitzero"`
+	MarketingURL    Nullable[string] `json:"marketingUrl,omitzero"`
+	PromotionalText Nullable[string] `json:"promotionalText,omitzero"`
+	SupportURL      Nullable[string] `json:"supportUrl,omitzero"`
+	WhatsNew        Nullable[string] `json:"whatsNew,omitzero"`
 }
 
 // AppStoreVersionLocalizationCreateRequestDataRelationships is generated from AppStoreVersionLocalizationCreateRequestData.relationships.
@@ -3067,12 +3067,12 @@ type AppStoreVersionLocalizationUpdateRequestData struct {
 
 // AppStoreVersionLocalizationUpdateRequestDataAttributes is generated from AppStoreVersionLocalizationUpdateRequestData.attributes.
 type AppStoreVersionLocalizationUpdateRequestDataAttributes struct {
-	Description     *string `json:"description,omitempty"`
-	Keywords        *string `json:"keywords,omitempty"`
-	MarketingURL    *string `json:"marketingUrl,omitempty"`
-	PromotionalText *string `json:"promotionalText,omitempty"`
-	SupportURL      *string `json:"supportUrl,omitempty"`
-	WhatsNew        *string `json:"whatsNew,omitempty"`
+	Description     Nullable[string] `json:"description,omitzero"`
+	Keywords        Nullable[string] `json:"keywords,omitzero"`
+	MarketingURL    Nullable[string] `json:"marketingUrl,omitzero"`
+	PromotionalText Nullable[string] `json:"promotionalText,omitzero"`
+	SupportURL      Nullable[string] `json:"supportUrl,omitzero"`
+	WhatsNew        Nullable[string] `json:"whatsNew,omitzero"`
 }
 
 // AppStoreVersionLocalizationsResponse is generated from components.schemas.AppStoreVersionLocalizationsResponse.
@@ -3113,7 +3113,7 @@ type AppStoreVersionPhasedReleaseCreateRequestData struct {
 
 // AppStoreVersionPhasedReleaseCreateRequestDataAttributes is generated from AppStoreVersionPhasedReleaseCreateRequestData.attributes.
 type AppStoreVersionPhasedReleaseCreateRequestDataAttributes struct {
-	PhasedReleaseState *PhasedReleaseState `json:"phasedReleaseState,omitempty"`
+	PhasedReleaseState Nullable[PhasedReleaseState] `json:"phasedReleaseState,omitzero"`
 }
 
 // AppStoreVersionPhasedReleaseCreateRequestDataRelationships is generated from AppStoreVersionPhasedReleaseCreateRequestData.relationships.
@@ -3146,7 +3146,7 @@ type AppStoreVersionPhasedReleaseUpdateRequestData struct {
 
 // AppStoreVersionPhasedReleaseUpdateRequestDataAttributes is generated from AppStoreVersionPhasedReleaseUpdateRequestData.attributes.
 type AppStoreVersionPhasedReleaseUpdateRequestDataAttributes struct {
-	PhasedReleaseState *PhasedReleaseState `json:"phasedReleaseState,omitempty"`
+	PhasedReleaseState Nullable[PhasedReleaseState] `json:"phasedReleaseState,omitzero"`
 }
 
 // AppStoreVersionPhasedReleaseWithoutIncludesResponse is generated from components.schemas.AppStoreVersionPhasedReleaseWithoutIncludesResponse.
@@ -3255,13 +3255,13 @@ type AppStoreVersionUpdateRequestData struct {
 
 // AppStoreVersionUpdateRequestDataAttributes is generated from AppStoreVersionUpdateRequestData.attributes.
 type AppStoreVersionUpdateRequestDataAttributes struct {
-	VersionString       *string                                                `json:"versionString,omitempty"`
-	Copyright           *string                                                `json:"copyright,omitempty"`
-	ReviewType          *AppStoreVersionUpdateRequestDataAttributesReviewType  `json:"reviewType,omitempty"`
-	ReleaseType         *AppStoreVersionUpdateRequestDataAttributesReleaseType `json:"releaseType,omitempty"`
-	EarliestReleaseDate *time.Time                                             `json:"earliestReleaseDate,omitempty"`
-	UsesIdfa            *bool                                                  `json:"usesIdfa,omitempty"`
-	Downloadable        *bool                                                  `json:"downloadable,omitempty"`
+	VersionString       Nullable[string]                                                `json:"versionString,omitzero"`
+	Copyright           Nullable[string]                                                `json:"copyright,omitzero"`
+	ReviewType          Nullable[AppStoreVersionUpdateRequestDataAttributesReviewType]  `json:"reviewType,omitzero"`
+	ReleaseType         Nullable[AppStoreVersionUpdateRequestDataAttributesReleaseType] `json:"releaseType,omitzero"`
+	EarliestReleaseDate Nullable[time.Time]                                             `json:"earliestReleaseDate,omitzero"`
+	UsesIdfa            Nullable[bool]                                                  `json:"usesIdfa,omitzero"`
+	Downloadable        Nullable[bool]                                                  `json:"downloadable,omitzero"`
 }
 
 // AppStoreVersionUpdateRequestDataAttributesReviewType is generated from AppStoreVersionUpdateRequestDataAttributes.reviewType.
@@ -3572,8 +3572,8 @@ type BetaBuildLocalizationCreateRequestData struct {
 
 // BetaBuildLocalizationCreateRequestDataAttributes is generated from BetaBuildLocalizationCreateRequestData.attributes.
 type BetaBuildLocalizationCreateRequestDataAttributes struct {
-	WhatsNew *string `json:"whatsNew,omitempty"`
-	Locale   string  `json:"locale"`
+	WhatsNew Nullable[string] `json:"whatsNew,omitzero"`
+	Locale   string           `json:"locale"`
 }
 
 // BetaBuildLocalizationCreateRequestDataRelationships is generated from BetaBuildLocalizationCreateRequestData.relationships.
@@ -3607,7 +3607,7 @@ type BetaBuildLocalizationUpdateRequestData struct {
 
 // BetaBuildLocalizationUpdateRequestDataAttributes is generated from BetaBuildLocalizationUpdateRequestData.attributes.
 type BetaBuildLocalizationUpdateRequestDataAttributes struct {
-	WhatsNew *string `json:"whatsNew,omitempty"`
+	WhatsNew Nullable[string] `json:"whatsNew,omitzero"`
 }
 
 // BetaBuildLocalizationsWithoutIncludesResponse is generated from components.schemas.BetaBuildLocalizationsWithoutIncludesResponse.
@@ -3706,13 +3706,13 @@ type BetaGroupCreateRequestData struct {
 
 // BetaGroupCreateRequestDataAttributes is generated from BetaGroupCreateRequestData.attributes.
 type BetaGroupCreateRequestDataAttributes struct {
-	Name                   string `json:"name"`
-	IsInternalGroup        *bool  `json:"isInternalGroup,omitempty"`
-	HasAccessToAllBuilds   *bool  `json:"hasAccessToAllBuilds,omitempty"`
-	PublicLinkEnabled      *bool  `json:"publicLinkEnabled,omitempty"`
-	PublicLinkLimitEnabled *bool  `json:"publicLinkLimitEnabled,omitempty"`
-	PublicLinkLimit        *int   `json:"publicLinkLimit,omitempty"`
-	FeedbackEnabled        *bool  `json:"feedbackEnabled,omitempty"`
+	Name                   string         `json:"name"`
+	IsInternalGroup        Nullable[bool] `json:"isInternalGroup,omitzero"`
+	HasAccessToAllBuilds   Nullable[bool] `json:"hasAccessToAllBuilds,omitzero"`
+	PublicLinkEnabled      Nullable[bool] `json:"publicLinkEnabled,omitzero"`
+	PublicLinkLimitEnabled Nullable[bool] `json:"publicLinkLimitEnabled,omitzero"`
+	PublicLinkLimit        Nullable[int]  `json:"publicLinkLimit,omitzero"`
+	FeedbackEnabled        Nullable[bool] `json:"feedbackEnabled,omitzero"`
 }
 
 // BetaGroupCreateRequestDataRelationships is generated from BetaGroupCreateRequestData.relationships.
@@ -3896,9 +3896,9 @@ type BetaTesterCreateRequestData struct {
 
 // BetaTesterCreateRequestDataAttributes is generated from BetaTesterCreateRequestData.attributes.
 type BetaTesterCreateRequestDataAttributes struct {
-	FirstName *string `json:"firstName,omitempty"`
-	LastName  *string `json:"lastName,omitempty"`
-	Email     string  `json:"email"`
+	FirstName Nullable[string] `json:"firstName,omitzero"`
+	LastName  Nullable[string] `json:"lastName,omitzero"`
+	Email     string           `json:"email"`
 }
 
 // BetaTesterCreateRequestDataRelationships is generated from BetaTesterCreateRequestData.relationships.
@@ -4242,8 +4242,8 @@ type BuildUpdateRequestData struct {
 
 // BuildUpdateRequestDataAttributes is generated from BuildUpdateRequestData.attributes.
 type BuildUpdateRequestDataAttributes struct {
-	Expired                 *bool `json:"expired,omitempty"`
-	UsesNonExemptEncryption *bool `json:"usesNonExemptEncryption,omitempty"`
+	Expired                 Nullable[bool] `json:"expired,omitzero"`
+	UsesNonExemptEncryption Nullable[bool] `json:"usesNonExemptEncryption,omitzero"`
 }
 
 // BuildUpdateRequestDataRelationships is generated from BuildUpdateRequestData.relationships.
@@ -4456,8 +4456,8 @@ type BuildUploadFileUpdateRequestData struct {
 
 // BuildUploadFileUpdateRequestDataAttributes is generated from BuildUploadFileUpdateRequestData.attributes.
 type BuildUploadFileUpdateRequestDataAttributes struct {
-	SourceFileChecksums *Checksums `json:"sourceFileChecksums,omitempty"`
-	Uploaded            *bool      `json:"uploaded,omitempty"`
+	SourceFileChecksums Nullable[Checksums] `json:"sourceFileChecksums,omitzero"`
+	Uploaded            Nullable[bool]      `json:"uploaded,omitzero"`
 }
 
 // BuildUploadResponse is generated from components.schemas.BuildUploadResponse.
@@ -5577,7 +5577,7 @@ type ReviewSubmissionCreateRequestData struct {
 
 // ReviewSubmissionCreateRequestDataAttributes is generated from ReviewSubmissionCreateRequestData.attributes.
 type ReviewSubmissionCreateRequestDataAttributes struct {
-	Platform *Platform `json:"platform,omitempty"`
+	Platform Nullable[Platform] `json:"platform,omitzero"`
 }
 
 // ReviewSubmissionCreateRequestDataRelationships is generated from ReviewSubmissionCreateRequestData.relationships.
@@ -5860,9 +5860,9 @@ type ReviewSubmissionUpdateRequestData struct {
 
 // ReviewSubmissionUpdateRequestDataAttributes is generated from ReviewSubmissionUpdateRequestData.attributes.
 type ReviewSubmissionUpdateRequestDataAttributes struct {
-	Platform  *Platform `json:"platform,omitempty"`
-	Submitted *bool     `json:"submitted,omitempty"`
-	Canceled  *bool     `json:"canceled,omitempty"`
+	Platform  Nullable[Platform] `json:"platform,omitzero"`
+	Submitted Nullable[bool]     `json:"submitted,omitzero"`
+	Canceled  Nullable[bool]     `json:"canceled,omitzero"`
 }
 
 // ReviewSubmissionsResponse is generated from components.schemas.ReviewSubmissionsResponse.
