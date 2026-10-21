@@ -156,7 +156,7 @@ func reviewTexts(d asc.AppStoreReviewDetail) metadata.Texts {
 // ApplyReviewChanges sends the changes: a POST (relationship appStoreVersion)
 // when v has no review detail, else a PATCH, both with only the changed
 // attributes. A demoAccountRequired change to "" means "no change" and is
-// skipped. It returns the changes applied.
+// skipped. It returns the changes applied, secrets masked.
 func (s *Service) ApplyReviewChanges(ctx context.Context, v Version, changes []metadata.Change) ([]metadata.Change, error) {
 	applied := []metadata.Change{}
 	var attrs asc.AppStoreReviewDetailUpdateRequestDataAttributes
@@ -180,6 +180,7 @@ func (s *Service) ApplyReviewChanges(ctx context.Context, v Version, changes []m
 	if len(applied) == 0 {
 		return applied, nil
 	}
+	masked := metadata.MaskSecrets(metadata.AppleReviewFields, applied)
 	if !exists {
 		_, err = s.createReviewDetail(ctx, v, &attrs)
 	} else {
@@ -190,7 +191,7 @@ func (s *Service) ApplyReviewChanges(ctx context.Context, v Version, changes []m
 	if err != nil {
 		return []metadata.Change{}, fmt.Errorf("set review information: %w", err)
 	}
-	return applied, nil
+	return masked, nil
 }
 
 // createReviewDetail creates the review detail of v with attrs (nil: empty).
@@ -355,30 +356,20 @@ func (s *Service) SetReviewInfo(ctx context.Context, v Version, texts metadata.T
 		for _, p := range attachments {
 			info.Attachments = append(info.Attachments, filepath.Base(p))
 		}
-	} else if d, ok, err := s.reviewDetail(ctx, v); err == nil && ok {
-		atts, err := s.reviewAttachments(ctx, d.ID)
+	} else {
+		d, ok, err := s.reviewDetail(ctx, v)
 		if err != nil {
 			return ReviewInfo{}, nil, err
 		}
-		info.Attachments = attachmentNames(atts)
-	}
-	return info, maskChanges(changes), nil
-}
-
-// maskChanges hides passwords in changes meant for output.
-func maskChanges(in []metadata.Change) []metadata.Change {
-	out := slices.Clone(in)
-	for i := range out {
-		if out[i].Field == apiDemoPassword {
-			if out[i].Old != "" {
-				out[i].Old = maskedPassword
+		if ok {
+			atts, err := s.reviewAttachments(ctx, d.ID)
+			if err != nil {
+				return ReviewInfo{}, nil, err
 			}
-			if out[i].New != "" {
-				out[i].New = maskedPassword
-			}
+			info.Attachments = attachmentNames(atts)
 		}
 	}
-	return out
+	return info, metadata.MaskSecrets(metadata.AppleReviewFields, changes), nil
 }
 
 // attachmentKind is the assetKind of App Review attachments.

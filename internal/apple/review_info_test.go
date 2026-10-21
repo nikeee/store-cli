@@ -234,3 +234,37 @@ func TestReviewInfoMissingAttachmentSendsNothing(t *testing.T) {
 		t.Fatalf("err=%v requests=%v", err, srv.Requests())
 	}
 }
+
+func TestReviewInfoApplyReturnsMaskedChanges(t *testing.T) {
+	srv := reviewServer(t, reviewDetailJSON)
+	changes := []metadata.Change{{Action: metadata.ActionUpdate, Scope: "review", Field: "demoAccountPassword", Old: "s3cret", New: "newpass"}}
+	applied, err := newService(t, srv).ApplyReviewChanges(t.Context(), reviewVersion, changes)
+	if err != nil || len(applied) != 1 || applied[0].New != "***" || applied[0].Old != "***" {
+		t.Fatalf("applied=%+v err=%v", applied, err)
+	}
+	if patches := requestsOf(srv, "PATCH"); len(patches) != 1 || !strings.Contains(string(patches[0].Body), `"demoAccountPassword":"newpass"`) {
+		t.Errorf("patches = %v", patches)
+	}
+}
+
+func TestReviewInfoSetReturnsDetailReadError(t *testing.T) {
+	srv := reviewServer(t, reviewDetailJSON)
+	calls := 0
+	// The first two reads (diff, apply) succeed; the read after the PATCH fails.
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreReviewDetail", func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		if calls > 2 {
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"errors": []any{map[string]any{"status": "500", "code": "UNEXPECTED_ERROR", "title": "boom"}}})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(reviewDetailJSON))
+	})
+	_, _, err := newService(t, srv).SetReviewInfo(t.Context(), reviewVersion, metadata.Texts{"notes": "changed"}, nil, false)
+	if err == nil {
+		t.Fatal("error swallowed")
+	}
+	if len(requestsOf(srv, "PATCH")) != 1 {
+		t.Errorf("requests = %v", srv.Requests())
+	}
+}

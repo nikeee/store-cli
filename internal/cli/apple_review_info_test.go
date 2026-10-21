@@ -129,7 +129,7 @@ func TestAppleReviewInfoSetDryRun(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
-	if strings.Contains(stdout, "newpass") || strings.Contains(stdout, "s3cret") || !strings.Contains(stdout, `"Grace"`) {
+	if strings.Contains(stdout, "newpass") || strings.Contains(stdout, "s3cret") || strings.Contains(stderr, "newpass") || strings.Contains(stderr, "s3cret") || !strings.Contains(stdout, `"Grace"`) {
 		t.Errorf("stdout = %s", stdout)
 	}
 	for _, r := range srv.Requests() {
