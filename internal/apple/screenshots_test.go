@@ -335,8 +335,9 @@ func TestUploadScreenshotSlowProcessing(t *testing.T) {
 func TestUploadScreenshotTimeout(t *testing.T) {
 	srv := newShotServer(t, "appScreenshotSets_two.json", nil, func(int) (string, []map[string]string) { return "UPLOAD_COMPLETE", nil })
 	svc, _ := uploadService(t, srv.Server) // each poll advances the clock by 1m
-	_, _, err := svc.syncScreenshots(t.Context(), screenshotSync{
-		localizationID: "vl-en", locale: "en-US", device: iphone69, paths: shotFiles(t, 1), replace: true, timeout: 3 * time.Minute,
+	_, _, err := svc.syncMedia(t.Context(), screenshotMedia, mediaSync{
+		localizationID: "vl-en",
+		mediaUpload:    mediaUpload{locale: "en-US", device: iphone69, paths: shotFiles(t, 1), replace: true, timeout: 3 * time.Minute, asset: screenshotKind},
 	})
 	if err == nil || clierr.ExitCode(err) != 1 {
 		t.Fatalf("err = %v", err)

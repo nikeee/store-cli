@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
@@ -48,33 +46,11 @@ type ScreenshotSets []ScreenshotSet
 
 // RenderText implements output.TextRenderer.
 func (l ScreenshotSets) RenderText(w io.Writer, s output.Styles) error {
-	if len(l) == 0 {
-		_, err := io.WriteString(w, s.Dim.Render("(none)")+"\n")
-		return err
-	}
+	data := make([]mediaSetData, len(l))
 	for i, set := range l {
-		if i > 0 {
-			if _, err := io.WriteString(w, "\n"); err != nil {
-				return err
-			}
-		}
-		head := fmt.Sprintf("%s %s (%s): %s", set.Locale, set.Device, set.DisplayType, countScreenshots(len(set.Screenshots)))
-		if _, err := io.WriteString(w, s.Key.Render(head)+"\n"); err != nil {
-			return err
-		}
-		if len(set.Screenshots) == 0 {
-			continue
-		}
-		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-		_, _ = fmt.Fprintln(tw, "  POS\tFILE\tSTATE\tCHECKSUM\tID")
-		for _, sh := range set.Screenshots {
-			_, _ = fmt.Fprintf(tw, "  %d\t%s\t%s\t%s\t%s\n", sh.Position, sh.FileName, sh.State, sh.Checksum, sh.ID)
-		}
-		if err := tw.Flush(); err != nil {
-			return err
-		}
+		data[i] = mediaSetData{locale: set.Locale, device: set.Device, setType: set.DisplayType, items: set.Screenshots}
 	}
-	return nil
+	return renderMediaSets(w, s, screenshotMedia, data)
 }
 
 // ScreenshotsDeleted is the result of deleting a screenshot set.
@@ -143,121 +119,15 @@ func CheckScreenshotFiles(d media.Device, paths []string) error {
 // device (in device table order). locale "" means all locales, device nil all
 // devices. A locale the version does not have is an error.
 func (s *Service) ListScreenshots(ctx context.Context, v Version, locale string, device *media.Device) (ScreenshotSets, error) {
-	ids, err := s.VersionLocalizationIDs(ctx, v)
+	data, err := s.listMedia(ctx, screenshotMedia, v, locale, device)
 	if err != nil {
 		return nil, err
-	}
-	var locales []string
-	if locale != "" {
-		if _, ok := ids[locale]; !ok {
-			return nil, noLocalization(v, locale)
-		}
-		locales = []string{locale}
-	} else {
-		for l := range ids {
-			locales = append(locales, l)
-		}
-		slices.Sort(locales)
-	}
-	displayType := ""
-	if device != nil {
-		displayType = device.DisplayType
 	}
 	out := ScreenshotSets{}
-	for _, l := range locales {
-		sets, err := s.screenshotSets(ctx, ids[l], displayType)
-		if err != nil {
-			return nil, fmt.Errorf("list screenshot sets of %s: %w", l, err)
-		}
-		slices.SortStableFunc(sets, func(a, b remoteSet) int { return deviceRank(a.displayType) - deviceRank(b.displayType) })
-		for _, rs := range sets {
-			shots, err := s.setScreenshots(ctx, rs.id)
-			if err != nil {
-				return nil, fmt.Errorf("list screenshots of %s %s: %w", l, rs.displayType, err)
-			}
-			out = append(out, ScreenshotSet{Locale: l, Device: deviceName(rs.displayType), DisplayType: rs.displayType, Screenshots: shots})
-		}
+	for _, d := range data {
+		out = append(out, ScreenshotSet{Locale: d.locale, Device: d.device, DisplayType: d.setType, Screenshots: d.items})
 	}
 	return out, nil
-}
-
-func noLocalization(v Version, locale string) *clierr.Error {
-	e := clierr.New("version %s has no localization for %s", v.Version, locale)
-	e.Hint = "store apple listing locale add " + locale
-	return e
-}
-
-// deviceRank is the position of the device with displayType in media.Devices;
-// unknown display types sort last.
-func deviceRank(displayType string) int {
-	if i := slices.IndexFunc(media.Devices, func(d media.Device) bool { return d.DisplayType == displayType }); i >= 0 {
-		return i
-	}
-	return len(media.Devices)
-}
-
-// deviceName is the alias of the device with displayType, else displayType.
-func deviceName(displayType string) string {
-	if i := deviceRank(displayType); i < len(media.Devices) {
-		return media.Devices[i].Alias
-	}
-	return displayType
-}
-
-// remoteSet is an appScreenshotSet of a localization.
-type remoteSet struct{ id, displayType string }
-
-// screenshotSets returns the sets of the localization, only those of
-// displayType if given.
-func (s *Service) screenshotSets(ctx context.Context, localizationID, displayType string) ([]remoteSet, error) {
-	params := asc.AppStoreVersionLocalizationsAppScreenshotSetsGetToManyRelatedParams{ID: localizationID, Limit: 50}
-	if displayType != "" {
-		params.FilterScreenshotDisplayType = []string{displayType}
-	}
-	first, err := s.client.AppStoreVersionLocalizationsAppScreenshotSetsGetToManyRelated(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-	var out []remoteSet
-	err = ascclient.Paginate(ctx, s.client, first, func(p *asc.AppScreenshotSetsResponse) *string {
-		for _, d := range p.Data {
-			rs := remoteSet{id: d.ID}
-			if d.Attributes != nil {
-				rs.displayType = string(deref(d.Attributes.ScreenshotDisplayType))
-			}
-			// The filter is applied by Apple; checking again keeps a set of
-			// another type from ever being replaced.
-			if displayType == "" || rs.displayType == displayType {
-				out = append(out, rs)
-			}
-		}
-		return p.Links.Next
-	})
-	return out, err
-}
-
-// setScreenshots returns the screenshots of a set in the order Apple shows them.
-func (s *Service) setScreenshots(ctx context.Context, setID string) ([]Screenshot, error) {
-	first, err := s.client.AppScreenshotSetsAppScreenshotsGetToManyRelated(ctx, asc.AppScreenshotSetsAppScreenshotsGetToManyRelatedParams{ID: setID, Limit: 50})
-	if err != nil {
-		return nil, err
-	}
-	out := []Screenshot{}
-	err = ascclient.Paginate(ctx, s.client, first, func(p *asc.AppScreenshotsResponse) *string {
-		for _, d := range p.Data {
-			shot := Screenshot{ID: d.ID, Position: len(out) + 1}
-			if a := d.Attributes; a != nil {
-				shot.FileName = deref(a.FileName)
-				shot.Checksum = deref(a.SourceFileChecksum)
-				if a.AssetDeliveryState != nil {
-					shot.State = string(deref(a.AssetDeliveryState.State))
-				}
-			}
-			out = append(out, shot)
-		}
-		return p.Links.Next
-	})
-	return out, err
 }
 
 // ScreenshotUpload is the input of UploadScreenshots.
@@ -275,29 +145,16 @@ type ScreenshotUpload struct {
 // and returns the planned or applied change and the resulting set (not read
 // with DryRun). The files are validated before the first API call.
 func (s *Service) UploadScreenshots(ctx context.Context, v Version, o ScreenshotUpload) (ScreenshotSet, metadata.Change, error) {
-	if err := CheckScreenshotFiles(o.Device, o.Paths); err != nil {
-		return ScreenshotSet{}, metadata.Change{}, err
-	}
-	ids, err := s.VersionLocalizationIDs(ctx, v)
-	if err != nil {
-		return ScreenshotSet{}, metadata.Change{}, err
-	}
-	locID, ok := ids[o.Locale]
-	if !ok {
-		return ScreenshotSet{}, metadata.Change{}, noLocalization(v, o.Locale)
-	}
-	change, setID, err := s.syncScreenshots(ctx, screenshotSync{
-		localizationID: locID, locale: o.Locale, device: o.Device, paths: o.Paths,
-		replace: o.Replace, dryRun: o.DryRun, timeout: o.Timeout,
-	})
 	set := ScreenshotSet{Locale: o.Locale, Device: o.Device.Alias, DisplayType: o.Device.DisplayType, Screenshots: []Screenshot{}}
-	if err != nil || o.DryRun || setID == "" {
-		return set, change, err
+	if err := CheckScreenshotFiles(o.Device, o.Paths); err != nil {
+		return set, metadata.Change{}, err
 	}
-	if set.Screenshots, err = s.setScreenshots(ctx, setID); err != nil {
-		return set, change, fmt.Errorf("list screenshots of %s %s: %w", o.Locale, o.Device.Alias, err)
-	}
-	return set, change, nil
+	items, change, err := s.uploadMedia(ctx, screenshotMedia, v, mediaUpload{
+		locale: o.Locale, device: o.Device, paths: o.Paths, replace: o.Replace,
+		timeout: o.Timeout, dryRun: o.DryRun, asset: screenshotKind,
+	})
+	set.Screenshots = items
+	return set, change, err
 }
 
 // SyncScreenshots makes the set of device d in the localization hold exactly
@@ -308,155 +165,102 @@ func (s *Service) SyncScreenshots(ctx context.Context, localizationID, locale st
 	if err := CheckScreenshotFiles(d, paths); err != nil {
 		return metadata.Change{}, err
 	}
-	change, _, err := s.syncScreenshots(ctx, screenshotSync{
-		localizationID: localizationID, locale: locale, device: d, paths: paths,
-		replace: true, dryRun: dryRun, timeout: defaultAssetTimeout,
-	})
-	return change, err
-}
-
-type screenshotSync struct {
-	localizationID, locale string
-	device                 media.Device
-	paths                  []string
-	replace, dryRun        bool
-	timeout                time.Duration
-}
-
-// syncScreenshots returns the change and the ID of the set ("" when a dry run
-// would create it). The files are already validated.
-func (s *Service) syncScreenshots(ctx context.Context, o screenshotSync) (metadata.Change, string, error) {
-	local, err := media.MD5List(o.paths)
-	if err != nil {
-		return metadata.Change{}, "", err
-	}
-	change := metadata.Change{Scope: screenshotsScope, Locale: o.locale, Field: o.device.Alias}
-	sets, err := s.screenshotSets(ctx, o.localizationID, o.device.DisplayType)
-	if err != nil {
-		return change, "", fmt.Errorf("list screenshot sets of %s: %w", o.locale, err)
-	}
-	var setID string
-	var remote []Screenshot
-	if len(sets) > 0 {
-		setID = sets[0].id
-		if remote, err = s.setScreenshots(ctx, setID); err != nil {
-			return change, setID, fmt.Errorf("list screenshots of %s %s: %w", o.locale, o.device.Alias, err)
-		}
-	}
-	change.Old = countScreenshots(len(remote))
-
-	// A screenshot Apple rejected or still processes after an earlier failed
-	// upload keeps its checksum, so only COMPLETE screenshots count as done.
-	remoteSums := make([]string, len(remote))
-	allComplete := true
-	for i, r := range remote {
-		remoteSums[i] = r.Checksum
-		allComplete = allComplete && r.State == string(asc.AppMediaAssetStateStateComplete)
-	}
-	switch {
-	case o.replace && allComplete && slices.Equal(remoteSums, local):
-		change.Action, change.New = metadata.ActionSkip, change.Old
-		return change, setID, nil
-	case o.replace:
-		change.New = countScreenshots(len(local))
-	default:
-		if total := len(remote) + len(local); total > maxScreenshots {
-			return change, setID, clierr.New("%s %s already holds %d screenshots, adding %d would exceed the maximum of %d (use --replace)",
-				o.locale, o.device.Alias, len(remote), len(local), maxScreenshots)
-		}
-		change.New = countScreenshots(len(remote) + len(local))
-	}
-	switch {
-	case len(remote) == 0:
-		change.Action = metadata.ActionCreate
-	case o.replace:
-		change.Action = metadata.ActionReplace
-	default:
-		change.Action = metadata.ActionUpdate
-	}
-	if o.dryRun {
-		return change, setID, nil
-	}
-
-	if setID == "" {
-		if setID, err = s.createScreenshotSet(ctx, o.localizationID, o.device); err != nil {
-			return change, "", fmt.Errorf("create %s screenshot set of %s: %w", o.device.Alias, o.locale, err)
-		}
-	}
-	if o.replace {
-		for _, r := range remote {
-			if err := s.client.AppScreenshotsDeleteInstance(ctx, asc.AppScreenshotsDeleteInstanceParams{ID: r.ID}); err != nil {
-				return change, setID, fmt.Errorf("delete screenshot %s: %w", r.FileName, err)
-			}
-		}
-	}
-	for i, p := range o.paths {
-		s.report.Progressf("%s %s: screenshot %d of %d", o.locale, o.device.Alias, i+1, len(o.paths))
-		if _, err := s.uploadAsset(ctx, screenshotKind, setID, p, o.timeout); err != nil {
-			return change, setID, err
-		}
-	}
-	return change, setID, nil
-}
-
-func countScreenshots(n int) string {
-	if n == 1 {
-		return "1 screenshot"
-	}
-	return fmt.Sprintf("%d screenshots", n)
-}
-
-func (s *Service) createScreenshotSet(ctx context.Context, localizationID string, d media.Device) (string, error) {
-	resp, err := s.client.AppScreenshotSetsCreateInstance(ctx, asc.AppScreenshotSetCreateRequest{
-		Data: asc.AppScreenshotSetCreateRequestData{
-			Type:       asc.ResourceTypeAppScreenshotSets,
-			Attributes: asc.AppScreenshotSetCreateRequestDataAttributes{ScreenshotDisplayType: asc.ScreenshotDisplayType(d.DisplayType)},
-			Relationships: &asc.AppScreenshotSetCreateRequestDataRelationships{
-				AppStoreVersionLocalization: &asc.AppScreenshotSetCreateRequestDataRelationshipsAppStoreVersionLocalization{
-					Data: &asc.ResourceIdentifier{Type: asc.ResourceTypeAppStoreVersionLocalizations, ID: localizationID},
-				},
-			},
+	change, _, err := s.syncMedia(ctx, screenshotMedia, mediaSync{
+		localizationID: localizationID,
+		mediaUpload: mediaUpload{
+			locale: locale, device: d, paths: paths, replace: true,
+			dryRun: dryRun, timeout: defaultAssetTimeout, asset: screenshotKind,
 		},
 	})
-	if err != nil {
-		return "", err
-	}
-	return resp.Data.ID, nil
+	return change, err
 }
 
 // DeleteScreenshots deletes the whole set of device d in locale of v. A
 // missing locale or set is an error. With dryRun it only reads and returns the
 // planned change.
 func (s *Service) DeleteScreenshots(ctx context.Context, v Version, locale string, d media.Device, dryRun bool) (ScreenshotsDeleted, metadata.Change, error) {
-	res := ScreenshotsDeleted{Locale: locale, Device: d.Alias}
-	ids, err := s.VersionLocalizationIDs(ctx, v)
-	if err != nil {
-		return res, metadata.Change{}, err
-	}
-	locID, ok := ids[locale]
-	if !ok {
-		return res, metadata.Change{}, noLocalization(v, locale)
-	}
-	sets, err := s.screenshotSets(ctx, locID, d.DisplayType)
-	if err != nil {
-		return res, metadata.Change{}, fmt.Errorf("list screenshot sets of %s: %w", locale, err)
-	}
-	if len(sets) == 0 {
-		return res, metadata.Change{}, clierr.New("%s has no %s screenshot set", locale, d.Alias)
-	}
-	shots, err := s.setScreenshots(ctx, sets[0].id)
-	if err != nil {
-		return res, metadata.Change{}, fmt.Errorf("list screenshots of %s %s: %w", locale, d.Alias, err)
-	}
-	change := metadata.Change{Action: ActionDelete, Scope: screenshotsScope, Locale: locale, Field: d.Alias, Old: countScreenshots(len(shots))}
-	if dryRun {
-		return res, change, nil
-	}
-	if err := s.client.AppScreenshotSetsDeleteInstance(ctx, asc.AppScreenshotSetsDeleteInstanceParams{ID: sets[0].id}); err != nil {
-		return res, change, fmt.Errorf("delete %s screenshot set of %s: %w", d.Alias, locale, err)
-	}
-	res.Deleted = true
-	return res, change, nil
+	change, deleted, err := s.deleteMedia(ctx, screenshotMedia, v, locale, d, dryRun)
+	return ScreenshotsDeleted{Locale: locale, Device: d.Alias, Deleted: deleted}, change, err
+}
+
+// screenshotMedia is the mediaKind of screenshot sets.
+var screenshotMedia = mediaKind{
+	name:   "screenshot",
+	plural: "screenshots",
+	scope:  screenshotsScope,
+	max:    maxScreenshots,
+	typeOf: func(d media.Device) string { return d.DisplayType },
+	listSets: func(ctx context.Context, c *ascclient.Client, localizationID, displayType string) ([]remoteSet, error) {
+		params := asc.AppStoreVersionLocalizationsAppScreenshotSetsGetToManyRelatedParams{ID: localizationID, Limit: 50}
+		if displayType != "" {
+			params.FilterScreenshotDisplayType = []string{displayType}
+		}
+		first, err := c.AppStoreVersionLocalizationsAppScreenshotSetsGetToManyRelated(ctx, params)
+		if err != nil {
+			return nil, err
+		}
+		var out []remoteSet
+		err = ascclient.Paginate(ctx, c, first, func(p *asc.AppScreenshotSetsResponse) *string {
+			for _, d := range p.Data {
+				rs := remoteSet{id: d.ID}
+				if d.Attributes != nil {
+					rs.setType = string(deref(d.Attributes.ScreenshotDisplayType))
+				}
+				// The filter is applied by Apple; checking again keeps a set of
+				// another type from ever being replaced.
+				if displayType == "" || rs.setType == displayType {
+					out = append(out, rs)
+				}
+			}
+			return p.Links.Next
+		})
+		return out, err
+	},
+	listItems: func(ctx context.Context, c *ascclient.Client, setID string) ([]Screenshot, error) {
+		first, err := c.AppScreenshotSetsAppScreenshotsGetToManyRelated(ctx, asc.AppScreenshotSetsAppScreenshotsGetToManyRelatedParams{ID: setID, Limit: 50})
+		if err != nil {
+			return nil, err
+		}
+		out := []Screenshot{}
+		err = ascclient.Paginate(ctx, c, first, func(p *asc.AppScreenshotsResponse) *string {
+			for _, d := range p.Data {
+				shot := Screenshot{ID: d.ID, Position: len(out) + 1}
+				if a := d.Attributes; a != nil {
+					shot.FileName = deref(a.FileName)
+					shot.Checksum = deref(a.SourceFileChecksum)
+					if a.AssetDeliveryState != nil {
+						shot.State = string(deref(a.AssetDeliveryState.State))
+					}
+				}
+				out = append(out, shot)
+			}
+			return p.Links.Next
+		})
+		return out, err
+	},
+	createSet: func(ctx context.Context, c *ascclient.Client, localizationID string, d media.Device) (string, error) {
+		resp, err := c.AppScreenshotSetsCreateInstance(ctx, asc.AppScreenshotSetCreateRequest{
+			Data: asc.AppScreenshotSetCreateRequestData{
+				Type:       asc.ResourceTypeAppScreenshotSets,
+				Attributes: asc.AppScreenshotSetCreateRequestDataAttributes{ScreenshotDisplayType: asc.ScreenshotDisplayType(d.DisplayType)},
+				Relationships: &asc.AppScreenshotSetCreateRequestDataRelationships{
+					AppStoreVersionLocalization: &asc.AppScreenshotSetCreateRequestDataRelationshipsAppStoreVersionLocalization{
+						Data: &asc.ResourceIdentifier{Type: asc.ResourceTypeAppStoreVersionLocalizations, ID: localizationID},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return "", err
+		}
+		return resp.Data.ID, nil
+	},
+	deleteSet: func(ctx context.Context, c *ascclient.Client, id string) error {
+		return c.AppScreenshotSetsDeleteInstance(ctx, asc.AppScreenshotSetsDeleteInstanceParams{ID: id})
+	},
+	deleteItem: func(ctx context.Context, c *ascclient.Client, id string) error {
+		return c.AppScreenshotsDeleteInstance(ctx, asc.AppScreenshotsDeleteInstanceParams{ID: id})
+	},
 }
 
 // screenshotKind is the assetKind of screenshots.
