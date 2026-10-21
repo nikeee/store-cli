@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"regexp"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -19,7 +20,7 @@ func newGoogleTrackCmd(Deps) *cobra.Command {
 	makeGroup(cmd)
 	cmd.AddCommand(
 		newGoogleTrackListCmd(), newGoogleTrackShowCmd(), newGoogleTrackPromoteCmd(),
-		newGoogleTrackRolloutCmd(),
+		newGoogleTrackRolloutCmd(), newGoogleTrackTestersCmd(),
 		newGoogleTrackStageCmd("halt", "Halt the staged rollout of a track",
 			"Halts the track's staged release (status halted, user fraction kept). Result: Track.",
 			func(s *google.Service, ctx context.Context, track string, c google.CommitOptions) (google.Track, error) {
@@ -194,5 +195,67 @@ func newGoogleTrackStageCmd(name, short, long string, run func(*google.Service, 
 	}
 	addChangesNotSentForReview(cmd)
 	addDryRun(cmd)
+	return cmd
+}
+
+// groupEmailRe is a loose shape check for a Google Group address.
+var groupEmailRe = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+
+func newGoogleTrackTestersCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "testers",
+		Short: "Show or set the tester groups of a track",
+	}
+	makeGroup(cmd)
+	show := &cobra.Command{
+		Use:     "show <track>",
+		Short:   "Show the tester groups of a track",
+		Long:    "Shows the Google Groups that test a track. Result: {track, googleGroups: [string]}.",
+		Example: "  store google track testers show internal",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, err := googleService(cmd)
+			if err != nil {
+				return err
+			}
+			res, err := svc.ShowTesters(cmd.Context(), args[0])
+			if err != nil {
+				return err
+			}
+			return emit(cmd, res)
+		},
+	}
+	set := &cobra.Command{
+		Use:   "set <track> --group <google-group-email>...",
+		Short: "Replace the tester groups of a track",
+		Long: "Replaces the Google Groups that test a track with the given --group addresses (repeatable, at\n" +
+			"least one). Result: {track, googleGroups: [string]}; with --dry-run what would be stored.",
+		Example: "  store google track testers set internal --group qa@googlegroups.com --group beta@example.com",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireFlags(cmd, "group"); err != nil {
+				return err
+			}
+			groups, _ := cmd.Flags().GetStringArray("group")
+			for _, g := range groups {
+				if !groupEmailRe.MatchString(g) {
+					return clierr.Usagef("invalid --group %q (expected a Google Group email address)", g)
+				}
+			}
+			svc, err := googleService(cmd)
+			if err != nil {
+				return err
+			}
+			res, err := svc.SetTesters(cmd.Context(), args[0], groups, commitOptions(cmd))
+			if err != nil {
+				return err
+			}
+			return emit(cmd, res)
+		},
+	}
+	set.Flags().StringArray("group", nil, "Google Group email address of the testers (repeatable)")
+	addChangesNotSentForReview(set)
+	addDryRun(set)
+	cmd.AddCommand(show, set)
 	return cmd
 }
