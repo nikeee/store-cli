@@ -2,9 +2,13 @@
 package cli
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/httpx"
 )
 
 // NewRootCmd builds the full command tree.
@@ -18,7 +22,7 @@ func NewRootCmd(d Deps) *cobra.Command {
 	makeGroup(root)
 	// Run the root hook together with the nearest group hook (apple validates --platform).
 	cobra.EnableTraverseRunHooks = true
-	root.PersistentPreRunE = resolvePrinter(d)
+	root.PersistentPreRunE = withDeps(d, resolvePrinter(d))
 	root.SetOut(d.Stdout)
 	root.SetErr(d.Stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
@@ -73,4 +77,31 @@ func addDryRun(cmd *cobra.Command) {
 func dryRun(cmd *cobra.Command) bool {
 	v, _ := cmd.Flags().GetBool("dry-run")
 	return v
+}
+
+type depsKey struct{}
+
+// withDeps wraps a PersistentPreRunE so that the command context carries d.
+func withDeps(d Deps, next func(*cobra.Command, []string) error) func(*cobra.Command, []string) error {
+	return func(c *cobra.Command, args []string) error {
+		ctx := c.Context()
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		c.SetContext(context.WithValue(ctx, depsKey{}, d))
+		return next(c, args)
+	}
+}
+
+// httpClient returns the one HTTP client for API calls of cmd: retries, and a
+// redacted request log on stderr with --verbose. Only valid in command bodies.
+func httpClient(cmd *cobra.Command) *http.Client {
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	opts := httpx.Options{Verbose: verbose, Log: cmd.ErrOrStderr()}
+	if ctx := cmd.Context(); ctx != nil {
+		if d, ok := ctx.Value(depsKey{}).(Deps); ok {
+			opts.Log, opts.Sleep = d.Stderr, d.Sleep
+		}
+	}
+	return httpx.NewClient(opts)
 }
