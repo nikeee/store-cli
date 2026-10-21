@@ -606,12 +606,14 @@ Result: `[Track]` / `Track`.
 
 ```
 store google track promote [<release-name>] --from <t> --to <t> [--rollout <0..1>]
-                           [--release-notes <dir>]
+                           [--status completed|draft|in-progress|halted] [--release-notes <dir>]
+                           [--changes-not-sent-for-review]
 ```
 
 Copies a release (by name, default the newest by version code) from one track to another,
 `completed` or `in-progress` with `--rollout`. Release notes from `--release-notes`, else the
-source release's notes. Already `completed` on the target: no-op. Result: `Track` (target).
+source release's notes. Already `completed` on the target: no-op. `--status in-progress` and
+`halted` need `--rollout`. Result: `Track` (target).
 
 ### store google track rollout / halt / resume / complete
 
@@ -621,6 +623,8 @@ store google track halt <track>
 store google track resume <track>
 store google track complete <track>
 ```
+
+All accept `--changes-not-sent-for-review`. `<fraction>` must be greater than 0 and less than 1.
 
 Act on the track's staged release: change its user fraction, halt it, resume it, or roll it out to
 everyone. Result: `Track`.
@@ -638,9 +642,11 @@ Result: `{track, googleGroups: [string]}`.
 
 ```
 store google release-notes set <track> [--release-name <s>] (--dir <dir> | --locale <l> --text <text>)
+                               [--changes-not-sent-for-review]
 ```
 
-Sets the release notes of a release on a track (default: the newest). Result: `Release`.
+Sets the release notes of a release on a track (default: the newest by version code). Notes of
+other languages stay. Result: `Release`.
 
 ### store google listing show / set
 

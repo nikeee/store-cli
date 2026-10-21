@@ -1,0 +1,25 @@
+[2]:
+  - track: internal
+    releases[2]:
+      - name: v1.3.0
+        versionCodes[1]: "30"
+        status: completed
+        releaseNotes: []
+      - name: v1.4.0
+        versionCodes[2]: "40","41"
+        status: completed
+        releaseNotes[2]{locale,text}:
+          en-US,Bug fixes
+          de-DE,Fehler behoben
+  - track: staged
+    releases[2]:
+      - name: v1.3.0
+        versionCodes[1]: "30"
+        status: completed
+        releaseNotes: []
+      - name: v1.4.0
+        versionCodes[1]: "40"
+        status: inProgress
+        userFraction: 0.2
+        releaseNotes[1]{locale,text}:
+          en-US,Bug fixes

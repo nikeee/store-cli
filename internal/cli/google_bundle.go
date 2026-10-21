@@ -34,7 +34,7 @@ func newGoogleBundleUploadCmd() *cobra.Command {
 		Short: "Upload an AAB and release it on tracks",
 		Long: "Uploads the AAB (resumable upload, streamed from disk), optionally the deobfuscation file for\n" +
 			"its version code, and creates one release per --track with that version code, all in one edit.\n" +
-			"--status defaults to completed; --rollout implies in-progress. Apps that were never published\n" +
+			"--status defaults to completed; --rollout implies in-progress; in-progress and halted need --rollout. Apps that were never published\n" +
 			"only accept --status draft; the error says so. Release notes max 500 characters per locale;\n" +
 			"locales the listing does not have are dropped with a warning.\n" +
 			"A completed release replaces the track's releases. An in-progress or halted release keeps the\n" +
@@ -82,20 +82,9 @@ func bundleOptions(cmd *cobra.Command, aab string) (google.BundleUploadOptions, 
 	o := google.BundleUploadOptions{Path: aab, Commit: commitOptions(cmd)}
 	o.Tracks, _ = f.GetStringArray("track")
 	o.ReleaseName, _ = f.GetString("release-name")
-	status, _ := f.GetString("status")
-	var ok bool
-	if o.Status, ok = bundleStatuses[status]; !ok {
-		return o, clierr.Usagef("invalid --status %q (use completed, draft, in-progress or halted)", status)
-	}
-	if f.Changed("rollout") {
-		rollout, _ := f.GetFloat64("rollout")
-		if !(rollout > 0 && rollout < 1) {
-			return o, clierr.Usagef("invalid --rollout %v (must be greater than 0 and less than 1)", rollout)
-		}
-		if f.Changed("status") && o.Status != google.StatusInProgress {
-			return o, clierr.Usagef("--rollout needs --status in-progress, not %s", status)
-		}
-		o.Status, o.UserFraction = google.StatusInProgress, rollout
+	var err error
+	if o.Status, o.UserFraction, err = releaseStatus(cmd); err != nil {
+		return o, err
 	}
 	if err := checkFile(aab); err != nil {
 		return o, err
@@ -118,6 +107,37 @@ func bundleOptions(cmd *cobra.Command, aab string) (google.BundleUploadOptions, 
 	return o, nil
 }
 
+// releaseStatus reads --status and --rollout of a command that creates a
+// release: the status in the API spelling and the user fraction. --rollout
+// implies in-progress; in-progress and halted need --rollout. It sends no
+// request.
+func releaseStatus(cmd *cobra.Command) (string, float64, error) {
+	f := cmd.Flags()
+	name, _ := f.GetString("status")
+	status, ok := bundleStatuses[name]
+	if !ok {
+		return "", 0, clierr.Usagef("invalid --status %q (use completed, draft, in-progress or halted)", name)
+	}
+	staged := status == google.StatusInProgress || status == google.StatusHalted
+	if !f.Changed("rollout") {
+		if staged {
+			return "", 0, clierr.Usagef("--status %s needs --rollout <fraction>", name)
+		}
+		return status, 0, nil
+	}
+	rollout, _ := f.GetFloat64("rollout")
+	if !(rollout > 0 && rollout < 1) {
+		return "", 0, clierr.Usagef("invalid --rollout %v (must be greater than 0 and less than 1)", rollout)
+	}
+	switch {
+	case !f.Changed("status"):
+		status = google.StatusInProgress
+	case !staged:
+		return "", 0, clierr.Usagef("--rollout needs --status in-progress or halted, not %s", name)
+	}
+	return status, rollout, nil
+}
+
 // checkFile reports a missing, unreadable or non-regular file.
 func checkFile(path string) error {
 	st, err := os.Stat(path)
@@ -134,4 +154,3 @@ func checkFile(path string) error {
 	_ = fh.Close()
 	return nil
 }
-

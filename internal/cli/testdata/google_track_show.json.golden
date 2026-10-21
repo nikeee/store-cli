@@ -1,0 +1,27 @@
+{
+  "track": "staged",
+  "releases": [
+    {
+      "name": "v1.3.0",
+      "versionCodes": [
+        "30"
+      ],
+      "status": "completed",
+      "releaseNotes": []
+    },
+    {
+      "name": "v1.4.0",
+      "versionCodes": [
+        "40"
+      ],
+      "status": "inProgress",
+      "userFraction": 0.2,
+      "releaseNotes": [
+        {
+          "locale": "en-US",
+          "text": "Bug fixes"
+        }
+      ]
+    }
+  ]
+}

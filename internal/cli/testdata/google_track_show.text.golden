@@ -1,0 +1,10 @@
+track: staged
+  release: v1.3.0
+    status: completed
+    versionCodes: 30
+  release: v1.4.0
+    status: inProgress
+    versionCodes: 40
+    userFraction: 0.2
+    releaseNotes:
+      en-US: Bug fixes
