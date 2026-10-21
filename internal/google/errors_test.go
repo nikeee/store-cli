@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"testing"
 
+	"google.golang.org/api/googleapi"
+
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/testutil/playfake"
 )
@@ -77,10 +79,26 @@ func TestFromAPIErrorRedactsTransportErrors(t *testing.T) {
 	}{
 		{"bare", ue, `Post "https://example.com/upload/x?uploadType=resumable&upload_id=***": connection reset`},
 		{"wrapped", fmt.Errorf("upload bundle: %w", ue), `upload bundle: Post "https://example.com/upload/x?uploadType=resumable&upload_id=***": connection reset`},
+		{"context after", fmt.Errorf("en-US phone: %w (image set incomplete)", ue),
+			`en-US phone: Post "https://example.com/upload/x?uploadType=resumable&upload_id=***": connection reset (image set incomplete)`},
 	}
 	for _, tt := range tests {
 		if got := FromAPIError(tt.err).Error(); got != tt.want {
 			t.Errorf("%s: got %q", tt.name, got)
 		}
+	}
+}
+
+// Context a wrapper adds after the API error, like the "image set incomplete"
+// note of SyncImages, is kept.
+func TestFromAPIErrorKeepsContextAfter(t *testing.T) {
+	ge := &googleapi.Error{Code: http.StatusBadRequest, Message: "Invalid request", Body: `{"error":{"status":"INVALID_ARGUMENT"}}`}
+	err := fmt.Errorf("staged 1 of 2 changes: en-US phone: upload a.png: %w (image set incomplete, run again)", ge)
+	var ce *clierr.Error
+	if !errors.As(FromAPIError(err), &ce) {
+		t.Fatalf("not a clierr.Error: %v", err)
+	}
+	if want := "staged 1 of 2 changes: en-US phone: upload a.png: Invalid request (image set incomplete, run again)"; ce.Message != want || ce.Code != "INVALID_ARGUMENT" {
+		t.Errorf("got %+v", *ce)
 	}
 }
