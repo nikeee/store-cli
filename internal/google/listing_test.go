@@ -188,3 +188,27 @@ func TestApplyListingChangesReturnsAppliedOnError(t *testing.T) {
 		t.Errorf("applied = %v", applied)
 	}
 }
+
+func TestListingFieldsCoverGoogleFields(t *testing.T) {
+	for _, f := range metadata.GoogleFields {
+		if lf, ok := listingFields[f.API]; !ok || lf.api == nil || lf.result == nil {
+			t.Errorf("no listingFields entry for %s", f.API)
+		}
+	}
+	if len(listingFields) != len(metadata.GoogleFields) {
+		t.Errorf("%d entries for %d fields", len(listingFields), len(metadata.GoogleFields))
+	}
+}
+
+func TestSetListingNewLocaleAllEmpty(t *testing.T) {
+	srv := listingServer(t)
+	_, err := newService(t, srv, io.Discard).SetListing(t.Context(), "xx-XX", metadata.Texts{"title": ""}, CommitOptions{})
+	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "listing xx-XX does not exist; give at least one non-empty field to create it") {
+		t.Fatalf("err = %v", err)
+	}
+	for _, r := range srv.Requests() {
+		if r.Method == "PUT" || strings.HasSuffix(r.Path, ":commit") {
+			t.Errorf("sent %s %s", r.Method, r.Path)
+		}
+	}
+}

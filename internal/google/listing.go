@@ -30,14 +30,33 @@ type Listing struct {
 // Listings is the result of ShowListings.
 type Listings []Listing
 
-// listingFields maps metadata.Field.API names to the generated Listing
-// field. It is the only place that knows the generated names; read
-// (ListingTexts, listingFromAPI) and write (ApplyListingChanges) share it.
-var listingFields = map[string]func(*androidpublisher.Listing) *string{
-	"title":            func(l *androidpublisher.Listing) *string { return &l.Title },
-	"shortDescription": func(l *androidpublisher.Listing) *string { return &l.ShortDescription },
-	"fullDescription":  func(l *androidpublisher.Listing) *string { return &l.FullDescription },
-	"video":            func(l *androidpublisher.Listing) *string { return &l.Video },
+// listingField selects one text in the generated API listing and in Listing.
+type listingField struct {
+	api    func(*androidpublisher.Listing) *string
+	result func(*Listing) *string
+}
+
+// listingFields maps metadata.Field.API names to the generated Listing field
+// and the result field. It is the only place that knows either; read
+// (ListingTexts, listingFromAPI), write (ApplyListingChanges) and rendering
+// share it.
+var listingFields = map[string]listingField{
+	"title": {
+		func(l *androidpublisher.Listing) *string { return &l.Title },
+		func(l *Listing) *string { return &l.Title },
+	},
+	"shortDescription": {
+		func(l *androidpublisher.Listing) *string { return &l.ShortDescription },
+		func(l *Listing) *string { return &l.ShortDescription },
+	},
+	"fullDescription": {
+		func(l *androidpublisher.Listing) *string { return &l.FullDescription },
+		func(l *Listing) *string { return &l.FullDescription },
+	},
+	"video": {
+		func(l *androidpublisher.Listing) *string { return &l.Video },
+		func(l *Listing) *string { return &l.Video },
+	},
 }
 
 // RenderText implements output.TextRenderer.
@@ -67,7 +86,7 @@ func (ls Listings) RenderText(w io.Writer, s output.Styles) error {
 func (l Listing) render(sb *strings.Builder, s output.Styles) {
 	sb.WriteString(s.Key.Render("locale:") + " " + l.Locale + "\n")
 	for _, f := range metadata.GoogleFields {
-		v := *listingFields[f.API](toAPIListing(l))
+		v := *listingFields[f.API].result(&l)
 		line := s.Key.Render(f.API + ":")
 		if strings.Contains(v, "\n") {
 			sb.WriteString(line + "\n")
@@ -80,25 +99,19 @@ func (l Listing) render(sb *strings.Builder, s output.Styles) {
 	}
 }
 
-func toAPIListing(l Listing) *androidpublisher.Listing {
-	return &androidpublisher.Listing{
-		Language: l.Locale, Title: l.Title, ShortDescription: l.ShortDescription,
-		FullDescription: l.FullDescription, Video: l.Video,
-	}
-}
-
 func listingFromAPI(a *androidpublisher.Listing) Listing {
-	return Listing{
-		Locale: a.Language, Title: a.Title, ShortDescription: a.ShortDescription,
-		FullDescription: a.FullDescription, Video: a.Video,
+	l := Listing{Locale: a.Language}
+	for _, f := range metadata.GoogleFields {
+		*listingFields[f.API].result(&l) = *listingFields[f.API].api(a)
 	}
+	return l
 }
 
 func listingTexts(a *androidpublisher.Listing) metadata.Texts {
 	t := metadata.Texts{}
-	for api, sel := range listingFields {
-		if v := *sel(a); v != "" {
-			t[api] = v
+	for _, f := range metadata.GoogleFields {
+		if v := *listingFields[f.API].api(a); v != "" {
+			t[f.API] = v
 		}
 	}
 	return t
@@ -162,7 +175,7 @@ func overlay(cur *androidpublisher.Listing, language string, changes []metadata.
 		merged.Language = language
 	}
 	for _, c := range changes {
-		*listingFields[c.Field](&merged) = c.New
+		*listingFields[c.Field].api(&merged) = c.New
 	}
 	return &merged
 }
@@ -183,6 +196,8 @@ func (s *Service) SetListing(ctx context.Context, language string, texts metadat
 		var remote metadata.Texts
 		if cur != nil {
 			remote = listingTexts(cur)
+		} else if !slices.ContainsFunc(metadata.GoogleFields, func(f metadata.Field) bool { return texts[f.API] != "" }) {
+			return clierr.New("listing %s does not exist; give at least one non-empty field to create it", language)
 		}
 		changes := metadata.DiffTexts(metadata.LevelListing, language, metadata.GoogleFields, texts, remote)
 		res = listingFromAPI(overlay(cur, language, changes))
