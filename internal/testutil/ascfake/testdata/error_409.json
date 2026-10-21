@@ -1,0 +1,13 @@
+{
+  "errors": [
+    {
+      "status": "409",
+      "code": "ENTITY_ERROR.ATTRIBUTE.INVALID",
+      "title": "An attribute value is invalid.",
+      "detail": "The attribute 'whatsNew' can not be edited at this time.",
+      "source": {
+        "pointer": "/data/attributes/whatsNew"
+      }
+    }
+  ]
+}

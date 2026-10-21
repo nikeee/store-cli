@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "type": "apps",
+      "id": "1234567892",
+      "attributes": {
+        "name": "Beispiel",
+        "bundleId": "de.example.beispiel",
+        "sku": "BEISPIEL",
+        "primaryLocale": "de-DE"
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/apps/1234567892"
+      }
+    }
+  ],
+  "links": {
+    "self": "{{baseURL}}/v1/apps?cursor=Mg&limit=200"
+  },
+  "meta": {
+    "paging": {
+      "total": 3,
+      "limit": 200
+    }
+  }
+}
