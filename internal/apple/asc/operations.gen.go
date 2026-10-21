@@ -206,6 +206,17 @@ func (c *Client) AppScreenshotSetsCreateInstance(ctx context.Context, body AppSc
 	return out, nil
 }
 
+// AppScreenshotSetsDeleteInstanceParams holds the parameters of AppScreenshotSetsDeleteInstance.
+type AppScreenshotSetsDeleteInstanceParams struct {
+	ID string // path id, required
+}
+
+// AppScreenshotSetsDeleteInstance sends DELETE /v1/appScreenshotSets/{id} (appScreenshotSets_deleteInstance).
+func (c *Client) AppScreenshotSetsDeleteInstance(ctx context.Context, params AppScreenshotSetsDeleteInstanceParams) error {
+	u := c.url("/v1/appScreenshotSets/"+url.PathEscape(params.ID), nil)
+	return c.do(ctx, "DELETE", u, nil, nil)
+}
+
 // AppScreenshotsCreateInstance sends POST /v1/appScreenshots (appScreenshots_createInstance).
 func (c *Client) AppScreenshotsCreateInstance(ctx context.Context, body AppScreenshotCreateRequest) (*AppScreenshotResponse, error) {
 	u := c.url("/v1/appScreenshots", nil)
