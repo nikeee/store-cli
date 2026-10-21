@@ -88,11 +88,16 @@ func newAppleService(cmd *cobra.Command, creds config.AppleCredentials) (*apple.
 }
 
 // appleAPIError turns an App Store Connect error response anywhere in err's
-// chain into a clierr.Error; other errors pass unchanged.
+// chain into a clierr.Error, keeping the context added by wrappers
+// ("attach build 42: ..."); other errors pass unchanged.
 func appleAPIError(err error) error {
 	var re *asc.ResponseError
-	if errors.As(err, &re) {
-		return ascclient.FromAPIError(re)
+	if !errors.As(err, &re) {
+		return err
 	}
-	return err
+	ce := ascclient.FromAPIError(re)
+	if prefix, ok := strings.CutSuffix(err.Error(), re.Error()); ok {
+		ce.Message = prefix + ce.Message
+	}
+	return ce
 }
