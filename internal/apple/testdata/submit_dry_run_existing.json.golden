@@ -1,0 +1,45 @@
+{
+  "version": "1.3.0",
+  "build": "45",
+  "submissionId": "",
+  "state": "dry-run",
+  "plan": {
+    "changes": [
+      {
+        "action": "update",
+        "scope": "version",
+        "field": "release type",
+        "old": "SCHEDULED",
+        "new": "MANUAL"
+      },
+      {
+        "action": "update",
+        "scope": "version",
+        "field": "attach build",
+        "old": "45",
+        "new": "45"
+      },
+      {
+        "action": "update",
+        "scope": "version",
+        "locale": "en-US",
+        "field": "description",
+        "old": "An example app.",
+        "new": "Changed."
+      },
+      {
+        "action": "update",
+        "scope": "version",
+        "locale": "en-US",
+        "field": "set release notes",
+        "new": "Fixes"
+      },
+      {
+        "action": "create",
+        "scope": "submission",
+        "field": "submit",
+        "new": "1.3.0"
+      }
+    ]
+  }
+}

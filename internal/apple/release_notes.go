@@ -17,6 +17,12 @@ const CodeNotYetReleased = "NOT_YET_RELEASED"
 // releaseNotesFile is the metadata file of the What's New text.
 const releaseNotesFile = "release_notes.txt"
 
+func notYetReleased() *clierr.Error {
+	e := clierr.New("App Store Connect accepts What's New only after the first release")
+	e.Code = CodeNotYetReleased
+	return e
+}
+
 // ReleaseNote is the What's New text of one locale.
 type ReleaseNote struct {
 	Locale   string `json:"locale"`
@@ -53,9 +59,7 @@ func (s *Service) setReleaseNotes(ctx context.Context, app App, v Version, notes
 		return nil, err
 	}
 	if !released {
-		e := clierr.New("App Store Connect accepts What's New only after the first release")
-		e.Code = CodeNotYetReleased
-		return nil, e
+		return nil, notYetReleased()
 	}
 	ids, err := s.versionLocalizationIDs(ctx, v.ID)
 	if err != nil {

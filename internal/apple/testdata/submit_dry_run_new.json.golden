@@ -1,0 +1,41 @@
+{
+  "version": "1.4.0",
+  "build": "45",
+  "submissionId": "",
+  "state": "dry-run",
+  "plan": {
+    "changes": [
+      {
+        "action": "create",
+        "scope": "version",
+        "field": "create version",
+        "new": "1.4.0"
+      },
+      {
+        "action": "update",
+        "scope": "version",
+        "field": "attach build",
+        "new": "45"
+      },
+      {
+        "action": "create",
+        "scope": "version",
+        "field": "push metadata",
+        "new": "metadata"
+      },
+      {
+        "action": "update",
+        "scope": "version",
+        "locale": "en-US",
+        "field": "set release notes",
+        "new": "Fixes"
+      },
+      {
+        "action": "create",
+        "scope": "submission",
+        "field": "submit",
+        "new": "1.4.0"
+      }
+    ]
+  }
+}
