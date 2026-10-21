@@ -26,7 +26,28 @@ func NewRootCmd(d Deps) *cobra.Command {
 
 	root.AddCommand(newVersionCmd(d), newAppleCmd(d), newGoogleCmd(d))
 	root.InitDefaultCompletionCmd()
+	if c, _, err := root.Find([]string{"completion"}); err == nil && c != root {
+		makeGroup(c)
+	}
+	wrapArgsErrors(root)
 	return root
+}
+
+// wrapArgsErrors makes every positional-argument validation error in the tree
+// a usage error (exit code 2), keeping cobra's message. Call it after the
+// whole tree is built.
+func wrapArgsErrors(cmd *cobra.Command) {
+	if orig := cmd.Args; orig != nil {
+		cmd.Args = func(c *cobra.Command, args []string) error {
+			if err := orig(c, args); err != nil {
+				return clierr.Usagef("%s", err)
+			}
+			return nil
+		}
+	}
+	for _, sub := range cmd.Commands() {
+		wrapArgsErrors(sub)
+	}
 }
 
 // makeGroup turns cmd into a command that only groups subcommands: with no

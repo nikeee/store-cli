@@ -58,3 +58,12 @@ func TestRunInvalidPlatformExits2(t *testing.T) {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
 }
+
+func TestRunArgValidationExits2(t *testing.T) {
+	for _, args := range [][]string{{"version", "extra"}, {"completion", "nope"}} {
+		code, _, stderr := run(t, args...)
+		if code != 2 {
+			t.Errorf("%v: code=%d stderr=%q", args, code, stderr)
+		}
+	}
+}

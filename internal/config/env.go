@@ -22,9 +22,10 @@ const (
 // AgentMarkers are environment variables set by AI coding agents. When any
 // is set, the CLI treats the session as non-interactive agent use.
 var AgentMarkers = []string{
-	"AI_AGENT",      // generic convention, https://github.com/vercel/vercel/tree/main/packages/detect-agent
-	"CLAUDECODE",    // Claude Code, https://code.claude.com/docs/en/settings (environment variables)
-	"GEMINI_CLI",    // Gemini CLI, https://github.com/google-gemini/gemini-cli (set in spawned shells)
-	"CURSOR_AGENT",  // Cursor agent terminal, https://cursor.com/docs/agent/terminal
-	"CODEX_SANDBOX", // OpenAI Codex CLI, https://github.com/openai/codex (sandboxed command env)
+	"AI_AGENT",        // Vercel detect-agent, https://github.com/vercel/vercel/tree/main/packages/detect-agent
+	"CLAUDECODE",      // set by Claude Code; also listed by https://docs.rs/crate/is-ai-agent/0.5.0
+	"CURSOR_AGENT",    // https://docs.rs/crate/is-ai-agent/0.5.0 and https://packagist.org/packages/laravel/agent-detector
+	"GEMINI_CLI",      // https://docs.rs/crate/is-ai-agent/0.5.0 and https://packagist.org/packages/laravel/agent-detector
+	"CODEX_SANDBOX",   // https://docs.rs/crate/is-ai-agent/0.5.0 and https://packagist.org/packages/laravel/agent-detector
+	"CODEX_THREAD_ID", // https://docs.rs/crate/is-ai-agent/0.5.0 and https://packagist.org/packages/laravel/agent-detector
 }
