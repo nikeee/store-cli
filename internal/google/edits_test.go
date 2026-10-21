@@ -2,6 +2,7 @@ package google
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -138,6 +139,24 @@ func TestWithEditDryRunDeletes(t *testing.T) {
 	}
 	if c := strings.Join(calls(srv), ", "); c != "POST /edits, DELETE /edits/edit-1" {
 		t.Errorf("calls = %s", c)
+	}
+}
+
+// An interrupt (Ctrl-C, --timeout) cancels the context inside fn; the edit is
+// deleted all the same.
+func TestWithEditDeletesAfterCancel(t *testing.T) {
+	srv := editServer(t)
+	ctx, cancel := context.WithCancel(t.Context())
+	var stderr bytes.Buffer
+	err := newService(t, srv, &stderr).withEdit(ctx, CommitOptions{}, func(string) error {
+		cancel()
+		return ctx.Err()
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v", err)
+	}
+	if c := strings.Join(calls(srv), ", "); c != "POST /edits, DELETE /edits/edit-1" || stderr.Len() != 0 {
+		t.Errorf("calls = %s, stderr = %q", c, stderr.String())
 	}
 }
 

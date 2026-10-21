@@ -3,6 +3,7 @@ package google
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"google.golang.org/api/androidpublisher/v3"
 )
@@ -17,10 +18,12 @@ type CommitOptions struct {
 }
 
 // withEdit runs fn in a new edit of the app; fn gets the edit ID. Contract:
-// when fn succeeds the edit is committed (deleted with opts.DryRun). When fn
-// or the commit fails, the edit is deleted, so nothing is published, and
-// that error is returned. A failed delete is only a warning: an uncommitted
-// edit is never published.
+// when fn succeeds the edit is committed. When fn or the commit fails, the
+// edit is deleted, so nothing is published, and that error is returned. With
+// opts.DryRun fn still runs and must itself skip uploads and every other
+// mutating call; the edit is then deleted instead of committed. The delete
+// runs even when ctx is cancelled; a failed delete is only a warning, since
+// an uncommitted edit is never published.
 func (s *Service) withEdit(ctx context.Context, opts CommitOptions, fn func(editID string) error) error {
 	edit, err := s.api.Edits.Insert(s.packageName, &androidpublisher.AppEdit{}).Context(ctx).Do()
 	if err != nil {
@@ -45,7 +48,14 @@ func (s *Service) withEdit(ctx context.Context, opts CommitOptions, fn func(edit
 	return nil
 }
 
+// deleteEditTimeout bounds the cleanup delete, which ignores the caller's
+// cancellation.
+const deleteEditTimeout = 30 * time.Second
+
 func (s *Service) deleteEdit(ctx context.Context, editID string) {
+	// After Ctrl-C or a timeout, ctx is done but the edit must still go.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), deleteEditTimeout)
+	defer cancel()
 	if err := s.api.Edits.Delete(s.packageName, editID).Context(ctx).Do(); err != nil {
 		s.report.Warnf("could not delete edit %s: %v", editID, FromAPIError(err))
 	}
