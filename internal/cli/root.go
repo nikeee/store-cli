@@ -93,6 +93,16 @@ func withDeps(d Deps, next func(*cobra.Command, []string) error) func(*cobra.Com
 	}
 }
 
+// cmdDeps returns the Deps of the command tree. Only valid in command bodies.
+func cmdDeps(cmd *cobra.Command) Deps {
+	if ctx := cmd.Context(); ctx != nil {
+		if d, ok := ctx.Value(depsKey{}).(Deps); ok {
+			return d
+		}
+	}
+	return DefaultDeps()
+}
+
 // httpClient returns the one HTTP client for API calls of cmd: retries, and a
 // redacted request log on stderr with --verbose. Only valid in command bodies.
 func httpClient(cmd *cobra.Command) *http.Client {
