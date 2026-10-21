@@ -108,26 +108,47 @@ func (s *Service) releaseNotes(ctx context.Context, editID string, notes map[str
 //
 // With dryRun the track is read and the result computed, nothing is updated.
 func (s *Service) setRelease(ctx context.Context, editID, track string, rel *androidpublisher.TrackRelease, dryRun bool) (Track, error) {
-	cur, err := s.api.Edits.Tracks.Get(s.packageName, editID, track).Context(ctx).Do()
+	var keep func(r *androidpublisher.TrackRelease) bool
+	switch rel.Status {
+	case StatusCompleted:
+		keep = func(*androidpublisher.TrackRelease) bool { return false }
+	case StatusDraft:
+		keep = func(r *androidpublisher.TrackRelease) bool { return r.Status != StatusDraft }
+	case StatusInProgress, StatusHalted:
+		if !(rel.UserFraction > 0 && rel.UserFraction < 1) {
+			return Track{}, clierr.Usagef("a %s release needs a rollout fraction greater than 0 and less than 1", rel.Status)
+		}
+		keep = func(r *androidpublisher.TrackRelease) bool { return r.Status == StatusCompleted }
+	default:
+		return Track{}, fmt.Errorf("unknown release status %q", rel.Status)
+	}
+	cur, err := s.getTrack(ctx, editID, track)
 	if err != nil {
-		return Track{}, fmt.Errorf("read track %s: %w", track, err)
+		return Track{}, err
 	}
 	var kept []*androidpublisher.TrackRelease
 	for _, r := range cur.Releases {
-		switch rel.Status {
-		case StatusCompleted:
-		case StatusDraft:
-			if r.Status != StatusDraft {
-				kept = append(kept, r)
-			}
-		default:
-			if r.Status == StatusCompleted {
-				kept = append(kept, r)
-			}
+		if keep(r) {
+			kept = append(kept, r)
 		}
 	}
-	out := &androidpublisher.Track{Track: track, Releases: append(kept, rel)}
+	return s.putTrack(ctx, editID, track, append(kept, rel), dryRun)
+}
+
+func (s *Service) getTrack(ctx context.Context, editID, track string) (*androidpublisher.Track, error) {
+	t, err := s.api.Edits.Tracks.Get(s.packageName, editID, track).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("read track %s: %w", track, err)
+	}
+	return t, nil
+}
+
+// putTrack stores releases as the whole release list of the track; with
+// dryRun nothing is sent and the result is what would be stored.
+func (s *Service) putTrack(ctx context.Context, editID, track string, releases []*androidpublisher.TrackRelease, dryRun bool) (Track, error) {
+	out := &androidpublisher.Track{Track: track, Releases: releases}
 	if !dryRun {
+		var err error
 		if out, err = s.api.Edits.Tracks.Update(s.packageName, editID, track, out).Context(ctx).Do(); err != nil {
 			return Track{}, fmt.Errorf("update track %s: %w", track, err)
 		}

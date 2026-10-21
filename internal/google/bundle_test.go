@@ -166,7 +166,7 @@ func TestSetReleaseKeepsRules(t *testing.T) {
 		t.Run(tt.status, func(t *testing.T) {
 			srv := bundleServer(t, current)
 			_, err := newService(t, srv, io.Discard).UploadBundle(t.Context(), BundleUploadOptions{
-				Path: writeFile(t, "app.aab", []byte("x")), Tracks: []string{"beta"}, ReleaseName: "new", Status: tt.status,
+				Path: writeFile(t, "app.aab", []byte("x")), Tracks: []string{"beta"}, ReleaseName: "new", Status: tt.status, UserFraction: 0.5,
 			})
 			if err != nil {
 				t.Fatal(err)
