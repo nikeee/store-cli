@@ -33,7 +33,8 @@ func newAppleCmd(d Deps) *cobra.Command {
 		}
 		return nil
 	}
-	cmd.AddCommand(newAppleAuthCmd(d), newAppleAppCmd(d), newAppleBuildCmd(d), newAppleTestflightCmd(d), newAppleVersionCmd(d), newAppleListingCmd(d), newAppleReleaseNotesCmd(d), newAppleScreenshotsCmd(d), newApplePreviewsCmd(d), newAppleReviewInfoCmd(d))
+	cmd.AddCommand(newAppleAuthCmd(d), newAppleAppCmd(d), newAppleBuildCmd(d), newAppleTestflightCmd(d), newAppleVersionCmd(d), newAppleListingCmd(d), newAppleReleaseNotesCmd(d), newAppleScreenshotsCmd(d), newApplePreviewsCmd(d), newAppleReviewInfoCmd(d),
+		newAppleInitCmd(), newApplePushCmd(), newApplePullCmd())
 	return cmd
 }
 

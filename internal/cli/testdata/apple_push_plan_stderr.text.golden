@@ -1,0 +1,10 @@
+plan: 9 changes
+  update app-info en-US subtitle
+  create app-info fr-FR name
+  update version de-DE description
+  update version en-US keywords
+  update version en-US marketingUrl
+  create version fr-FR description
+  update review contactFirstName
+  update review demoAccountPassword
+  replace screenshots en-US iphone-6.9

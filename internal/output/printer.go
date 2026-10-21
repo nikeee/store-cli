@@ -35,6 +35,9 @@ func NewPrinter(mode Mode, stdout, stderr io.Writer, color bool) *Printer {
 	return &Printer{mode: mode, stdout: stdout, stderr: stderr, styles: NewStyles(color && mode == ModeText)}
 }
 
+// Mode returns the output mode.
+func (p *Printer) Mode() Mode { return p.mode }
+
 // Result writes v to stdout in the printer's mode.
 func (p *Printer) Result(v any) error {
 	switch p.mode {

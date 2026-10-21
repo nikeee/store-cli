@@ -1,0 +1,31 @@
+created:
+  <tmp>/metadata/en-US/name.txt                        App name, max 30 characters
+  <tmp>/metadata/en-US/subtitle.txt                    App subtitle, max 30 characters
+  <tmp>/metadata/en-US/privacy_url.txt                 Privacy policy URL
+  <tmp>/metadata/en-US/privacy_choices_url.txt         Privacy choices URL
+  <tmp>/metadata/en-US/description.txt                 App description, max 4000 characters
+  <tmp>/metadata/en-US/keywords.txt                    Search keywords, comma separated, max 100 characters
+  <tmp>/metadata/en-US/promotional_text.txt            Promotional text, max 170 characters
+  <tmp>/metadata/en-US/marketing_url.txt               Marketing URL
+  <tmp>/metadata/en-US/support_url.txt                 Support URL
+  <tmp>/metadata/en-US/release_notes.txt               What's New text (set with release-notes set), max 4000 characters
+  <tmp>/metadata/de-DE/name.txt                        App name, max 30 characters
+  <tmp>/metadata/de-DE/subtitle.txt                    App subtitle, max 30 characters
+  <tmp>/metadata/de-DE/privacy_url.txt                 Privacy policy URL
+  <tmp>/metadata/de-DE/privacy_choices_url.txt         Privacy choices URL
+  <tmp>/metadata/de-DE/description.txt                 App description, max 4000 characters
+  <tmp>/metadata/de-DE/keywords.txt                    Search keywords, comma separated, max 100 characters
+  <tmp>/metadata/de-DE/promotional_text.txt            Promotional text, max 170 characters
+  <tmp>/metadata/de-DE/marketing_url.txt               Marketing URL
+  <tmp>/metadata/de-DE/support_url.txt                 Support URL
+  <tmp>/metadata/de-DE/release_notes.txt               What's New text (set with release-notes set), max 4000 characters
+  <tmp>/metadata/review_information/first_name.txt     Review contact first name
+  <tmp>/metadata/review_information/last_name.txt      Review contact last name
+  <tmp>/metadata/review_information/phone_number.txt   Review contact phone number
+  <tmp>/metadata/review_information/email_address.txt  Review contact email address
+  <tmp>/metadata/review_information/demo_required.txt  Whether a demo account is needed: true or false
+  <tmp>/metadata/review_information/demo_user.txt      Demo account user name
+  <tmp>/metadata/review_information/demo_password.txt  Demo account password
+  <tmp>/metadata/review_information/notes.txt          Notes for the App Review team, max 4000 characters
+  <tmp>/screenshots/en-US/
+  <tmp>/screenshots/de-DE/

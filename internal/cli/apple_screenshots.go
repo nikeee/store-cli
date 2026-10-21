@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/nikeee/store-cli/internal/apple"
 	"github.com/nikeee/store-cli/internal/clierr"
@@ -168,10 +169,19 @@ func newAppleScreenshotsDeleteCmd() *cobra.Command {
 }
 
 // requireFlags makes a missing or empty required flag a usage error (exit 2),
-// which cobra's own required-flag check does not.
+// which cobra's own required-flag check does not. A repeatable flag must be
+// given at least once.
 func requireFlags(cmd *cobra.Command, names ...string) error {
 	for _, n := range names {
-		if v, _ := cmd.Flags().GetString(n); v == "" {
+		set := false
+		if f := cmd.Flags().Lookup(n); f != nil {
+			if sv, ok := f.Value.(pflag.SliceValue); ok {
+				set = len(sv.GetSlice()) > 0
+			} else {
+				set = f.Value.String() != ""
+			}
+		}
+		if !set {
 			return clierr.Usagef("required flag --%s not set", n)
 		}
 	}
