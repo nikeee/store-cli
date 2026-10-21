@@ -1,0 +1,55 @@
+{
+  "data": {
+    "type": "appScreenshots",
+    "id": "7d1e5c3a-2b4f-4e6a-8c9d-0f1a2b3c4d5e",
+    "attributes": {
+      "fileSize": 1572864,
+      "fileName": "iphone67_01.png",
+      "assetDeliveryState": {
+        "errors": [],
+        "warnings": [],
+        "state": "AWAITING_UPLOAD"
+      },
+      "uploadOperations": [
+        {
+          "method": "PUT",
+          "url": "https://store-001.blobstore.apple.com/upload/7d1e5c3a/part-1?token=abc",
+          "length": 1048576,
+          "offset": 0,
+          "requestHeaders": [
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "url": "https://store-001.blobstore.apple.com/upload/7d1e5c3a/part-2?token=abc",
+          "length": 524288,
+          "offset": 1048576,
+          "requestHeaders": [
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            }
+          ]
+        }
+      ]
+    },
+    "relationships": {
+      "appScreenshotSet": {
+        "data": {
+          "type": "appScreenshotSets",
+          "id": "3a2b1c0d-9e8f-4a7b-b6c5-d4e3f2a1b0c9"
+        }
+      }
+    },
+    "links": {
+      "self": "https://api.appstoreconnect.apple.com/v1/appScreenshots/7d1e5c3a-2b4f-4e6a-8c9d-0f1a2b3c4d5e"
+    }
+  },
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appScreenshots"
+  }
+}

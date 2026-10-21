@@ -1,0 +1,75 @@
+{
+  "data": [
+    {
+      "type": "reviewSubmissions",
+      "id": "c0ffee00-1111-4222-8333-444455556666",
+      "attributes": {
+        "platform": "IOS",
+        "submittedDate": "2026-10-19T08:30:00-07:00",
+        "state": "WAITING_FOR_REVIEW"
+      },
+      "relationships": {
+        "items": {
+          "data": [
+            {
+              "type": "reviewSubmissionItems",
+              "id": "item-0001"
+            }
+          ]
+        },
+        "appStoreVersionForReview": {
+          "data": {
+            "type": "appStoreVersions",
+            "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+          }
+        }
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/reviewSubmissions/c0ffee00-1111-4222-8333-444455556666"
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "reviewSubmissionItems",
+      "id": "item-0001",
+      "attributes": {
+        "state": "READY_FOR_REVIEW"
+      },
+      "relationships": {
+        "appStoreVersion": {
+          "data": {
+            "type": "appStoreVersions",
+            "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+          }
+        }
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/reviewSubmissionItems/item-0001"
+      }
+    },
+    {
+      "type": "appStoreVersions",
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "2.3.0",
+        "appVersionState": "WAITING_FOR_REVIEW",
+        "releaseType": "AFTER_APPROVAL",
+        "createdDate": "2026-10-15T11:00:00-07:00"
+      },
+      "links": {
+        "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/reviewSubmissions?filter%5Bapp%5D=1234567890&include=items%2CappStoreVersionForReview"
+  },
+  "meta": {
+    "paging": {
+      "total": 1,
+      "limit": 50
+    }
+  }
+}
