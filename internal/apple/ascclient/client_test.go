@@ -3,6 +3,7 @@ package ascclient_test
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +19,14 @@ func newClient(t *testing.T, srv *ascfake.Server, now func() time.Time) *ascclie
 		t.Fatal(err)
 	}
 	return c
+}
+
+func TestNewRejectsBadKey(t *testing.T) {
+	creds := ascfake.Credentials()
+	creds.PrivateKeyPEM = []byte("not a key")
+	if _, err := ascclient.New(creds, &http.Client{}, "http://unused", time.Now); err == nil || !strings.Contains(err.Error(), "APPLE_APPSTORE_API_PRIVATE_KEY") {
+		t.Fatalf("err = %v", err)
+	}
 }
 
 func TestResolveApp(t *testing.T) {

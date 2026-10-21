@@ -2,17 +2,13 @@ package ascclient
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
 	"sync"
 	"time"
 
-	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
 )
 
@@ -36,20 +32,11 @@ type tokenSource struct {
 }
 
 func newTokenSource(creds config.AppleCredentials, now func() time.Time) (*tokenSource, error) {
-	bad := clierr.New("%s is not a PKCS#8 EC private key (.p8)", config.EnvApplePrivateKey)
-	block, _ := pem.Decode(creds.PrivateKeyPEM)
-	if block == nil {
-		return nil, bad
-	}
-	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	key, err := config.ParseAppleKey(creds.PrivateKeyPEM)
 	if err != nil {
-		return nil, bad
+		return nil, err
 	}
-	ec, ok := key.(*ecdsa.PrivateKey)
-	if !ok || ec.Curve != elliptic.P256() {
-		return nil, bad
-	}
-	return &tokenSource{issuerID: creds.IssuerID, keyID: creds.KeyID, key: ec, now: now}, nil
+	return &tokenSource{issuerID: creds.IssuerID, keyID: creds.KeyID, key: key, now: now}, nil
 }
 
 // Token returns the cached token or signs a new one.

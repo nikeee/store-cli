@@ -53,27 +53,29 @@ func LoadAppleCredentials(env Env, readFile func(string) ([]byte, error)) (Apple
 		pemBytes = b
 	}
 
-	if err := checkAppleKey(pemBytes); err != nil {
+	if _, err := ParseAppleKey(pemBytes); err != nil {
 		return AppleCredentials{}, err
 	}
 	return AppleCredentials{IssuerID: issuer, KeyID: keyID, PrivateKeyPEM: pemBytes}, nil
 }
 
-func checkAppleKey(pemBytes []byte) error {
+// ParseAppleKey parses an App Store Connect API key: a PEM-encoded PKCS#8
+// P-256 private key (.p8).
+func ParseAppleKey(pemBytes []byte) (*ecdsa.PrivateKey, error) {
 	bad := clierr.New("%s is not a PKCS#8 EC private key (.p8)", EnvApplePrivateKey)
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
-		return bad
+		return nil, bad
 	}
 	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
-		return bad
+		return nil, bad
 	}
 	ec, ok := key.(*ecdsa.PrivateKey)
 	if !ok || ec.Curve != elliptic.P256() {
-		return bad
+		return nil, bad
 	}
-	return nil
+	return ec, nil
 }
 
 // trimQuotes removes one pair of matching surrounding quotes.

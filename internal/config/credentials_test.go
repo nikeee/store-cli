@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"crypto/elliptic"
 	"errors"
 	"os"
 	"strings"
@@ -85,6 +86,18 @@ func TestLoadAppleCredentialsShapes(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestParseAppleKey(t *testing.T) {
+	key, err := config.ParseAppleKey([]byte(readTestdata(t, "test_ec_p256.p8")))
+	if err != nil || key.Curve != elliptic.P256() {
+		t.Fatalf("key=%v err=%v", key, err)
+	}
+	for _, bad := range []string{"", "abc", readTestdata(t, "test_rsa.p8")} {
+		if _, err := config.ParseAppleKey([]byte(bad)); err == nil || !strings.Contains(err.Error(), "not a PKCS#8 EC private key") {
+			t.Errorf("err = %v", err)
+		}
+	}
 }
 
 func TestLoadGoogleServiceAccountShapes(t *testing.T) {
