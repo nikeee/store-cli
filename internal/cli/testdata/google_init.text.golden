@@ -1,0 +1,21 @@
+created:
+  <tmp>/metadata/android/en-US/title.txt              App title, max 30 characters
+  <tmp>/metadata/android/en-US/short_description.txt  Short description, max 80 characters
+  <tmp>/metadata/android/en-US/full_description.txt   Full description, max 4000 characters
+  <tmp>/metadata/android/en-US/video.txt              Promo video URL
+  <tmp>/metadata/android/en-US/images/
+  <tmp>/metadata/android/en-US/images/phoneScreenshots/
+  <tmp>/metadata/android/en-US/images/sevenInchScreenshots/
+  <tmp>/metadata/android/en-US/images/tenInchScreenshots/
+  <tmp>/metadata/android/en-US/images/tvScreenshots/
+  <tmp>/metadata/android/en-US/images/wearScreenshots/
+  <tmp>/metadata/android/it-IT/title.txt              App title, max 30 characters
+  <tmp>/metadata/android/it-IT/short_description.txt  Short description, max 80 characters
+  <tmp>/metadata/android/it-IT/full_description.txt   Full description, max 4000 characters
+  <tmp>/metadata/android/it-IT/video.txt              Promo video URL
+  <tmp>/metadata/android/it-IT/images/
+  <tmp>/metadata/android/it-IT/images/phoneScreenshots/
+  <tmp>/metadata/android/it-IT/images/sevenInchScreenshots/
+  <tmp>/metadata/android/it-IT/images/tenInchScreenshots/
+  <tmp>/metadata/android/it-IT/images/tvScreenshots/
+  <tmp>/metadata/android/it-IT/images/wearScreenshots/

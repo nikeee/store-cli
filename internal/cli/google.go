@@ -17,7 +17,8 @@ func newGoogleCmd(d Deps) *cobra.Command {
 	}
 	makeGroup(cmd)
 	cmd.PersistentFlags().String("app", "", "package name, e.g. com.example.app (default $GOOGLE_PLAY_PACKAGE_NAME)")
-	cmd.AddCommand(newGoogleAuthCmd(d), newGoogleBundleCmd(d), newGoogleTrackCmd(d), newGoogleReleaseNotesCmd(d), newGoogleDetailsCmd(d), newGoogleListingCmd(d), newGoogleImagesCmd(d))
+	cmd.AddCommand(newGoogleAuthCmd(d), newGoogleBundleCmd(d), newGoogleTrackCmd(d), newGoogleReleaseNotesCmd(d), newGoogleDetailsCmd(d), newGoogleListingCmd(d), newGoogleImagesCmd(d),
+		newGoogleInitCmd(), newGooglePushCmd(), newGooglePullCmd())
 	return cmd
 }
 

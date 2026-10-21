@@ -15,7 +15,9 @@ import (
 // ReviewDir is the folder of the App Review files (AppleReviewFields).
 const ReviewDir = "review_information"
 
-const androidDir = "android"
+// AndroidDir is the folder of the Google Play listing in a metadata directory,
+// with one folder per Play language.
+const AndroidDir = "android"
 
 var localeRe = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
 
@@ -58,7 +60,7 @@ func readLocales(dir string, fields []Field) (map[string]Texts, error) {
 		if !e.IsDir() || !IsLocale(name) {
 			continue
 		}
-		if name == ReviewDir || name == androidDir {
+		if name == ReviewDir || name == AndroidDir {
 			continue
 		}
 		t, err := readTexts(filepath.Join(dir, name), fields)
@@ -86,7 +88,7 @@ func ReadAppleTexts(dir string) (locales map[string]Texts, review Texts, err err
 
 // ReadGoogleTexts reads dir/android/<locale>/.
 func ReadGoogleTexts(dir string) (map[string]Texts, error) {
-	return readLocales(filepath.Join(dir, androidDir), GoogleFields)
+	return readLocales(filepath.Join(dir, AndroidDir), GoogleFields)
 }
 
 // WriteTexts writes one file per key present in t, value plus a newline, and

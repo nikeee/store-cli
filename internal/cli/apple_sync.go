@@ -40,7 +40,7 @@ func newAppleInitCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return emit(cmd, initResult{res})
+			return emit(cmd, initResult{res, scaffoldedField})
 		},
 	}
 	cmd.Flags().StringArray("locale", nil, "locale to scaffold, e.g. en-US (required, repeatable)")
@@ -49,8 +49,12 @@ func newAppleInitCmd() *cobra.Command {
 }
 
 // initResult is an InitResult whose text form names the field and the
-// character limit of every created file.
-type initResult struct{ metadata.InitResult }
+// character limit of every created file. fieldOf returns the field of a
+// created file; folders have none.
+type initResult struct {
+	metadata.InitResult
+	fieldOf func(path string) (metadata.Field, bool)
+}
 
 // RenderText implements output.TextRenderer.
 func (r initResult) RenderText(w io.Writer, s output.Styles) error {
@@ -61,7 +65,7 @@ func (r initResult) RenderText(w io.Writer, s output.Styles) error {
 		_, _ = fmt.Fprintln(tw, s.Key.Render("created:"))
 	}
 	for _, p := range r.Created {
-		f, ok := scaffoldedField(p)
+		f, ok := r.fieldOf(p)
 		switch {
 		case !ok:
 			_, _ = fmt.Fprintf(tw, "  %s%c\n", p, filepath.Separator)
@@ -80,7 +84,8 @@ func (r initResult) RenderText(w io.Writer, s output.Styles) error {
 	return tw.Flush()
 }
 
-// scaffoldedField returns the field of a file created by init; folders have none.
+// scaffoldedField returns the field of a file created by apple init; folders
+// have none.
 func scaffoldedField(path string) (metadata.Field, bool) {
 	fields := metadata.AppleFields
 	if filepath.Base(filepath.Dir(path)) == metadata.ReviewDir {

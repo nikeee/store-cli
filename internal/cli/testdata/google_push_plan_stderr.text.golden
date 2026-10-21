@@ -1,0 +1,8 @@
+plan: 7 changes
+  update listing de-DE fullDescription
+  update listing en-US title
+  update listing en-US video
+  create listing fr-FR title
+  replace images en-US phone
+  create images en-US icon
+  create images fr-FR feature-graphic

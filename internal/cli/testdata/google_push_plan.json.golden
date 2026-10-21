@@ -1,0 +1,57 @@
+{
+  "changes": [
+    {
+      "action": "update",
+      "scope": "listing",
+      "locale": "de-DE",
+      "field": "fullDescription",
+      "new": "Neue Beschreibung"
+    },
+    {
+      "action": "update",
+      "scope": "listing",
+      "locale": "en-US",
+      "field": "title",
+      "old": "Title",
+      "new": "New title"
+    },
+    {
+      "action": "update",
+      "scope": "listing",
+      "locale": "en-US",
+      "field": "video",
+      "old": "https://youtu.be/x"
+    },
+    {
+      "action": "create",
+      "scope": "listing",
+      "locale": "fr-FR",
+      "field": "title",
+      "new": "Titre"
+    },
+    {
+      "action": "replace",
+      "scope": "images",
+      "locale": "en-US",
+      "field": "phone",
+      "old": "1 image",
+      "new": "2 images"
+    },
+    {
+      "action": "create",
+      "scope": "images",
+      "locale": "en-US",
+      "field": "icon",
+      "old": "0 images",
+      "new": "1 image"
+    },
+    {
+      "action": "create",
+      "scope": "images",
+      "locale": "fr-FR",
+      "field": "feature-graphic",
+      "old": "0 images",
+      "new": "1 image"
+    }
+  ]
+}
