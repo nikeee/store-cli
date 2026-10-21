@@ -187,3 +187,73 @@ func TestAppleVersionSubmitCancelDryRun(t *testing.T) {
 		}
 	}
 }
+
+func releaseCLIServer(t *testing.T) *ascfake.Server {
+	t.Helper()
+	srv := versionCLIServer(t, "versions_pending_release.json")
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionPhasedRelease", ascfake.JSON(http.StatusOK, "phased_release_active.json"))
+	srv.Handle("POST", "/v1/appStoreVersionReleaseRequests", ascfake.JSON(http.StatusCreated, "release_request_created.json"))
+	srv.Handle("POST", "/v1/appStoreVersionPhasedReleases", ascfake.JSON(http.StatusCreated, "phased_release_created_inactive.json"))
+	srv.Handle("PATCH", "/v1/appStoreVersionPhasedReleases/{id}", ascfake.JSON(http.StatusOK, "phased_release_paused.json"))
+	return srv
+}
+
+func TestAppleVersionRelease(t *testing.T) {
+	srv := releaseCLIServer(t)
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "release", "1.3.0", "-o", "json")
+	if code != 0 || !strings.Contains(stdout, `"version": "1.3.0"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if reqs := srv.Requests(); reqs[len(reqs)-1].Path != "/v1/appStoreVersionReleaseRequests" {
+		t.Errorf("last request = %s", reqs[len(reqs)-1].Path)
+	}
+}
+
+func TestAppleVersionReleaseWrongState(t *testing.T) {
+	srv := versionCLIServer(t, "app_appStoreVersions.json")
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "release", "1.3.0")
+	if code != 1 || !strings.Contains(stderr, "PREPARE_FOR_SUBMISSION") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+}
+
+func TestAppleVersionPhased(t *testing.T) {
+	srv := releaseCLIServer(t)
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "phased", "pause", "1.3.0", "-o", "json")
+	if code != 0 || !strings.Contains(stdout, `"state": "PAUSED"`) || !strings.Contains(stdout, `"currentDayNumber": 3`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}
+
+func TestAppleVersionPhasedWithoutPhasedRelease(t *testing.T) {
+	srv := releaseCLIServer(t)
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionPhasedRelease", ascfake.JSON(http.StatusOK, "phased_release_none.json"))
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "phased", "resume", "1.3.0")
+	if code != 1 || !strings.Contains(stderr, "store apple version phased start 1.3.0") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+}
+
+func TestAppleVersionReleasePhasedDryRun(t *testing.T) {
+	for _, args := range [][]string{
+		{"apple", "version", "release", "1.3.0", "--dry-run", "-o", "json"},
+		{"apple", "version", "phased", "pause", "1.3.0", "--dry-run", "-o", "json"},
+		{"apple", "version", "phased", "resume", "1.3.0", "--dry-run", "-o", "json"},
+		{"apple", "version", "phased", "complete", "1.3.0", "--dry-run", "-o", "json"},
+		{"apple", "version", "phased", "start", "1.3.0", "--dry-run", "-o", "json"},
+	} {
+		srv := releaseCLIServer(t)
+		if args[3] == "start" {
+			srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionPhasedRelease", ascfake.JSON(http.StatusOK, "phased_release_none.json"))
+		}
+		code, stdout, stderr := runEnv(t, buildEnv(srv), false, args...)
+		if code != 0 || !strings.Contains(stdout, `"version": "1.3.0"`) {
+			t.Fatalf("%v: code=%d stdout=%q stderr=%q", args, code, stdout, stderr)
+		}
+		for _, r := range srv.Requests() {
+			if r.Method != http.MethodGet {
+				t.Errorf("%v: dry run sent %s %s", args, r.Method, r.Path)
+			}
+		}
+	}
+}

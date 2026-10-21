@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
+	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/clierr"
 )
 
@@ -22,6 +23,8 @@ func newAppleVersionCmd(Deps) *cobra.Command {
 		newAppleVersionSetBuildCmd(),
 		newAppleVersionSubmitCmd(),
 		newAppleVersionCancelCmd(),
+		newAppleVersionReleaseCmd(),
+		newAppleVersionPhasedCmd(),
 	)
 	return cmd
 }
@@ -247,6 +250,104 @@ func newAppleVersionCancelCmd() *cobra.Command {
 				return err
 			}
 			return emit(cmd, res)
+		},
+	}
+	addDryRun(cmd)
+	return cmd
+}
+
+func newAppleVersionReleaseCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "release <version>",
+		Short:   "Release a version that waits for the developer release",
+		Long:    "Releases a version in PENDING_DEVELOPER_RELEASE. Result: Version.",
+		Example: "  store apple version release 1.4.0",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, app, err := appleService(cmd)
+			if err != nil {
+				return err
+			}
+			v, err := findVersionToChange(cmd, svc, app, args[0])
+			if err != nil {
+				return err
+			}
+			v, err = svc.ReleaseVersion(cmd.Context(), v, dryRun(cmd))
+			if err != nil {
+				return err
+			}
+			return emit(cmd, v)
+		},
+	}
+	addDryRun(cmd)
+	return cmd
+}
+
+func newAppleVersionPhasedCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "phased",
+		Short: "Manage the phased release of a version",
+	}
+	makeGroup(cmd)
+	cmd.AddCommand(
+		newAppleVersionPhasedStartCmd(),
+		newAppleVersionPhasedStateCmd("pause", asc.PhasedReleaseStatePaused, "Pause the running phased release"),
+		newAppleVersionPhasedStateCmd("resume", asc.PhasedReleaseStateActive, "Resume a paused phased release"),
+		newAppleVersionPhasedStateCmd("complete", asc.PhasedReleaseStateComplete, "Release to all users now, ending the phased release"),
+	)
+	return cmd
+}
+
+func newAppleVersionPhasedStartCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "start <version>",
+		Short: "Enable phased release for a version",
+		Long: "Enables phased release for a version that is not live yet. It starts with the release. For a version\n" +
+			"that is live it starts at once. A version that has a phased release is left as it is.\n" +
+			"Result: {version, state, currentDayNumber}.",
+		Example: "  store apple version phased start 1.4.0",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, app, err := appleService(cmd)
+			if err != nil {
+				return err
+			}
+			v, err := findVersionToChange(cmd, svc, app, args[0])
+			if err != nil {
+				return err
+			}
+			p, err := svc.StartPhasedRelease(cmd.Context(), v, dryRun(cmd))
+			if err != nil {
+				return err
+			}
+			return emit(cmd, p)
+		},
+	}
+	addDryRun(cmd)
+	return cmd
+}
+
+func newAppleVersionPhasedStateCmd(name string, state asc.PhasedReleaseState, short string) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     name + " <version>",
+		Short:   short,
+		Long:    "Sets the phased release of the version to " + string(state) + ". Result: {version, state, currentDayNumber}.",
+		Example: "  store apple version phased " + name + " 1.4.0",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			svc, app, err := appleService(cmd)
+			if err != nil {
+				return err
+			}
+			v, err := findVersionToChange(cmd, svc, app, args[0])
+			if err != nil {
+				return err
+			}
+			p, err := svc.SetPhasedReleaseState(cmd.Context(), v, state, dryRun(cmd))
+			if err != nil {
+				return err
+			}
+			return emit(cmd, p)
 		},
 	}
 	addDryRun(cmd)
