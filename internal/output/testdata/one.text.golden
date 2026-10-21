@@ -1,0 +1,8 @@
+id: app-1
+name: My App
+count: 3
+tags: a, b
+items:
+  A   B
+  x1  y1
+  x2  y2

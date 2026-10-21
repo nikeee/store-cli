@@ -1,0 +1,8 @@
+ID     NAME        COUNT  TAGS
+app-1  My App      3      a, b
+app-2  Other, App  0
+
+app-1 items:
+  A   B
+  x1  y1
+  x2  y2
