@@ -14,6 +14,9 @@ import (
 // before the first release; submit skips release notes on it.
 const CodeNotYetReleased = "NOT_YET_RELEASED"
 
+// releaseNotesFile is the metadata file of the What's New text.
+const releaseNotesFile = "release_notes.txt"
+
 // ReleaseNote is the What's New text of one locale.
 type ReleaseNote struct {
 	Locale   string `json:"locale"`
@@ -33,9 +36,13 @@ func (s *Service) PreviewReleaseNotes(ctx context.Context, app App, v Version, n
 }
 
 func (s *Service) setReleaseNotes(ctx context.Context, app App, v Version, notes map[string]string, dryRun bool) ([]ReleaseNote, error) {
+	field, ok := metadata.FieldByFile(metadata.AppleFields, releaseNotesFile)
+	if !ok {
+		return nil, clierr.New("internal error: no release notes field")
+	}
 	locales := make([]string, 0, len(notes))
 	for l, text := range notes {
-		if err := metadata.ValidateLocaleTexts(l, metadata.AppleFields, metadata.Texts{"whatsNew": text}); err != nil {
+		if err := metadata.ValidateLocaleTexts(l, metadata.AppleFields, metadata.Texts{field.API: text}); err != nil {
 			return nil, err
 		}
 		locales = append(locales, l)
@@ -64,7 +71,8 @@ func (s *Service) setReleaseNotes(ctx context.Context, app App, v Version, notes
 	out := make([]ReleaseNote, 0, len(locales))
 	for _, l := range locales {
 		if !dryRun {
-			attrs := asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{WhatsNew: nullable(notes[l])}
+			attrs := asc.AppStoreVersionLocalizationUpdateRequestDataAttributes{}
+			*versionFields[field.API].update(&attrs) = nullable(notes[l])
 			id := ids[l]
 			_, err := s.client.AppStoreVersionLocalizationsUpdateInstance(ctx, asc.AppStoreVersionLocalizationsUpdateInstanceParams{ID: id},
 				asc.AppStoreVersionLocalizationUpdateRequest{Data: asc.AppStoreVersionLocalizationUpdateRequestData{Type: asc.ResourceTypeAppStoreVersionLocalizations, ID: id, Attributes: &attrs}})

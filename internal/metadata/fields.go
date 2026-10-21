@@ -73,3 +73,13 @@ func FieldByFlag(fields []Field, flag string) (Field, bool) {
 	}
 	return Field{}, false
 }
+
+// FieldByFile returns the field stored in the given file.
+func FieldByFile(fields []Field, file string) (Field, bool) {
+	for _, f := range fields {
+		if f.File == file {
+			return f, true
+		}
+	}
+	return Field{}, false
+}
