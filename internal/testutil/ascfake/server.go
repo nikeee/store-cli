@@ -73,6 +73,8 @@ func (s *Server) Requests() []Request {
 
 // UploadURL returns a presigned-style upload URL served by the fake. The
 // query carries a fake signature that must never show up in any output.
+// Uploads answer 200 unless a route for their path is registered, e.g.
+// Handle("PUT", "/upload/{name}", h) to fail or delay them.
 func (s *Server) UploadURL(name string) string {
 	return s.URL + uploadPrefix + name + "?X-Amz-Signature=fake-signature-" + name
 }
@@ -95,7 +97,11 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "" {
 			s.t.Errorf("ascfake: upload %s %s carries an Authorization header", r.Method, r.URL.Path)
 		}
-		w.WriteHeader(http.StatusOK)
+		if h == nil {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		h(w, r)
 		return
 	}
 	if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {

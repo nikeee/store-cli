@@ -68,6 +68,10 @@ func TestServer(t *testing.T) {
 		last.Query.Get("X-Amz-Signature") == "" {
 		t.Errorf("recorded %+v", last)
 	}
+	srv.Handle("PUT", "/upload/denied", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusForbidden) })
+	if code, _ := send(t, "PUT", srv.UploadURL("denied"), nil); code != http.StatusForbidden || len(rec.errs) != 0 {
+		t.Errorf("registered upload route: %d %v", code, rec.errs)
+	}
 
 	tests := []struct {
 		name, method, url string
@@ -76,9 +80,10 @@ func TestServer(t *testing.T) {
 		failure           string
 	}{
 		{"unregistered", "POST", srv.URL + "/v1/apps", auth, http.StatusNotImplemented,
-			"no handler for POST /v1/apps; registered: GET /v1/apps/{id}, GET /v1/apps/{id}, GET /v1/next"},
+			"no handler for POST /v1/apps; registered: GET /v1/apps/{id}, GET /v1/apps/{id}, GET /v1/next, PUT /upload/denied"},
 		{"no token", "GET", srv.URL + "/v1/apps/42", nil, http.StatusUnauthorized, "GET /v1/apps/42 without bearer token"},
 		{"upload with token", "PUT", srv.UploadURL("part2"), auth, http.StatusOK, "upload PUT /upload/part2 carries an Authorization header"},
+		{"registered upload with token", "PUT", srv.UploadURL("denied"), auth, http.StatusForbidden, "upload PUT /upload/denied carries an Authorization header"},
 	}
 	for _, tt := range tests {
 		rec.errs = nil
