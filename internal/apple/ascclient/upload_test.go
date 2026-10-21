@@ -2,11 +2,10 @@ package ascclient_test
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -46,20 +45,23 @@ func TestUploadPartsSendsNoAuthorization(t *testing.T) {
 // Presigned URLs carry their signature in the query; a failing upload must
 // not print it.
 func TestUploadPartsErrorHidesSignature(t *testing.T) {
-	const secret = "X-Amz-Signature=topsecret"
-	forbidden := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	srv := ascfake.New(t)
+	srv.Handle("PUT", "/upload/{name}", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-	}))
-	t.Cleanup(forbidden.Close)
+	})
+	// A closed server stands in for an unreachable upload host.
 	closed := httptest.NewServer(http.NotFoundHandler())
 	closed.Close()
 
-	for name, base := range map[string]string{"status 403": forbidden.URL, "connection refused": closed.URL} {
+	for name, url := range map[string]string{
+		"status 403":         srv.UploadURL("part1"),
+		"connection refused": closed.URL + "/upload/part1?X-Amz-Signature=fake-signature-part1",
+	} {
 		t.Run(name, func(t *testing.T) {
-			c := newClient(t, ascfake.New(t), time.Now)
-			op := ascclient.UploadOperation{Method: "PUT", URL: base + "/upload/part1?" + secret, Length: 5}
+			c := newClient(t, srv, time.Now)
+			op := ascclient.UploadOperation{Method: "PUT", URL: url, Length: 5}
 			err := c.UploadParts(t.Context(), []ascclient.UploadOperation{op}, strings.NewReader("hello"))
-			if err == nil || strings.Contains(err.Error(), "topsecret") {
+			if err == nil || strings.Contains(err.Error(), "fake-signature") {
 				t.Fatalf("err = %v", err)
 			}
 		})
@@ -69,26 +71,25 @@ func TestUploadPartsErrorHidesSignature(t *testing.T) {
 // A part that fails with 503 is sent again by the httpx client, with the
 // same bytes.
 func TestUploadPartsRetries(t *testing.T) {
-	var mu sync.Mutex
-	var bodies []string
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, _ := io.ReadAll(r.Body)
-		mu.Lock()
-		defer mu.Unlock()
-		bodies = append(bodies, string(b))
-		if len(bodies) == 1 {
+	srv := ascfake.New(t)
+	var failed atomic.Bool
+	srv.Handle("PUT", "/upload/{name}", func(w http.ResponseWriter, _ *http.Request) {
+		if !failed.Swap(true) {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
-	}))
-	t.Cleanup(srv.Close)
+	})
 	noSleep := func(context.Context, time.Duration) error { return nil }
 	c, err := ascclient.New(ascfake.Credentials(), httpx.NewClient(httpx.Options{Sleep: noSleep}), srv.URL, time.Now)
 	if err != nil {
 		t.Fatal(err)
 	}
-	op := ascclient.UploadOperation{Method: "PUT", URL: srv.URL + "/upload/part2", Offset: 5, Length: 3}
+	op := ascclient.UploadOperation{Method: "PUT", URL: srv.UploadURL("part2"), Offset: 5, Length: 3}
 	if err := c.UploadParts(t.Context(), []ascclient.UploadOperation{op}, strings.NewReader("helloabc")); err != nil {
 		t.Fatal(err)
+	}
+	var bodies []string
+	for _, r := range srv.Requests() {
+		bodies = append(bodies, string(r.Body))
 	}
 	if len(bodies) != 2 || bodies[0] != "abc" || bodies[1] != "abc" {
 		t.Errorf("bodies = %q", bodies)
