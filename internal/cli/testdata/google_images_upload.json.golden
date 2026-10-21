@@ -1,0 +1,16 @@
+{
+  "locale": "it-IT",
+  "type": "phone",
+  "images": [
+    {
+      "id": "img1",
+      "url": "https://play.example/img1",
+      "sha256": "aa11"
+    },
+    {
+      "id": "img2",
+      "url": "https://play.example/img2",
+      "sha256": "bb22"
+    }
+  ]
+}

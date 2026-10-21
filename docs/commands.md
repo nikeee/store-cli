@@ -669,13 +669,14 @@ store google listing set --locale <l> [field flags]
 
 ```
 store google images list --locale <l> [--type <t>]
-store google images upload --locale <l> --type <t> [--replace] <png>...
-store google images delete --locale <l> --type <t>
+store google images upload --locale <l> --type <t> [--replace] [--dry-run] [--changes-not-sent-for-review] <png>...
+store google images delete --locale <l> --type <t> [--dry-run] [--changes-not-sent-for-review]
 ```
 
 `--replace` compares the ordered SHA-256 list with Play's and replaces all images of that type
-only if it differs. Dimensions and aspect ratio are checked locally before uploading. Result:
-`[Image]`.
+only if it differs. Dimensions and aspect ratio are checked locally before uploading. `list` result:
+`[ImageSet]` (`locale`, `type`, `images` with `id`, `url`, `sha256`); `upload`: `ImageSet`; `delete`:
+`{locale, type, deleted}`; `--dry-run` of both: the planned change.
 
 | `--type` | Folder or file (`push`/`pull`) | API image type | Count |
 |---|---|---|---|

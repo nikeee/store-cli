@@ -1,0 +1,6 @@
+[1]:
+  - locale: it-IT
+    type: phone
+    images[2]{id,url,sha256}:
+      img1,"https://play.example/img1",aa11
+      img2,"https://play.example/img2",bb22
