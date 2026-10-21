@@ -2,13 +2,13 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
+	"github.com/nikeee/store-cli/internal/output"
 )
 
 // Deps are the process-level dependencies of the command tree, replaced in tests.
@@ -48,8 +48,18 @@ func DefaultDeps() Deps {
 func Run(ctx context.Context, args []string, d Deps) int {
 	root := NewRootCmd(d)
 	root.SetArgs(args)
-	if err := root.ExecuteContext(ctx); err != nil {
-		_, _ = fmt.Fprintf(d.Stderr, "error: %s\n", err)
+	slot := &printerSlot{}
+	if err := root.ExecuteContext(context.WithValue(ctx, printerKey{}, slot)); err != nil {
+		p := slot.p
+		if p == nil {
+			// failed before the mode was resolved: honor the environment, else text
+			mode, merr := output.ResolveMode("", d.Env)
+			if merr != nil {
+				mode = output.ModeText
+			}
+			p = newPrinter(d, mode)
+		}
+		p.Error(err)
 		return clierr.ExitCode(err)
 	}
 	return 0

@@ -16,6 +16,9 @@ func NewRootCmd(d Deps) *cobra.Command {
 		SilenceErrors: true,
 	}
 	makeGroup(root)
+	// Run the root hook together with the nearest group hook (apple validates --platform).
+	cobra.EnableTraverseRunHooks = true
+	root.PersistentPreRunE = resolvePrinter(d)
 	root.SetOut(d.Stdout)
 	root.SetErr(d.Stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
