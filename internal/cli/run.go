@@ -49,7 +49,7 @@ func Run(ctx context.Context, args []string, d Deps) int {
 	root := NewRootCmd(d)
 	root.SetArgs(args)
 	if err := root.ExecuteContext(ctx); err != nil {
-		fmt.Fprintf(d.Stderr, "error: %s\n", err)
+		_, _ = fmt.Fprintf(d.Stderr, "error: %s\n", err)
 		return clierr.ExitCode(err)
 	}
 	return 0
