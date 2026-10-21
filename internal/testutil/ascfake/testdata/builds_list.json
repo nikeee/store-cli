@@ -1,0 +1,68 @@
+{
+  "data": [
+    {
+      "type": "builds",
+      "id": "b3f1c2d4-0000-4a11-9c01-000000000045",
+      "attributes": {
+        "version": "45",
+        "uploadedDate": "2026-10-20T09:30:00-07:00",
+        "expired": false,
+        "processingState": "PROCESSING",
+        "usesNonExemptEncryption": null
+      },
+      "relationships": {
+        "preReleaseVersion": {
+          "data": {"type": "preReleaseVersions", "id": "pre-13"}
+        }
+      }
+    },
+    {
+      "type": "builds",
+      "id": "b3f1c2d4-0000-4a11-9c01-000000000044",
+      "attributes": {
+        "version": "44",
+        "uploadedDate": "2026-10-18T14:05:12Z",
+        "expired": false,
+        "processingState": "VALID",
+        "usesNonExemptEncryption": false
+      },
+      "relationships": {
+        "preReleaseVersion": {
+          "data": {"type": "preReleaseVersions", "id": "pre-13"}
+        }
+      }
+    },
+    {
+      "type": "builds",
+      "id": "b3f1c2d4-0000-4a11-9c01-000000000042",
+      "attributes": {
+        "version": "42",
+        "uploadedDate": "2026-09-30T08:00:00Z",
+        "expired": true,
+        "processingState": "VALID",
+        "usesNonExemptEncryption": true
+      },
+      "relationships": {
+        "preReleaseVersion": {
+          "data": {"type": "preReleaseVersions", "id": "pre-12"}
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "preReleaseVersions",
+      "id": "pre-13",
+      "attributes": {"version": "1.3.0", "platform": "IOS"}
+    },
+    {
+      "type": "preReleaseVersions",
+      "id": "pre-12",
+      "attributes": {"version": "1.2.0", "platform": "IOS"}
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/builds"
+  },
+  "meta": {"paging": {"total": 3, "limit": 20}}
+}

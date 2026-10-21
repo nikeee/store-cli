@@ -1,0 +1,5 @@
+{
+  "data": [],
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/builds"},
+  "meta": {"paging": {"total": 0, "limit": 1}}
+}

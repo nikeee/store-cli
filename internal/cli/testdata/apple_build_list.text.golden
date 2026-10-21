@@ -1,0 +1,4 @@
+ID                                    VERSION  BUILD  PLATFORM  STATE       UPLOADEDAT                 EXPIRED  USESNONEXEMPTENCRYPTION
+b3f1c2d4-0000-4a11-9c01-000000000045  1.3.0    45     ios       processing  2026-10-20T09:30:00-07:00  false
+b3f1c2d4-0000-4a11-9c01-000000000044  1.3.0    44     ios       valid       2026-10-18T14:05:12Z       false    false
+b3f1c2d4-0000-4a11-9c01-000000000042  1.2.0    42     ios       valid       2026-09-30T08:00:00Z       true     true

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "type": "builds",
+    "id": "b3f1c2d4-0000-4a11-9c01-000000000044",
+    "attributes": {
+      "version": "44",
+      "uploadedDate": "2026-10-18T14:05:12Z",
+      "expired": false,
+      "processingState": "VALID",
+      "usesNonExemptEncryption": false
+    }
+  },
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/builds/b3f1c2d4-0000-4a11-9c01-000000000044"}
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "b3f1c2d4-0000-4a11-9c01-000000000045",
+    "version": "1.3.0",
+    "build": "45",
+    "platform": "ios",
+    "state": "processing",
+    "uploadedAt": "2026-10-20T09:30:00-07:00",
+    "expired": false,
+    "usesNonExemptEncryption": null
+  },
+  {
+    "id": "b3f1c2d4-0000-4a11-9c01-000000000044",
+    "version": "1.3.0",
+    "build": "44",
+    "platform": "ios",
+    "state": "valid",
+    "uploadedAt": "2026-10-18T14:05:12Z",
+    "expired": false,
+    "usesNonExemptEncryption": false
+  },
+  {
+    "id": "b3f1c2d4-0000-4a11-9c01-000000000042",
+    "version": "1.2.0",
+    "build": "42",
+    "platform": "ios",
+    "state": "valid",
+    "uploadedAt": "2026-09-30T08:00:00Z",
+    "expired": true,
+    "usesNonExemptEncryption": true
+  }
+]
