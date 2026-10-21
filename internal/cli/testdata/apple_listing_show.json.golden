@@ -1,0 +1,28 @@
+[
+  {
+    "locale": "de-DE",
+    "name": "Beispiel App",
+    "subtitle": "Dinge tun",
+    "privacyUrl": "",
+    "privacyChoicesUrl": "",
+    "description": "Eine Beispiel-App.",
+    "keywords": "beispiel,app",
+    "promotionalText": "",
+    "marketingUrl": "",
+    "supportUrl": "https://example.com/support",
+    "whatsNew": ""
+  },
+  {
+    "locale": "en-US",
+    "name": "Example App",
+    "subtitle": "Do things",
+    "privacyUrl": "https://example.com/privacy",
+    "privacyChoicesUrl": "https://example.com/choices",
+    "description": "An example app.",
+    "keywords": "example,app",
+    "promotionalText": "New!",
+    "marketingUrl": "https://example.com",
+    "supportUrl": "https://example.com/support",
+    "whatsNew": "Bug fixes."
+  }
+]

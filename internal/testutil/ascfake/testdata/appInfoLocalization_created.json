@@ -1,0 +1,3 @@
+{"data":
+    {"type": "appInfoLocalizations", "id": "il-new", "attributes": {"locale": "fr-FR", "name": "Example"}, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/il-new"}}
+, "links": {"self": "https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/il-new"}}
