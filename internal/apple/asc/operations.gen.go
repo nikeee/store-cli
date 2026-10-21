@@ -1347,6 +1347,24 @@ func (c *Client) BuildUploadsGetInstance(ctx context.Context, params BuildUpload
 	return out, nil
 }
 
+// BuildsBetaAppReviewSubmissionGetToOneRelatedParams holds the parameters of BuildsBetaAppReviewSubmissionGetToOneRelated.
+type BuildsBetaAppReviewSubmissionGetToOneRelatedParams struct {
+	ID                             string   // path id, required
+	FieldsBetaAppReviewSubmissions []string // query fields[betaAppReviewSubmissions]
+}
+
+// BuildsBetaAppReviewSubmissionGetToOneRelated sends GET /v1/builds/{id}/betaAppReviewSubmission (builds_betaAppReviewSubmission_getToOneRelated).
+func (c *Client) BuildsBetaAppReviewSubmissionGetToOneRelated(ctx context.Context, params BuildsBetaAppReviewSubmissionGetToOneRelatedParams) (*BetaAppReviewSubmissionWithoutIncludesResponse, error) {
+	q := url.Values{}
+	setList(q, "fields[betaAppReviewSubmissions]", params.FieldsBetaAppReviewSubmissions)
+	u := c.url("/v1/builds/"+url.PathEscape(params.ID)+"/betaAppReviewSubmission", q)
+	out := new(BetaAppReviewSubmissionWithoutIncludesResponse)
+	if err := c.do(ctx, "GET", u, nil, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BuildsBetaBuildLocalizationsGetToManyRelatedParams holds the parameters of BuildsBetaBuildLocalizationsGetToManyRelated.
 type BuildsBetaBuildLocalizationsGetToManyRelatedParams struct {
 	ID                           string   // path id, required

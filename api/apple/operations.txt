@@ -26,6 +26,7 @@ betaGroups_betaTesters_deleteToManyRelationship
 betaTesters_getCollection
 betaTesters_createInstance
 betaAppReviewSubmissions_createInstance
+builds_betaAppReviewSubmission_getToOneRelated
 # versions
 appStoreVersions_createInstance
 appStoreVersions_updateInstance

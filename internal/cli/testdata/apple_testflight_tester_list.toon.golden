@@ -1,0 +1,3 @@
+[2]{id,email,firstName,lastName,inviteType,state}:
+  tester-1,ada@example.com,Ada,Lovelace,email,accepted
+  tester-2,alan@example.com,Alan,Turing,public_link,installed

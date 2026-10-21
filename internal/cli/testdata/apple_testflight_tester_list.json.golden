@@ -1,0 +1,18 @@
+[
+  {
+    "id": "tester-1",
+    "email": "ada@example.com",
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "inviteType": "email",
+    "state": "accepted"
+  },
+  {
+    "id": "tester-2",
+    "email": "alan@example.com",
+    "firstName": "Alan",
+    "lastName": "Turing",
+    "inviteType": "public_link",
+    "state": "installed"
+  }
+]

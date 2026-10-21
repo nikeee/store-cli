@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "status": "409",
+      "code": "ENTITY_ERROR",
+      "title": "The request entity is not valid.",
+      "detail": "The build has already been submitted for Beta App Review."
+    }
+  ]
+}

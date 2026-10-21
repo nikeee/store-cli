@@ -1,0 +1,16 @@
+[
+  {
+    "id": "grp-internal",
+    "name": "Team",
+    "internal": true,
+    "publicLinkEnabled": false,
+    "publicLink": ""
+  },
+  {
+    "id": "grp-beta",
+    "name": "Beta",
+    "internal": false,
+    "publicLinkEnabled": true,
+    "publicLink": "https://testflight.apple.com/join/AbCdEf"
+  }
+]

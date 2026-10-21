@@ -13586,6 +13586,108 @@
         }
       ]
     },
+    "/v1/builds/{id}/betaAppReviewSubmission": {
+      "get": {
+        "tags": [
+          "Builds"
+        ],
+        "operationId": "builds_betaAppReviewSubmission_getToOneRelated",
+        "parameters": [
+          {
+            "name": "fields[betaAppReviewSubmissions]",
+            "in": "query",
+            "description": "the fields to include for returned resources of type betaAppReviewSubmissions",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "betaReviewState",
+                  "submittedDate",
+                  "build"
+                ]
+              }
+            },
+            "style": "form",
+            "explode": false
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Parameter error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Single BetaAppReviewSubmission with get",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BetaAppReviewSubmissionWithoutIncludesResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "the id of the requested resource",
+          "schema": {
+            "type": "string"
+          },
+          "style": "simple",
+          "required": true
+        }
+      ]
+    },
     "/v1/builds/{id}/betaBuildLocalizations": {
       "get": {
         "tags": [
@@ -28952,6 +29054,22 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "BetaAppReviewSubmissionWithoutIncludesResponse": {
+        "type": "object",
+        "title": "BetaAppReviewSubmissionWithoutIncludesResponse",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BetaAppReviewSubmission"
+          },
+          "links": {
+            "$ref": "#/components/schemas/DocumentLinks"
+          }
+        },
+        "required": [
+          "data",
+          "links"
         ]
       },
       "BetaBuildLocalizationsWithoutIncludesResponse": {

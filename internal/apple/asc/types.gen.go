@@ -3532,6 +3532,12 @@ type BetaAppReviewSubmissionResponse struct {
 	Links    DocumentLinks           `json:"links"`
 }
 
+// BetaAppReviewSubmissionWithoutIncludesResponse is generated from components.schemas.BetaAppReviewSubmissionWithoutIncludesResponse.
+type BetaAppReviewSubmissionWithoutIncludesResponse struct {
+	Data  BetaAppReviewSubmission `json:"data"`
+	Links DocumentLinks           `json:"links"`
+}
+
 // BetaBuildLocalization is generated from components.schemas.BetaBuildLocalization.
 type BetaBuildLocalization struct {
 	Type          ResourceType                        `json:"type"`

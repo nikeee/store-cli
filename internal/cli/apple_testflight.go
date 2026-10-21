@@ -13,7 +13,7 @@ func newAppleTestflightCmd(Deps) *cobra.Command {
 		Short: "Manage TestFlight",
 	}
 	makeGroup(cmd)
-	cmd.AddCommand(newAppleTestflightNotesCmd())
+	cmd.AddCommand(newAppleTestflightNotesCmd(), newAppleTestflightGroupCmd(), newAppleTestflightTesterCmd(), newAppleTestflightSubmitCmd())
 	return cmd
 }
 

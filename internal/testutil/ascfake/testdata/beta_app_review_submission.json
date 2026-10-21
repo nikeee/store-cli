@@ -1,0 +1,4 @@
+{
+  "data": {"type": "betaAppReviewSubmissions", "id": "sub-1", "attributes": {"betaReviewState": "WAITING_FOR_REVIEW", "submittedDate": "2026-10-20T10:00:00Z"}},
+  "links": {"self": "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions/sub-1"}
+}
