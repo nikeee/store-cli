@@ -52,7 +52,7 @@ var resultTypes = []resultType{
 	rt[apple.ScreenshotsDeleted]("ScreenshotsDeleted", "`action` is `delete`, or `skip` when there was no set."),
 	rt[apple.PreviewSet]("PreviewSet", ""),
 	rt[apple.PreviewsDeleted]("PreviewsDeleted", "`action` is `delete`, or `skip` when there was no set."),
-	rt[apple.ReviewInfo]("ReviewInfo", "`demoPassword` is `***` unless `--reveal` is given."),
+	rt[apple.ReviewInfo]("ReviewInfo", "`demoPassword` is `"+metadata.Mask+"` unless `--reveal` is given."),
 	rt[apple.PullResult]("ApplePullResult", ""),
 	rt[metadata.Plan]("Plan", "Used by `push` and by `--dry-run`."),
 	rt[metadata.Change]("Change", "`action` is `create`, `update`, `replace` or `skip`."),
