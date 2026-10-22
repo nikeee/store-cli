@@ -140,6 +140,17 @@ func TestAppleListingSetErrors(t *testing.T) {
 	}
 }
 
+func TestAppleListingSetWithoutLocaleExits2(t *testing.T) {
+	srv := listingCLIServer(t, "app_appInfos.json", "appInfo_localizations_full.json", "version_localizations.json")
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "listing", "set", "--name", "X")
+	if code != 2 || !strings.Contains(stderr, "required flag --locale not set") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+	if n := len(srv.Requests()); n != 0 {
+		t.Errorf("requests = %d", n)
+	}
+}
+
 func TestAppleListingLocalePrimaryRefused(t *testing.T) {
 	srv := defaultListingServer(t)
 	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "listing", "locale", "remove", "en-US")

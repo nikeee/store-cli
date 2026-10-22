@@ -76,10 +76,10 @@ func newAppleListingSetCmd() *cobra.Command {
 		Example: "  store apple listing set --locale en-US --subtitle \"Fast and small\" --keywords @keywords.txt",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			locale, _ := cmd.Flags().GetString("locale")
-			if locale == "" {
-				return clierr.Usagef("--locale must not be empty")
+			if err := requireFlags(cmd, "locale"); err != nil {
+				return err
 			}
+			locale, _ := cmd.Flags().GetString("locale")
 			texts := metadata.Texts{}
 			for _, f := range metadata.AppleFields {
 				if tf := flags[f.Flag]; f.Flag != "" && tf.Changed {
@@ -109,7 +109,6 @@ func newAppleListingSetCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().String("locale", "", "locale to change, e.g. en-US (required)")
-	_ = cmd.MarkFlagRequired("locale")
 	addListingVersionFlag(cmd)
 	for _, f := range metadata.AppleFields {
 		if f.Flag == "" {
