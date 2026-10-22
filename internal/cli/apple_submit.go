@@ -1,12 +1,9 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
-	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/metadata"
 )
 
@@ -19,7 +16,7 @@ func newAppleSubmitCmd() *cobra.Command {
 			"2. Find or create the version. It must be editable (PREPARE_FOR_SUBMISSION, DEVELOPER_REJECTED,\n" +
 			"   REJECTED, METADATA_REJECTED, INVALID_BINARY); otherwise exit 1 with its state.\n" +
 			"3. Attach the build. Set the release type only when --release is given (scheduled needs\n" +
-			"   --release-date, an RFC 3339 time).\n" +
+			"   --release-date, an RFC 3339 time; --release-date needs --release scheduled).\n" +
 			"4. --metadata: run push against this version.\n" +
 			"5. --release-notes: set \"What's New\" per locale. While the app has never had a released version,\n" +
 			"   this step is skipped with a notice (Apple rejects the field then).\n" +
@@ -33,19 +30,9 @@ func newAppleSubmitCmd() *cobra.Command {
 			o.Build, _ = cmd.Flags().GetString("build")
 			o.MetadataDir, _ = cmd.Flags().GetString("metadata")
 			o.ScreenshotsDir, _ = cmd.Flags().GetString("screenshots")
-			if r, _ := cmd.Flags().GetString("release"); r != "" {
-				t, err := apple.ParseReleaseType(r)
-				if err != nil {
-					return err
-				}
-				o.ReleaseType = t
-			}
-			if d, _ := cmd.Flags().GetString("release-date"); d != "" {
-				t, err := time.Parse(time.RFC3339, d)
-				if err != nil {
-					return clierr.Usagef("invalid --release-date %q (use an RFC 3339 time, e.g. 2026-12-01T09:00:00Z)", d)
-				}
-				o.ReleaseDate = &t
+			var err error
+			if o.ReleaseType, o.ReleaseDate, err = releaseFlags(cmd); err != nil {
+				return err
 			}
 			if dir, _ := cmd.Flags().GetString("release-notes"); dir != "" {
 				notes, err := metadata.ReadReleaseNotesDir(dir)

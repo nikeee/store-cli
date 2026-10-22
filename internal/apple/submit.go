@@ -116,8 +116,8 @@ func CheckSubmitInputs(o SubmitOptions) error {
 	if _, ok := APIPlatform(o.Platform); !ok {
 		return clierr.Usagef("invalid --platform %q", o.Platform)
 	}
-	if o.ReleaseType == "SCHEDULED" && o.ReleaseDate == nil {
-		return clierr.Usagef("--release scheduled needs --release-date")
+	if err := CheckReleaseDate(o.ReleaseType, o.ReleaseDate); err != nil {
+		return err
 	}
 	if o.MetadataDir != "" {
 		if _, err := ReadPushDir(pushOptions(o)); err != nil {

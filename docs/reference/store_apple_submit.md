@@ -9,7 +9,7 @@ The whole App Store submission in one command:
 2. Find or create the version. It must be editable (PREPARE_FOR_SUBMISSION, DEVELOPER_REJECTED,
    REJECTED, METADATA_REJECTED, INVALID_BINARY); otherwise exit 1 with its state.
 3. Attach the build. Set the release type only when --release is given (scheduled needs
-   --release-date, an RFC 3339 time).
+   --release-date, an RFC 3339 time; --release-date needs --release scheduled).
 4. --metadata: run push against this version.
 5. --release-notes: set "What's New" per locale. While the app has never had a released version,
    this step is skipped with a notice (Apple rejects the field then).

@@ -97,25 +97,16 @@ func newAppleVersionCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create <version>",
 		Short: "Create a new App Store version",
-		Long: "Creates the version. Fails if the version exists. --release scheduled needs --release-date.\n" +
+		Long: "Creates the version. Fails if the version exists. --release scheduled needs --release-date, and\n" +
+			"--release-date needs --release scheduled.\n" +
 			"Result: Version",
 		Example: "  store apple version create 1.4.0 --release scheduled --release-date 2026-12-01T09:00:00Z",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o := apple.CreateVersionOptions{Version: args[0], Platform: platformFlag(cmd), DryRun: dryRun(cmd)}
-			if r, _ := cmd.Flags().GetString("release"); r != "" {
-				t, err := apple.ParseReleaseType(r)
-				if err != nil {
-					return err
-				}
-				o.ReleaseType = t
-			}
-			if d, _ := cmd.Flags().GetString("release-date"); d != "" {
-				t, err := time.Parse(time.RFC3339, d)
-				if err != nil {
-					return clierr.Usagef("invalid --release-date %q (use an RFC 3339 time, e.g. 2026-12-01T09:00:00Z)", d)
-				}
-				o.ReleaseDate = &t
+			var err error
+			if o.ReleaseType, o.ReleaseDate, err = releaseFlags(cmd); err != nil {
+				return err
 			}
 			if copyright.Changed {
 				o.Copyright = &copyright.Value
@@ -137,6 +128,24 @@ func newAppleVersionCreateCmd() *cobra.Command {
 	cmd.Flags().Var(copyright, "copyright", "copyright text, or @file to read it from a file")
 	addDryRun(cmd)
 	return cmd
+}
+
+// releaseFlags parses --release and --release-date and checks that they fit
+// together, before any API call.
+func releaseFlags(cmd *cobra.Command) (releaseType string, date *time.Time, err error) {
+	if r, _ := cmd.Flags().GetString("release"); r != "" {
+		if releaseType, err = apple.ParseReleaseType(r); err != nil {
+			return "", nil, err
+		}
+	}
+	if d, _ := cmd.Flags().GetString("release-date"); d != "" {
+		t, err := time.Parse(time.RFC3339, d)
+		if err != nil {
+			return "", nil, clierr.Usagef("invalid --release-date %q (use an RFC 3339 time, e.g. 2026-12-01T09:00:00Z)", d)
+		}
+		date = &t
+	}
+	return releaseType, date, apple.CheckReleaseDate(releaseType, date)
 }
 
 func newAppleVersionSetBuildCmd() *cobra.Command {

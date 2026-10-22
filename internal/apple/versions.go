@@ -40,6 +40,18 @@ func ParseReleaseType(flag string) (string, error) {
 	return "", clierr.Usagef("invalid --release %q (use manual, after-approval or scheduled)", flag)
 }
 
+// CheckReleaseDate reports a release date that does not fit the release type
+// (see ParseReleaseType): SCHEDULED needs one, the other types take none.
+func CheckReleaseDate(releaseType string, date *time.Time) error {
+	if releaseType == "SCHEDULED" && date == nil {
+		return clierr.Usagef("--release scheduled needs --release-date")
+	}
+	if releaseType != "SCHEDULED" && date != nil {
+		return clierr.Usagef("--release-date needs --release scheduled")
+	}
+	return nil
+}
+
 func isEditable(v Version) bool { return slices.Contains(EditableVersionStates, v.State) }
 
 // listVersions returns up to limit versions of app on platform (a --platform
@@ -169,8 +181,8 @@ func (s *Service) CreateVersion(ctx context.Context, app App, o CreateVersionOpt
 	if !ok {
 		return Version{}, clierr.Usagef("invalid --platform %q", o.Platform)
 	}
-	if o.ReleaseType == "SCHEDULED" && o.ReleaseDate == nil {
-		return Version{}, clierr.Usagef("--release scheduled needs --release-date")
+	if err := CheckReleaseDate(o.ReleaseType, o.ReleaseDate); err != nil {
+		return Version{}, err
 	}
 	if existing, found, err := s.FindVersion(ctx, app, o.Version, o.Platform); err != nil {
 		return Version{}, err

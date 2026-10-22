@@ -74,12 +74,17 @@ func TestAppleVersionCreateUsageErrors(t *testing.T) {
 		"scheduled without date": {"--release", "scheduled"},
 		"bad date":               {"--release", "scheduled", "--release-date", "tomorrow"},
 		"bad release":            {"--release", "now"},
+		"date without release":   {"--release-date", "2026-12-01T09:00:00Z"},
+		"date with manual":       {"--release", "manual", "--release-date", "2026-12-01T09:00:00Z"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			srv := versionCLIServer(t, "versions_live_only.json")
 			code, _, stderr := runEnv(t, buildEnv(srv), false, append([]string{"apple", "version", "create", "1.4.0"}, args...)...)
 			if code != 2 || !strings.Contains(stderr, "--release") {
 				t.Fatalf("code=%d stderr=%q", code, stderr)
+			}
+			if n := len(srv.Requests()); n != 0 {
+				t.Errorf("requests = %d", n)
 			}
 		})
 	}

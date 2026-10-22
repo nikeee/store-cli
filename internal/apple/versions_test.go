@@ -111,6 +111,33 @@ func TestCreateScheduledNeedsDate(t *testing.T) {
 	}
 }
 
+func TestCheckReleaseDate(t *testing.T) {
+	date := time.Date(2026, 12, 1, 9, 0, 0, 0, time.UTC)
+	for _, c := range []struct {
+		releaseType string
+		date        *time.Time
+		wantErr     string
+	}{
+		{"", nil, ""},
+		{"MANUAL", nil, ""},
+		{"SCHEDULED", &date, ""},
+		{"SCHEDULED", nil, "--release scheduled needs --release-date"},
+		{"", &date, "--release-date needs --release scheduled"},
+		{"AFTER_APPROVAL", &date, "--release-date needs --release scheduled"},
+	} {
+		err := CheckReleaseDate(c.releaseType, c.date)
+		if c.wantErr == "" {
+			if err != nil {
+				t.Errorf("%q, %v: err = %v", c.releaseType, c.date, err)
+			}
+			continue
+		}
+		if err == nil || clierr.ExitCode(err) != 2 || err.Error() != c.wantErr {
+			t.Errorf("%q, %v: err = %v, want %q", c.releaseType, c.date, err, c.wantErr)
+		}
+	}
+}
+
 func TestCreateVersion(t *testing.T) {
 	srv := versionServer(t, "versions_live_only.json")
 	srv.Handle("POST", "/v1/appStoreVersions", ascfake.JSON(http.StatusCreated, "version_created.json"))

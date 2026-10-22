@@ -64,6 +64,8 @@ func TestAppleSubmitInvalidInputSendsNothing(t *testing.T) {
 		{[]string{"--release", "scheduled"}, 2},
 		{[]string{"--release", "later"}, 2},
 		{[]string{"--release", "scheduled", "--release-date", "tomorrow"}, 2},
+		{[]string{"--release-date", "2026-12-01T09:00:00Z"}, 2},
+		{[]string{"--release", "after-approval", "--release-date", "2026-12-01T09:00:00Z"}, 2},
 	} {
 		args := append([]string{"apple", "submit", "1.3.0"}, c.args...)
 		if code, _, stderr := runEnv(t, buildEnv(srv), false, args...); code != c.code {
