@@ -168,6 +168,30 @@ func TestSubmitNoBuild(t *testing.T) {
 	}
 }
 
+func TestSubmitLatestIsNewestValidBuild(t *testing.T) {
+	srv := submitServer(t, "app_appStoreVersions.json", "builds_processing.json")
+	// Build 45 is newer but still processing; build 44 is the newest valid one.
+	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, r *http.Request) {
+		fixture := "builds_processing.json"
+		if r.URL.Query().Get("filter[processingState]") == "VALID" {
+			fixture = "builds_valid_older.json"
+		}
+		ascfake.JSON(http.StatusOK, fixture)(w, r)
+	})
+	res, err := newService(t, srv).Submit(t.Context(), listingApp, SubmitOptions{Version: "1.3.0", Platform: "ios", Build: "latest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Build != "44" {
+		t.Errorf("build = %s, want 44", res.Build)
+	}
+	for _, r := range srv.Requests() {
+		if r.Path == "/v1/builds" && r.Query.Get("filter[preReleaseVersion.version]") != "1.3.0" {
+			t.Errorf("build query = %v", r.Query)
+		}
+	}
+}
+
 func TestSubmitInvalidInputMakesNoRequest(t *testing.T) {
 	srv := submitServer(t, "app_appStoreVersions.json", "builds_valid.json")
 	root := t.TempDir()

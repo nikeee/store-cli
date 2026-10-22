@@ -265,23 +265,22 @@ func (s *Service) createOptions(o SubmitOptions) CreateVersionOptions {
 	return CreateVersionOptions{Version: o.Version, Platform: o.Platform, ReleaseType: o.ReleaseType, ReleaseDate: o.ReleaseDate, DryRun: o.DryRun}
 }
 
-// submitBuild resolves o.Build, which must be a valid build of o.Version.
+// submitBuild resolves o.Build, which must be a valid build of o.Version;
+// "latest" (the default) is the newest valid build of o.Version.
 func (s *Service) submitBuild(ctx context.Context, app App, o SubmitOptions) (Build, error) {
-	ref := o.Build
-	if ref == "" {
-		ref = "latest"
+	if o.Build != "" && o.Build != "latest" {
+		return s.ResolveBuild(ctx, app, o.Build, o.Version, o.Platform)
 	}
-	b, err := s.ResolveBuild(ctx, app, ref, o.Version, o.Platform)
-	if err == nil && ref == "latest" && b.State != "valid" {
-		e := clierr.New("the latest build %s of version %s is %s, not valid", b.Build, o.Version, b.State)
+	builds, err := s.ListBuilds(ctx, app, BuildFilter{Version: o.Version, State: "valid", Limit: 1, Platform: o.Platform})
+	if err != nil {
+		return Build{}, err
+	}
+	if len(builds) == 0 {
+		e := clierr.New("no valid build found for version %s", o.Version)
 		e.Hint = "store apple build list --version " + o.Version
 		return Build{}, e
 	}
-	var ce *clierr.Error
-	if errors.As(err, &ce) && ref == "latest" && ce.Hint == "store apple build list" {
-		ce.Hint = "store apple build list --version " + o.Version
-	}
-	return b, err
+	return builds[0], nil
 }
 
 // submitPrepareVersion creates the version if it does not exist, else sets
