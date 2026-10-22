@@ -1,5 +1,6 @@
 {
   "locale": "it-IT",
   "type": "phone",
+  "action": "delete",
   "deleted": 2
 }

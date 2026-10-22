@@ -145,6 +145,16 @@ Never contains the key.
 | `inviteType` | string |
 | `state` | string |
 
+## TesterRemoved
+
+`action` is `delete`, or `skip` when the tester was not in the group.
+
+| Field | Type |
+|---|---|
+| `email` | string |
+| `group` | string |
+| `action` | string |
+
 ## GroupBuild
 
 | Field | Type |
@@ -209,11 +219,13 @@ Also the entry type of app previews.
 
 ## ScreenshotsDeleted
 
+`action` is `delete`, or `skip` when there was no set.
+
 | Field | Type |
 |---|---|
 | `locale` | string |
 | `device` | string |
-| `deleted` | bool |
+| `action` | string |
 
 ## PreviewSet
 
@@ -226,11 +238,13 @@ Also the entry type of app previews.
 
 ## PreviewsDeleted
 
+`action` is `delete`, or `skip` when there was no set.
+
 | Field | Type |
 |---|---|
 | `locale` | string |
 | `device` | string |
-| `deleted` | bool |
+| `action` | string |
 
 ## ReviewInfo
 
@@ -376,12 +390,13 @@ Used by `push` and by `--dry-run`.
 
 ## ImagesDeleted
 
-`deleted` is the number of removed images.
+`action` is `delete`, or `skip` when there were no images; `deleted` is the number of removed images.
 
 | Field | Type |
 |---|---|
 | `locale` | string |
 | `type` | string |
+| `action` | string |
 | `deleted` | int |
 
 ## GooglePullResult

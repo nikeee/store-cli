@@ -95,6 +95,20 @@ func TestGoogleImagesDeleteGolden(t *testing.T) {
 	}
 }
 
+// No images is nothing to do: exit 0 with action skip, nothing committed.
+func TestGoogleImagesDeleteNoneSkips(t *testing.T) {
+	srv := playImagesServer(t)
+	code, stdout, stderr := runEnv(t, googleEnv(srv, nil), false, append(imageArgs("delete", "--locale", "en-US", "--type", "phone"), "-o", "json")...)
+	if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"en-US","type":"phone","action":"skip","deleted":0}` {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	for _, r := range srv.Requests() {
+		if strings.HasSuffix(r.Path, ":commit") {
+			t.Errorf("committed: %s", r.Path)
+		}
+	}
+}
+
 func TestGoogleImagesUsageErrors(t *testing.T) {
 	files := writeShots(t, 640, 1280, 2)
 	tests := []struct {

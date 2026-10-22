@@ -4,9 +4,9 @@ Remove a tester from a beta group
 
 ### Synopsis
 
-Removes the tester from the group only.
+Removes the tester from the group only. A tester not in the group is a skip (exit 0).
 
-Result: Tester
+Result: TesterRemoved
 
 ```
 store apple testflight tester remove <email> [flags]

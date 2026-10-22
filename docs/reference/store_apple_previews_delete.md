@@ -4,8 +4,8 @@ Delete the app preview set of one locale and device
 
 ### Synopsis
 
-Deletes the whole set. A set that does not exist is an error. With --dry-run the result is
-the planned Plan.
+Deletes the whole set. A set that does not exist is a skip (exit 0). With --dry-run the result
+is the planned Plan.
 
 Result: PreviewsDeleted
 

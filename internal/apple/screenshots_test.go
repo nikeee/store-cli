@@ -471,23 +471,34 @@ func TestDeleteScreenshots(t *testing.T) {
 	svc, _ := uploadService(t, srv.Server)
 	v := Version{ID: "v1", Version: "1.3.0"}
 
-	res, ch, err := svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, true)
-	if err != nil || res.Deleted || ch.Action != metadata.ActionDelete || ch.Old != "1 screenshot" || len(mutations(srv.Server)) != 0 {
-		t.Fatalf("dry run: res=%+v ch=%+v err=%v", res, ch, err)
+	_, ch, err := svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, true)
+	if err != nil || ch.Action != metadata.ActionDelete || ch.Old != "1 screenshot" || len(mutations(srv.Server)) != 0 {
+		t.Fatalf("dry run: ch=%+v err=%v", ch, err)
 	}
-	res, _, err = svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, false)
-	if err != nil || !res.Deleted || res.Device != "iphone-6.9" {
+	res, _, err := svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, false)
+	if err != nil || res != (ScreenshotsDeleted{Locale: "en-US", Device: "iphone-6.9", Action: metadata.ActionDelete}) {
 		t.Fatalf("res=%+v err=%v", res, err)
 	}
 	if m := mutations(srv.Server); len(m) != 1 || m[0] != "DELETE /v1/appScreenshotSets/set-1" {
 		t.Errorf("mutations = %v", m)
 	}
+}
 
-	empty := newShotServer(t, "appScreenshotSets_empty.json", nil, instantly)
-	svc2, _ := uploadService(t, empty.Server)
-	_, _, err = svc2.DeleteScreenshots(t.Context(), v, "en-US", iphone69, false)
-	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "no iphone-6.9 screenshot set") {
-		t.Errorf("err = %v", err)
+// A set or locale that does not exist is nothing to do: skip, no error.
+func TestDeleteScreenshotsMissingSkips(t *testing.T) {
+	v := Version{ID: "v1", Version: "1.3.0"}
+	for _, locale := range []string{"en-US", "fr-FR"} {
+		for _, dry := range []bool{true, false} {
+			srv := newShotServer(t, "appScreenshotSets_empty.json", nil, instantly)
+			svc, _ := uploadService(t, srv.Server)
+			res, ch, err := svc.DeleteScreenshots(t.Context(), v, locale, iphone69, dry)
+			if err != nil || res.Action != metadata.ActionSkip || ch.Action != metadata.ActionSkip || ch.Locale != locale || ch.Field != "iphone-6.9" {
+				t.Errorf("%s dry=%v: res=%+v ch=%+v err=%v", locale, dry, res, ch, err)
+			}
+			if m := mutations(srv.Server); len(m) != 0 {
+				t.Errorf("mutations = %v", m)
+			}
+		}
 	}
 }
 

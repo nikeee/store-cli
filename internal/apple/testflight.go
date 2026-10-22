@@ -10,6 +10,7 @@ import (
 	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 // BetaGroup is a TestFlight beta group.
@@ -255,26 +256,34 @@ func (s *Service) AddTester(ctx context.Context, g BetaGroup, email, firstName, 
 	return testerFromAPI(resp.Data), nil
 }
 
+// TesterRemoved is the result of RemoveTester. Action is delete, or skip when
+// the tester was not in the group.
+type TesterRemoved struct {
+	Email  string          `json:"email"`
+	Group  string          `json:"group"`
+	Action metadata.Action `json:"action"`
+}
+
 // RemoveTester removes the tester with email from g (the tester itself stays).
-// With dryRun it looks the tester up but sends no change.
-func (s *Service) RemoveTester(ctx context.Context, g BetaGroup, email string, dryRun bool) (Tester, error) {
+// A tester not in g is a skip. With dryRun it looks the tester up but sends
+// no change.
+func (s *Service) RemoveTester(ctx context.Context, g BetaGroup, email string, dryRun bool) (TesterRemoved, error) {
+	res := TesterRemoved{Email: email, Group: g.Name, Action: metadata.ActionSkip}
 	t, ok, err := s.findTester(ctx, email, g.ID)
-	if err != nil {
-		return Tester{}, err
+	if err != nil || !ok {
+		return res, err
 	}
-	if !ok {
-		return Tester{}, clierr.New("tester %s is not in group %q", email, g.Name)
-	}
+	res.Action = metadata.ActionDelete
 	if dryRun {
-		return t, nil
+		return res, nil
 	}
 	err = s.client.BetaGroupsBetaTestersDeleteToManyRelationship(ctx,
 		asc.BetaGroupsBetaTestersDeleteToManyRelationshipParams{ID: g.ID},
 		asc.BetaGroupBetaTestersLinkagesRequest{Data: []asc.ResourceIdentifier{{Type: asc.ResourceTypeBetaTesters, ID: t.ID}}})
 	if err != nil {
-		return Tester{}, fmt.Errorf("remove %s from group %q: %w", email, g.Name, err)
+		return res, fmt.Errorf("remove %s from group %q: %w", email, g.Name, err)
 	}
-	return t, nil
+	return res, nil
 }
 
 // stateSubmitted is reported when a build is known to be submitted but its

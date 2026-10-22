@@ -288,34 +288,35 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 }
 
 // deleteMedia deletes the whole set of device d in locale of v and returns the
-// planned or applied change and whether it deleted. A missing locale or set is
-// an error. With dryRun it only reads.
-func (s *Service) deleteMedia(ctx context.Context, k mediaKind, v Version, locale string, d media.Device, dryRun bool) (metadata.Change, bool, error) {
+// planned or applied change: delete, or skip when there is no such set (also
+// when v has no localization for locale). With dryRun it only reads.
+func (s *Service) deleteMedia(ctx context.Context, k mediaKind, v Version, locale string, d media.Device, dryRun bool) (metadata.Change, error) {
+	change := metadata.Change{Action: metadata.ActionSkip, Scope: k.scope, Locale: locale, Field: d.Alias}
 	ids, err := s.VersionLocalizationIDs(ctx, v)
 	if err != nil {
-		return metadata.Change{}, false, err
+		return change, err
 	}
 	locID, ok := ids[locale]
 	if !ok {
-		return metadata.Change{}, false, noLocalization(v, locale)
+		return change, nil
 	}
 	sets, err := k.listSets(ctx, s.client, locID, k.typeOf(d))
 	if err != nil {
-		return metadata.Change{}, false, fmt.Errorf("list %s sets of %s: %w", k.name, locale, err)
+		return change, fmt.Errorf("list %s sets of %s: %w", k.name, locale, err)
 	}
 	if len(sets) == 0 {
-		return metadata.Change{}, false, clierr.New("%s has no %s %s set", locale, d.Alias, k.name)
+		return change, nil
 	}
 	items, err := k.listItems(ctx, s.client, sets[0].id)
 	if err != nil {
-		return metadata.Change{}, false, fmt.Errorf("list %s of %s %s: %w", k.plural, locale, d.Alias, err)
+		return change, fmt.Errorf("list %s of %s %s: %w", k.plural, locale, d.Alias, err)
 	}
-	change := metadata.Change{Action: metadata.ActionDelete, Scope: k.scope, Locale: locale, Field: d.Alias, Old: k.count(len(items))}
+	change.Action, change.Old = metadata.ActionDelete, k.count(len(items))
 	if dryRun {
-		return change, false, nil
+		return change, nil
 	}
 	if err := k.deleteSet(ctx, s.client, sets[0].id); err != nil {
-		return change, false, fmt.Errorf("delete %s %s set of %s: %w", d.Alias, k.name, locale, err)
+		return change, fmt.Errorf("delete %s %s set of %s: %w", d.Alias, k.name, locale, err)
 	}
-	return change, true, nil
+	return change, nil
 }

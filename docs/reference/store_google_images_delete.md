@@ -4,8 +4,8 @@ Delete all images of one locale and type
 
 ### Synopsis
 
-Deletes all images of the type in the locale. A type without images is an error. --locale takes an
-App Store style locale. Types: phone, tablet-7, tablet-10, tv, wear, feature-graphic, icon, promo-graphic, tv-banner.
+Deletes all images of the type in the locale. A type without images is a skip (exit 0). --locale
+takes an App Store style locale. Types: phone, tablet-7, tablet-10, tv, wear, feature-graphic, icon, promo-graphic, tv-banner.
 With --dry-run the result is the planned Plan.
 
 Result: ImagesDeleted

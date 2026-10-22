@@ -156,3 +156,18 @@ func TestAppleTestflightSubmit409WithoutSubmissionFails(t *testing.T) {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 }
+
+func TestAppleTestflightTesterRemove(t *testing.T) {
+	for _, c := range []struct{ testers, action string }{
+		{"beta_testers.json", "delete"},
+		{"beta_testers_empty.json", "skip"},
+	} {
+		srv := distServer(t)
+		srv.Handle("GET", "/v1/betaTesters", ascfake.JSON(http.StatusOK, c.testers))
+		code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "testflight", "tester", "remove", "ada@example.com", "--group", "Beta", "-o", "json")
+		want := `{"email":"ada@example.com","group":"Beta","action":"` + c.action + `"}`
+		if code != 0 || strings.Join(strings.Fields(stdout), "") != want {
+			t.Fatalf("%s: code=%d stdout=%q stderr=%q", c.testers, code, stdout, stderr)
+		}
+	}
+}

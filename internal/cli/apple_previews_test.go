@@ -130,7 +130,7 @@ func TestApplePreviewsUploadLocalFailuresSendNothing(t *testing.T) {
 func TestApplePreviewsDelete(t *testing.T) {
 	srv := previewCLIServer(t)
 	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "previews", "delete", "--locale", "en-US", "--device", "iphone-6.9", "-o", "json")
-	if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"en-US","device":"iphone-6.9","deleted":true}` {
+	if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"en-US","device":"iphone-6.9","action":"delete"}` {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	reqs := srv.Requests()

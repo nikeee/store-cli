@@ -53,11 +53,12 @@ func (l ScreenshotSets) RenderText(w io.Writer, s output.Styles) error {
 	return renderMediaSets(w, s, screenshotMedia, data)
 }
 
-// ScreenshotsDeleted is the result of deleting a screenshot set.
+// ScreenshotsDeleted is the result of deleting a screenshot set. Action is
+// delete, or skip when there was no set.
 type ScreenshotsDeleted struct {
-	Locale  string `json:"locale"`
-	Device  string `json:"device"`
-	Deleted bool   `json:"deleted"`
+	Locale string          `json:"locale"`
+	Device string          `json:"device"`
+	Action metadata.Action `json:"action"`
 }
 
 // VersionLocalizationIDs returns the appStoreVersionLocalizations ID of v per
@@ -176,11 +177,11 @@ func (s *Service) SyncScreenshots(ctx context.Context, localizationID, locale st
 }
 
 // DeleteScreenshots deletes the whole set of device d in locale of v. A
-// missing locale or set is an error. With dryRun it only reads and returns the
+// missing locale or set is a skip. With dryRun it only reads and returns the
 // planned change.
 func (s *Service) DeleteScreenshots(ctx context.Context, v Version, locale string, d media.Device, dryRun bool) (ScreenshotsDeleted, metadata.Change, error) {
-	change, deleted, err := s.deleteMedia(ctx, screenshotMedia, v, locale, d, dryRun)
-	return ScreenshotsDeleted{Locale: locale, Device: d.Alias, Deleted: deleted}, change, err
+	change, err := s.deleteMedia(ctx, screenshotMedia, v, locale, d, dryRun)
+	return ScreenshotsDeleted{Locale: locale, Device: d.Alias, Action: change.Action}, change, err
 }
 
 // screenshotMedia is the mediaKind of screenshot sets.

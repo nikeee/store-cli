@@ -237,16 +237,25 @@ func TestListPreviews(t *testing.T) {
 func TestDeletePreviews(t *testing.T) {
 	srv := previewServer(t, "appPreviewSets_two.json", []remoteShot{{"a", "01.mp4", "s1"}}, "")
 	svc, _ := uploadService(t, srv)
-	res, ch, err := svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, true)
-	if err != nil || res.Deleted || ch.Action != metadata.ActionDelete || ch.Old != "1 preview" || len(mutations(srv)) != 0 {
-		t.Fatalf("dry run: res=%+v ch=%+v err=%v", res, ch, err)
+	_, ch, err := svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, true)
+	if err != nil || ch.Action != metadata.ActionDelete || ch.Old != "1 preview" || len(mutations(srv)) != 0 {
+		t.Fatalf("dry run: ch=%+v err=%v", ch, err)
 	}
-	res, _, err = svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, false)
-	if err != nil || !res.Deleted {
+	res, _, err := svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, false)
+	if err != nil || res != (PreviewsDeleted{Locale: "en-US", Device: "iphone-6.9", Action: metadata.ActionDelete}) {
 		t.Fatalf("res=%+v err=%v", res, err)
 	}
 	if m := mutations(srv); len(m) != 1 || m[0] != "DELETE /v1/appPreviewSets/pset-1" {
 		t.Errorf("mutations = %v", m)
+	}
+}
+
+func TestDeletePreviewsMissingSetSkips(t *testing.T) {
+	srv := previewServer(t, "appPreviewSets_empty.json", nil, "")
+	svc, _ := uploadService(t, srv)
+	res, ch, err := svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, false)
+	if err != nil || res.Action != metadata.ActionSkip || ch.Action != metadata.ActionSkip || len(mutations(srv)) != 0 {
+		t.Fatalf("res=%+v ch=%+v err=%v mutations=%v", res, ch, err, mutations(srv))
 	}
 }
 

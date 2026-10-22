@@ -46,11 +46,12 @@ func (l PreviewSets) RenderText(w io.Writer, s output.Styles) error {
 	return renderMediaSets(w, s, previewMedia, data)
 }
 
-// PreviewsDeleted is the result of deleting a preview set.
+// PreviewsDeleted is the result of deleting a preview set. Action is delete,
+// or skip when there was no set.
 type PreviewsDeleted struct {
-	Locale  string `json:"locale"`
-	Device  string `json:"device"`
-	Deleted bool   `json:"deleted"`
+	Locale string          `json:"locale"`
+	Device string          `json:"device"`
+	Action metadata.Action `json:"action"`
 }
 
 // DeviceForPreviews returns the device named by alias; a device without app
@@ -139,11 +140,11 @@ func (s *Service) UploadPreviews(ctx context.Context, v Version, o PreviewUpload
 }
 
 // DeletePreviews deletes the whole set of device d in locale of v. A missing
-// locale or set is an error. With dryRun it only reads and returns the planned
+// locale or set is a skip. With dryRun it only reads and returns the planned
 // change.
 func (s *Service) DeletePreviews(ctx context.Context, v Version, locale string, d media.Device, dryRun bool) (PreviewsDeleted, metadata.Change, error) {
-	change, deleted, err := s.deleteMedia(ctx, previewMedia, v, locale, d, dryRun)
-	return PreviewsDeleted{Locale: locale, Device: d.Alias, Deleted: deleted}, change, err
+	change, err := s.deleteMedia(ctx, previewMedia, v, locale, d, dryRun)
+	return PreviewsDeleted{Locale: locale, Device: d.Alias, Action: change.Action}, change, err
 }
 
 // previewMedia is the mediaKind of app preview sets.

@@ -39,11 +39,13 @@ type ImageSet struct {
 // ImageSets is the result of ListImages.
 type ImageSets []ImageSet
 
-// ImagesDeleted is the result of DeleteImages.
+// ImagesDeleted is the result of DeleteImages. Action is delete, or skip when
+// there were no images.
 type ImagesDeleted struct {
-	Locale  string `json:"locale"`
-	Type    string `json:"type"`
-	Deleted int    `json:"deleted"`
+	Locale  string          `json:"locale"`
+	Type    string          `json:"type"`
+	Action  metadata.Action `json:"action"`
+	Deleted int             `json:"deleted"`
 }
 
 // RenderText implements output.TextRenderer.
@@ -282,19 +284,20 @@ func (s *Service) UploadImages(ctx context.Context, language string, t media.Ima
 }
 
 // DeleteImages deletes all images of language and type t. A set without
-// images is an error. With DryRun it only reads and returns the planned change.
+// images is a skip, and nothing is committed. With DryRun it only reads and
+// returns the planned change.
 func (s *Service) DeleteImages(ctx context.Context, language string, t media.ImageType, c CommitOptions) (ImagesDeleted, metadata.Change, error) {
-	res := ImagesDeleted{Locale: language, Type: t.Alias}
-	var change metadata.Change
+	res := ImagesDeleted{Locale: language, Type: t.Alias, Action: metadata.ActionSkip}
+	change := metadata.Change{Action: metadata.ActionSkip, Scope: scopeImages, Locale: language, Field: t.Alias}
 	err := s.withEdit(ctx, c, func(editID string) error {
 		imgs, err := s.listImages(ctx, editID, language, t)
 		if err != nil {
 			return err
 		}
 		if len(imgs) == 0 {
-			return clierr.New("%s has no %s images", language, t.Alias)
+			return errNoChange
 		}
-		change = metadata.Change{Action: metadata.ActionDelete, Scope: scopeImages, Locale: language, Field: t.Alias, Old: imageCount(len(imgs))}
+		res.Action, change.Action, change.Old = metadata.ActionDelete, metadata.ActionDelete, imageCount(len(imgs))
 		if c.DryRun {
 			return nil
 		}
@@ -305,5 +308,8 @@ func (s *Service) DeleteImages(ctx context.Context, language string, t media.Ima
 		res.Deleted = len(r.Deleted)
 		return nil
 	})
+	if errors.Is(err, errNoChange) {
+		err = nil
+	}
 	return res, change, err
 }

@@ -152,12 +152,31 @@ func TestAppleScreenshotsUsageErrors(t *testing.T) {
 func TestAppleScreenshotsDelete(t *testing.T) {
 	srv := screenshotCLIServer(t)
 	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "screenshots", "delete", "--locale", "en-US", "--device", "iphone-6.9", "-o", "json")
-	if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"en-US","device":"iphone-6.9","deleted":true}` {
+	if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"en-US","device":"iphone-6.9","action":"delete"}` {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	reqs := srv.Requests()
 	if last := reqs[len(reqs)-1]; last.Method != "DELETE" || last.Path != "/v1/appScreenshotSets/set-1" {
 		t.Errorf("last request = %s %s", last.Method, last.Path)
+	}
+}
+
+// Nothing to delete is "nothing to do": exit 0 with action skip.
+func TestAppleMediaDeleteMissingSkips(t *testing.T) {
+	for _, kind := range []string{"screenshots", "previews"} {
+		srv := screenshotCLIServer(t)
+		if kind == "previews" {
+			srv = previewCLIServer(t)
+		}
+		code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", kind, "delete", "--locale", "fr-FR", "--device", "iphone-6.9", "-o", "json")
+		if code != 0 || strings.Join(strings.Fields(stdout), "") != `{"locale":"fr-FR","device":"iphone-6.9","action":"skip"}` {
+			t.Fatalf("%s: code=%d stdout=%q stderr=%q", kind, code, stdout, stderr)
+		}
+		for _, r := range srv.Requests() {
+			if r.Method != http.MethodGet {
+				t.Errorf("%s: sent %s %s", kind, r.Method, r.Path)
+			}
+		}
 	}
 }
 

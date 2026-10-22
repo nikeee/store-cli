@@ -129,8 +129,8 @@ func newGoogleImagesDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete --locale <l> --type <t>",
 		Short: "Delete all images of one locale and type",
-		Long: "Deletes all images of the type in the locale. A type without images is an error. --locale takes an\n" +
-			"App Store style locale. Types: " + imageTypeAliases() + ".\n" +
+		Long: "Deletes all images of the type in the locale. A type without images is a skip (exit 0). --locale\n" +
+			"takes an App Store style locale. Types: " + imageTypeAliases() + ".\n" +
 			"With --dry-run the result is the planned Plan.\n" +
 			"Result: ImagesDeleted",
 		Example: "  store google images delete --locale en-US --type tv-banner",

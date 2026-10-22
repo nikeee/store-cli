@@ -338,17 +338,25 @@ func TestDeleteImages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Deleted != 2 || res.Locale != "en-US" || res.Type != "phone" {
+	if res != (ImagesDeleted{Locale: "en-US", Type: "phone", Action: metadata.ActionDelete, Deleted: 2}) {
 		t.Errorf("res = %+v", res)
 	}
 	if len(srv.images) != 0 {
 		t.Error("images left")
 	}
+}
 
-	srv = newImageServer(t)
-	_, _, err = newService(t, srv.Server, io.Discard).DeleteImages(t.Context(), "en-US", phoneType(), CommitOptions{})
-	if err == nil || !strings.Contains(err.Error(), "no phone images") {
-		t.Errorf("err = %v", err)
+// No images is nothing to do: skip, and the edit is deleted, not committed.
+func TestDeleteImagesNoneSkips(t *testing.T) {
+	srv := newImageServer(t)
+	res, ch, err := newService(t, srv.Server, io.Discard).DeleteImages(t.Context(), "en-US", phoneType(), CommitOptions{})
+	if err != nil || res != (ImagesDeleted{Locale: "en-US", Type: "phone", Action: metadata.ActionSkip}) || ch.Action != metadata.ActionSkip {
+		t.Fatalf("res = %+v, change = %+v, err = %v", res, ch, err)
+	}
+	for _, c := range calls(srv.Server) {
+		if strings.HasSuffix(c, ":commit") || strings.HasPrefix(c, "DELETE /edits/edit-1/listings") {
+			t.Errorf("sent %s", c)
+		}
 	}
 }
 

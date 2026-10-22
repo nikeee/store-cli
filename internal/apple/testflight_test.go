@@ -9,6 +9,7 @@ import (
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 )
 
@@ -220,8 +221,8 @@ func TestRemoveTester(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.ID != "tester-1" {
-		t.Errorf("tester = %+v", got)
+	if got != (TesterRemoved{Email: "ada@example.com", Group: "Beta", Action: metadata.ActionDelete}) {
+		t.Errorf("result = %+v", got)
 	}
 	reqs := srv.Requests()
 	last := reqs[len(reqs)-1]
@@ -231,11 +232,11 @@ func TestRemoveTester(t *testing.T) {
 	wantBody(t, last, `{"data":[{"type":"betaTesters","id":"tester-1"}]}`)
 }
 
-func TestRemoveTesterNotInGroup(t *testing.T) {
+func TestRemoveTesterNotInGroupSkips(t *testing.T) {
 	srv := testerServer(t, "beta_testers_empty.json", "beta_testers_one.json")
-	_, err := newService(t, srv).RemoveTester(t.Context(), testGroup, "ada@example.com", false)
-	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), `ada@example.com is not in group "Beta"`) {
-		t.Fatalf("err = %v", err)
+	got, err := newService(t, srv).RemoveTester(t.Context(), testGroup, "ada@example.com", false)
+	if err != nil || got != (TesterRemoved{Email: "ada@example.com", Group: "Beta", Action: metadata.ActionSkip}) {
+		t.Fatalf("result = %+v, err = %v", got, err)
 	}
 	for _, r := range srv.Requests() {
 		if r.Method != "GET" {

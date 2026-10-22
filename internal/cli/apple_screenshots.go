@@ -131,8 +131,8 @@ func newAppleScreenshotsDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete --locale <l> --device <d> [--version <v>]",
 		Short: "Delete the screenshot set of one locale and device",
-		Long: "Deletes the whole set. A set that does not exist is an error. With --dry-run the result is\n" +
-			"the planned Plan.\n" +
+		Long: "Deletes the whole set. A set that does not exist is a skip (exit 0). With --dry-run the result\n" +
+			"is the planned Plan.\n" +
 			"Result: ScreenshotsDeleted",
 		Example: "  store apple screenshots delete --locale en-US --device iphone-6.5",
 		Args:    cobra.NoArgs,

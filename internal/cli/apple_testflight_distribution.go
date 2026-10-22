@@ -184,7 +184,7 @@ func newAppleTestflightTesterRemoveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove <email>",
 		Short:   "Remove a tester from a beta group",
-		Long:    "Removes the tester from the group only.\nResult: Tester",
+		Long:    "Removes the tester from the group only. A tester not in the group is a skip (exit 0).\nResult: TesterRemoved",
 		Example: "  store apple testflight tester remove ada@example.com --group Beta",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

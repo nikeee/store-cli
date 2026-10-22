@@ -41,6 +41,7 @@ var resultTypes = []resultType{
 	rt[apple.ReleaseNote]("WhatsNew", ""),
 	rt[apple.BetaGroup]("BetaGroup", ""),
 	rt[apple.Tester]("Tester", ""),
+	rt[apple.TesterRemoved]("TesterRemoved", "`action` is `delete`, or `skip` when the tester was not in the group."),
 	rt[apple.GroupBuild]("GroupBuild", ""),
 	rt[apple.BetaReview]("BetaReview", ""),
 	rt[apple.SubmissionResult]("SubmissionResult", ""),
@@ -48,9 +49,9 @@ var resultTypes = []resultType{
 	rt[apple.SubmitResult]("SubmitResult", ""),
 	rt[apple.Screenshot]("Screenshot", "Also the entry type of app previews."),
 	rt[apple.ScreenshotSet]("ScreenshotSet", ""),
-	rt[apple.ScreenshotsDeleted]("ScreenshotsDeleted", ""),
+	rt[apple.ScreenshotsDeleted]("ScreenshotsDeleted", "`action` is `delete`, or `skip` when there was no set."),
 	rt[apple.PreviewSet]("PreviewSet", ""),
-	rt[apple.PreviewsDeleted]("PreviewsDeleted", ""),
+	rt[apple.PreviewsDeleted]("PreviewsDeleted", "`action` is `delete`, or `skip` when there was no set."),
 	rt[apple.ReviewInfo]("ReviewInfo", "`demoPassword` is `***` unless `--reveal` is given."),
 	rt[apple.PullResult]("ApplePullResult", ""),
 	rt[metadata.Plan]("Plan", "Used by `push` and by `--dry-run`."),
@@ -67,7 +68,7 @@ var resultTypes = []resultType{
 	rt[google.Details]("Details", ""),
 	rt[google.Image]("Image", ""),
 	rt[google.ImageSet]("ImageSet", ""),
-	rt[google.ImagesDeleted]("ImagesDeleted", "`deleted` is the number of removed images."),
+	rt[google.ImagesDeleted]("ImagesDeleted", "`action` is `delete`, or `skip` when there were no images; `deleted` is the number of removed images."),
 	rt[google.PullResult]("GooglePullResult", ""),
 }
 
