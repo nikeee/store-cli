@@ -72,12 +72,16 @@ func Read(ipaPath string) (Info, error) {
 			return Info{}, fmt.Errorf("%s: %s is missing in Info.plist", ipaPath, k.key)
 		}
 	}
+	platform, ok := platforms[p.DTPlatformName]
+	if !ok {
+		return Info{}, fmt.Errorf("%s: DTPlatformName %q in Info.plist is no App Store platform (iphoneos, appletvos or xros)", ipaPath, p.DTPlatformName)
+	}
 	return Info{
 		BundleID: p.BundleID,
 		Version:  p.Version,
 		Build:    p.Build,
 		MinOS:    p.MinOS,
-		Platform: platform(p.DTPlatformName),
+		Platform: platform,
 	}, nil
 }
 
@@ -100,13 +104,10 @@ func readFile(f *zip.File) ([]byte, error) {
 	return io.ReadAll(rc)
 }
 
-func platform(dtPlatformName string) string {
-	switch dtPlatformName {
-	case "appletvos":
-		return "TV_OS"
-	case "xros":
-		return "VISION_OS"
-	default:
-		return "IOS"
-	}
+// platforms maps DTPlatformName to the API platform; old IPAs lack the key.
+var platforms = map[string]string{
+	"":          "IOS",
+	"iphoneos":  "IOS",
+	"appletvos": "TV_OS",
+	"xros":      "VISION_OS",
 }

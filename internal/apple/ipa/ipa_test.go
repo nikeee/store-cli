@@ -102,6 +102,16 @@ func TestPlatformMapping(t *testing.T) {
 	}
 }
 
+// A simulator or other unknown platform is no App Store build.
+func TestUnknownPlatformIsAnError(t *testing.T) {
+	info := fullInfo()
+	info["DTPlatformName"] = "iphonesimulator"
+	_, err := Read(writeIPA(t, plist.BinaryFormat, entry{"Payload/A.app/Info.plist", info}))
+	if err == nil || !strings.Contains(err.Error(), `DTPlatformName "iphonesimulator"`) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestIgnoresNestedPlists(t *testing.T) {
 	other := fullInfo()
 	other["CFBundleIdentifier"] = "com.example.app.widget"
