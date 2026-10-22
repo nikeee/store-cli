@@ -281,3 +281,23 @@ func TestChecksumListsOrder(t *testing.T) {
 		t.Error("want error")
 	}
 }
+
+// The *PathError of a failed open or read already names the file; the
+// message must not repeat it.
+func TestFileErrorsNameThePathOnce(t *testing.T) {
+	dir := t.TempDir()
+	missing := filepath.Join(dir, "missing.png")
+	for name, c := range map[string]struct {
+		path string
+		run  func(string) error
+	}{
+		"inspect missing": {missing, func(p string) error { _, err := Inspect(p); return err }},
+		"md5 missing":     {missing, func(p string) error { _, err := MD5List([]string{p}); return err }},
+		"sha256 of a dir": {dir, func(p string) error { _, err := SHA256List([]string{p}); return err }},
+	} {
+		err := c.run(c.path)
+		if err == nil || strings.Count(err.Error(), c.path) != 1 {
+			t.Errorf("%s: err = %v", name, err)
+		}
+	}
+}

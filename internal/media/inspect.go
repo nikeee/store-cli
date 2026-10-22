@@ -21,7 +21,7 @@ type ImageInfo struct {
 func Inspect(path string) (ImageInfo, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return ImageInfo{}, clierr.New("open %s: %v", path, err)
+		return ImageInfo{}, clierr.New("%v", err)
 	}
 	defer func() { _ = f.Close() }()
 	cfg, format, err := image.DecodeConfig(f)

@@ -25,13 +25,13 @@ func sums(paths []string, newHash func() hash.Hash) (ChecksumList, error) {
 	for _, p := range paths {
 		f, err := os.Open(p)
 		if err != nil {
-			return nil, clierr.New("open %s: %v", p, err)
+			return nil, clierr.New("%v", err)
 		}
 		h := newHash()
 		_, err = io.Copy(h, f)
 		_ = f.Close()
 		if err != nil {
-			return nil, clierr.New("read %s: %v", p, err)
+			return nil, clierr.New("%v", err)
 		}
 		out = append(out, hex.EncodeToString(h.Sum(nil)))
 	}

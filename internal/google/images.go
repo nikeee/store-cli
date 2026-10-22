@@ -238,7 +238,7 @@ func (s *Service) uploadImage(ctx context.Context, editID, language string, t me
 	}
 	f, err := os.Open(path)
 	if err != nil {
-		return clierr.New("open %s: %v", path, err)
+		return clierr.New("%v", err)
 	}
 	defer func() { _ = f.Close() }()
 	_, err = s.api.Edits.Images.Upload(s.packageName, editID, language, t.APIType).Context(ctx).
