@@ -38,6 +38,19 @@ func TestRunUnknownFlagExits2(t *testing.T) {
 	}
 }
 
+// Errors raised before cobra parsed the flags still honor --output.
+func TestRunEarlyUsageErrorHonorsOutputFlag(t *testing.T) {
+	for _, args := range [][]string{{"version", "--nope", "-o", "json"}, {"-o", "json", "nope"}, {"apple", "nope", "--output=json"}} {
+		code, _, stderr := runEnv(t, nil, false, args...)
+		var e struct {
+			Error string `json:"error"`
+		}
+		if code != 2 || json.Unmarshal([]byte(stderr), &e) != nil || e.Error == "" {
+			t.Errorf("%v: code=%d stderr=%q", args, code, stderr)
+		}
+	}
+}
+
 func TestVersionCommand(t *testing.T) {
 	code, stdout, _ := run(t, "version")
 	if code != 0 || !strings.Contains(stdout, "dev") {

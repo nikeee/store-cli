@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
@@ -55,8 +58,8 @@ func Run(ctx context.Context, args []string, d Deps) int {
 		err = google.FromAPIError(ascclient.MapError(err))
 		p := slot.p
 		if p == nil {
-			// failed before the mode was resolved: honor the environment, else text
-			mode, merr := output.ResolveMode("", d.Env)
+			// failed before the mode was resolved: honor --output and the environment, else text
+			mode, merr := output.ResolveMode(outputArg(root, args), d.Env)
 			if merr != nil {
 				mode = output.ModeText
 			}
@@ -66,6 +69,18 @@ func Run(ctx context.Context, args []string, d Deps) int {
 		return clierr.ExitCode(err)
 	}
 	return 0
+}
+
+// outputArg returns the --output value in args, for errors cobra raises
+// before it parsed the flags (e.g. an unknown flag).
+func outputArg(root *cobra.Command, args []string) string {
+	f := root.PersistentFlags().Lookup("output")
+	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
+	fs.ParseErrorsAllowlist.UnknownFlags = true
+	fs.SetOutput(io.Discard)
+	v := fs.StringP(f.Name, f.Shorthand, "", "")
+	_ = fs.Parse(args)
+	return *v
 }
 
 func isTerminal(f *os.File) bool {
