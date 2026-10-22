@@ -162,12 +162,15 @@ func (s *Service) CompleteRollout(ctx context.Context, track string, c CommitOpt
 // SetReleaseNotes sets the notes (App Store style locales) of a release on
 // the track, by name or, with an empty name, the newest by version code. The
 // notes of other languages stay. The other releases of the track are not
-// touched.
+// touched. Notes for none of the listing's languages are an error.
 func (s *Service) SetReleaseNotes(ctx context.Context, track, name string, notes map[string]string, c CommitOptions) (Release, error) {
 	var withNotes []*androidpublisher.LocalizedText
 	t, i, err := s.updateReleaseWith(ctx, track, c, pickName(name), func(editID string) error {
 		var err error
 		withNotes, err = s.releaseNotes(ctx, editID, notes)
+		if err == nil && len(withNotes) == 0 {
+			err = clierr.New("the Play listing has none of the release notes languages %s", strings.Join(slices.Sorted(mapKeys(notes)), ", "))
+		}
 		return err
 	}, func(r *androidpublisher.TrackRelease) {
 		r.ReleaseNotes = mergeNotes(r.ReleaseNotes, withNotes)

@@ -280,6 +280,17 @@ func TestSetReleaseNotes(t *testing.T) {
 	}
 }
 
+// Notes for none of the listing's languages are an error, not a commit of
+// the unchanged track.
+func TestSetReleaseNotesNoLanguageLeft(t *testing.T) {
+	srv := tracksServer(t, map[string]string{"internal": internalTrack})
+	_, err := newService(t, srv, io.Discard).SetReleaseNotes(t.Context(), "internal", "", map[string]string{"fr-FR": "X"}, CommitOptions{})
+	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "fr-FR") {
+		t.Fatalf("err = %v", err)
+	}
+	noMutations(t, srv)
+}
+
 func TestSetReleaseNotesDefaultsToNewest(t *testing.T) {
 	srv := tracksServer(t, map[string]string{"internal": internalTrack})
 	rel, err := newService(t, srv, io.Discard).SetReleaseNotes(t.Context(), "internal", "", map[string]string{"en-US": "X"}, CommitOptions{})
