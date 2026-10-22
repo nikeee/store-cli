@@ -171,8 +171,9 @@ func (s *Service) Submit(ctx context.Context, app App, o SubmitOptions) (SubmitR
 	var createStep, releaseStep *submitStep
 	if !found {
 		createStep = p.add("create version "+o.Version, step(metadata.ActionCreate, scopeVersion, "", stepCreateVersion, "", o.Version))
-	} else if o.ReleaseType != "" && o.ReleaseType != v.ReleaseType {
-		releaseStep = p.add("set release type", step(metadata.ActionUpdate, scopeVersion, "", stepReleaseType, v.ReleaseType, o.ReleaseType))
+	} else if needsRelease(o, v) {
+		releaseStep = p.add("set release type", step(metadata.ActionUpdate, scopeVersion, "", stepReleaseType,
+			releaseValue(v.ReleaseType, v.EarliestReleaseDate), releaseValue(o.ReleaseType, o.ReleaseDate)))
 	}
 	old := ""
 	if found && v.Build != nil {
@@ -283,13 +284,33 @@ func (s *Service) submitBuild(ctx context.Context, app App, o SubmitOptions) (Bu
 	return builds[0], nil
 }
 
+// needsRelease reports whether the existing version v must get the release
+// type or date o asks for.
+func needsRelease(o SubmitOptions, v Version) bool {
+	if o.ReleaseType == "" {
+		return false
+	}
+	if o.ReleaseType != v.ReleaseType {
+		return true
+	}
+	return o.ReleaseDate != nil && (v.EarliestReleaseDate == nil || !o.ReleaseDate.Equal(*v.EarliestReleaseDate))
+}
+
+// releaseValue renders a release type and its date for the plan.
+func releaseValue(releaseType string, date *time.Time) string {
+	if date == nil {
+		return releaseType
+	}
+	return releaseType + " " + date.UTC().Format(time.RFC3339)
+}
+
 // submitPrepareVersion creates the version if it does not exist, else sets
-// its release type when o asks for another one.
+// its release type or date when o asks for other ones.
 func (s *Service) submitPrepareVersion(ctx context.Context, app App, o SubmitOptions, v Version, found bool) (Version, error) {
 	if !found {
 		return s.CreateVersion(ctx, app, s.createOptions(o))
 	}
-	if o.ReleaseType == "" || (o.ReleaseType == v.ReleaseType && o.ReleaseDate == nil) {
+	if !needsRelease(o, v) {
 		return v, nil
 	}
 	attrs := asc.AppStoreVersionUpdateRequestDataAttributes{

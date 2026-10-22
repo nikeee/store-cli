@@ -8,8 +8,10 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 	"github.com/nikeee/store-cli/internal/testutil/golden"
 )
@@ -237,6 +239,33 @@ func TestSubmitDryRun(t *testing.T) {
 				t.Fatal(err)
 			}
 			golden.Assert(t, "submit_dry_run_"+c.name+".json", append(b, '\n'))
+		})
+	}
+}
+
+// A new date for a version that is already scheduled is a planned change;
+// the same date is none.
+func TestSubmitPlansReleaseDate(t *testing.T) {
+	scheduled := time.Date(2026, 11, 2, 16, 0, 0, 0, time.UTC) // in app_appStoreVersions.json
+	later := scheduled.Add(72 * time.Hour)
+	for name, tc := range map[string]struct {
+		date *time.Time
+		want []metadata.Change
+	}{
+		"new date":  {&later, []metadata.Change{{Action: metadata.ActionUpdate, Scope: scopeVersion, Field: stepReleaseType, Old: "SCHEDULED 2026-11-02T16:00:00Z", New: "SCHEDULED 2026-11-05T16:00:00Z"}}},
+		"same date": {&scheduled, nil},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := submitServer(t, "app_appStoreVersions.json", "builds_valid.json")
+			o := SubmitOptions{Version: "1.3.0", Platform: "ios", Build: "latest", ReleaseType: "SCHEDULED", ReleaseDate: tc.date, DryRun: true}
+			res, err := newService(t, srv).Submit(t.Context(), listingApp, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := slices.DeleteFunc(res.Plan.Changes, func(c metadata.Change) bool { return c.Field != stepReleaseType })
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("release changes = %+v, want %+v", got, tc.want)
+			}
 		})
 	}
 }
