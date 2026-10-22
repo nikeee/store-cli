@@ -46,7 +46,9 @@ func TestSIGTERMCancelsTheCommand(t *testing.T) {
 	// Signal once the command polls, i.e. sleeps until the next check.
 	for deadline := time.Now().Add(10 * time.Second); !polled(srv); time.Sleep(10 * time.Millisecond) {
 		if time.Now().After(deadline) {
+			// Wait ends the copy into stderr before it is read.
 			_ = cmd.Process.Kill()
+			_ = cmd.Wait()
 			t.Fatalf("command never polled; stderr = %s", stderr.String())
 		}
 	}
