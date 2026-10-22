@@ -117,12 +117,7 @@ func (p submitPlan) items() int {
 // submission to reuse.
 func (s *Service) planSubmit(ctx context.Context, app App, v Version) (submitPlan, error) {
 	if !isEditable(v) {
-		e := clierr.New("version %s is in state %s, nothing to submit", v.Version, v.State)
-		e.Code = "STATE_ERROR"
-		if v.State == "WAITING_FOR_REVIEW" || v.State == "IN_REVIEW" {
-			e.Hint = "store apple version cancel " + v.Version
-		}
-		return submitPlan{}, e
+		return submitPlan{}, withCancelHint(stateError("version %s is in state %s, nothing to submit", v.Version, v.State), v)
 	}
 	drafts, err := s.listReviewSubmissions(ctx, app, v.Platform, []string{"READY_FOR_REVIEW"})
 	if err != nil {

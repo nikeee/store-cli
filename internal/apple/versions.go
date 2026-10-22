@@ -99,9 +99,23 @@ func (s *Service) FindVersion(ctx context.Context, app App, version, platform st
 	return Version{}, false, nil
 }
 
-func noEditableVersion() *clierr.Error {
+// noEditableVersion is the error for versions vs (newest first) without an
+// editable one. A version newer than the live one (e.g. in review) is named,
+// since creating another version does not help then.
+func noEditableVersion(vs []Version) *clierr.Error {
+	if len(vs) > 0 && !slices.Contains(releasedVersionStates, vs[0].State) {
+		return withCancelHint(stateError("no editable version: %s is in state %s", vs[0].Version, vs[0].State), vs[0])
+	}
 	e := clierr.New("no editable version")
 	e.Hint = "store apple version create <version>"
+	return e
+}
+
+// withCancelHint points e at version cancel when v waits for or is in review.
+func withCancelHint(e *clierr.Error, v Version) *clierr.Error {
+	if v.State == "WAITING_FOR_REVIEW" || v.State == "IN_REVIEW" {
+		e.Hint = "store apple version cancel " + v.Version
+	}
 	return e
 }
 
@@ -110,10 +124,12 @@ func editableVersions(vs []Version) []Version {
 	return slices.DeleteFunc(slices.Clone(vs), func(v Version) bool { return !isEditable(v) })
 }
 
-func singleEditable(es []Version) (Version, error) {
+// singleEditable returns the one editable version of vs (newest first).
+func singleEditable(vs []Version) (Version, error) {
+	es := editableVersions(vs)
 	switch len(es) {
 	case 0:
-		return Version{}, noEditableVersion()
+		return Version{}, noEditableVersion(vs)
 	case 1:
 		return es[0], nil
 	}
@@ -131,7 +147,7 @@ func (s *Service) EditableVersion(ctx context.Context, app App, platform string)
 	if err != nil {
 		return Version{}, err
 	}
-	return singleEditable(editableVersions(vs))
+	return singleEditable(vs)
 }
 
 // CurrentVersion returns the editable version of app on platform, else the
@@ -141,15 +157,15 @@ func (s *Service) CurrentVersion(ctx context.Context, app App, platform string) 
 	if err != nil {
 		return Version{}, err
 	}
-	if es := editableVersions(vs); len(es) > 0 {
-		return singleEditable(es)
+	if slices.ContainsFunc(vs, isEditable) {
+		return singleEditable(vs)
 	}
 	for _, v := range vs {
 		if v.State == stateLive {
 			return v, nil
 		}
 	}
-	return Version{}, noEditableVersion()
+	return Version{}, noEditableVersion(vs)
 }
 
 // HasReleasedVersion reports whether app has, on platform, a version that is

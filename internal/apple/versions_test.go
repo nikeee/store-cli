@@ -56,6 +56,24 @@ func TestEditableVersionNone(t *testing.T) {
 	}
 }
 
+// A newer version that is not live yet is named: creating another version
+// would not help.
+func TestEditableVersionNoneNamesNewerVersion(t *testing.T) {
+	for fixture, want := range map[string]struct{ msg, hint string }{
+		"versions_in_review.json":       {"no editable version: 1.3.0 is in state WAITING_FOR_REVIEW", "store apple version cancel 1.3.0"},
+		"versions_pending_release.json": {"no editable version: 1.3.0 is in state PENDING_DEVELOPER_RELEASE", ""},
+	} {
+		_, err := newService(t, versionServer(t, fixture)).EditableVersion(t.Context(), versionsApp, "ios")
+		var ce *clierr.Error
+		if !errors.As(err, &ce) {
+			t.Fatalf("%s: err = %v", fixture, err)
+		}
+		if ce.Message != want.msg || ce.Hint != want.hint || ce.Code != "STATE_ERROR" {
+			t.Errorf("%s: err = %v (hint %q, code %q)", fixture, err, ce.Hint, ce.Code)
+		}
+	}
+}
+
 func TestEditableVersionPicksEditable(t *testing.T) {
 	v, err := newService(t, versionServer(t, "app_appStoreVersions.json")).EditableVersion(t.Context(), versionsApp, "ios")
 	if err != nil || v.Version != "1.3.0" {
