@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"path"
 
 	"howett.net/plist"
@@ -37,7 +38,11 @@ func Read(ipaPath string) (Info, error) {
 		if errors.Is(err, zip.ErrFormat) {
 			return Info{}, fmt.Errorf("%s is not an IPA (not a zip archive)", ipaPath)
 		}
-		return Info{}, fmt.Errorf("open %s: %w", ipaPath, err)
+		var pe *fs.PathError
+		if errors.As(err, &pe) {
+			return Info{}, err
+		}
+		return Info{}, fmt.Errorf("%s: %w", ipaPath, err)
 	}
 	defer func() { _ = zr.Close() }()
 

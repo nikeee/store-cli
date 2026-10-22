@@ -38,7 +38,7 @@ func readTexts(dir string, fields []Field) (Texts, error) {
 			continue
 		}
 		if err != nil {
-			return nil, clierr.New("read %s: %v", filepath.Join(dir, f.File), err)
+			return nil, clierr.New("%v", err)
 		}
 		t[f.API] = TrimValue(string(b))
 	}
@@ -52,7 +52,7 @@ func readLocales(dir string, fields []Field) (map[string]Texts, error) {
 		return map[string]Texts{}, nil
 	}
 	if err != nil {
-		return nil, clierr.New("read %s: %v", dir, err)
+		return nil, clierr.New("%v", err)
 	}
 	out := map[string]Texts{}
 	for _, e := range entries {
@@ -95,7 +95,7 @@ func ReadGoogleTexts(dir string) (map[string]Texts, error) {
 // creates dir. It returns the written paths in field table order.
 func WriteTexts(dir string, fields []Field, t Texts) (written []string, err error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, clierr.New("create %s: %v", dir, err)
+		return nil, clierr.New("%v", err)
 	}
 	for _, f := range fields {
 		v, ok := t[f.API]
@@ -104,7 +104,7 @@ func WriteTexts(dir string, fields []Field, t Texts) (written []string, err erro
 		}
 		p := filepath.Join(dir, f.File)
 		if err := os.WriteFile(p, []byte(v+"\n"), 0o644); err != nil {
-			return written, clierr.New("write %s: %v", p, err)
+			return written, clierr.New("%v", err)
 		}
 		written = append(written, p)
 	}

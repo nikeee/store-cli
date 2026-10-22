@@ -150,16 +150,16 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 	name := filepath.Base(o.Path)
 	f, err := os.Open(o.Path)
 	if err != nil {
-		return UploadResult{}, fmt.Errorf("open %s: %w", o.Path, err)
+		return UploadResult{}, err
 	}
 	defer func() { _ = f.Close() }()
 	fi, err := f.Stat()
 	if err != nil {
-		return UploadResult{}, fmt.Errorf("stat %s: %w", o.Path, err)
+		return UploadResult{}, err
 	}
 	checksum := md5.New()
 	if _, err := io.Copy(checksum, f); err != nil {
-		return UploadResult{}, fmt.Errorf("read %s: %w", o.Path, err)
+		return UploadResult{}, err
 	}
 
 	res := p.result("")

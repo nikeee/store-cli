@@ -31,7 +31,7 @@ func imageFiles(dir string) ([]string, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, clierr.New("read %s: %v", dir, err)
+		return nil, clierr.New("%v", err)
 	}
 	var out []string
 	for _, e := range entries {
@@ -53,7 +53,7 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 		return out, nil
 	}
 	if err != nil {
-		return nil, clierr.New("read %s: %v", dir, err)
+		return nil, clierr.New("%v", err)
 	}
 	for _, e := range entries {
 		if !e.IsDir() || !metadata.IsLocale(e.Name()) {
@@ -79,7 +79,7 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 		}
 		subs, err := os.ReadDir(locDir)
 		if err != nil {
-			return nil, clierr.New("read %s: %v", locDir, err)
+			return nil, clierr.New("%v", err)
 		}
 		for _, s := range subs {
 			if !s.IsDir() || strings.HasPrefix(s.Name(), ".") {
@@ -114,7 +114,7 @@ func ScanGoogleImages(dir string) (map[string]map[string][]string, error) {
 		return out, nil
 	}
 	if err != nil {
-		return nil, clierr.New("read %s: %v", root, err)
+		return nil, clierr.New("%v", err)
 	}
 	for _, e := range entries {
 		if !e.IsDir() || !metadata.IsLocale(e.Name()) {

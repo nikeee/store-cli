@@ -14,7 +14,7 @@ import (
 func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, clierr.New("read release notes directory %s: %v", dir, err)
+		return nil, clierr.New("release notes directory: %v", err)
 	}
 	out := map[string]string{}
 	for _, e := range entries {
@@ -29,7 +29,7 @@ func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 		}
 		b, err := os.ReadFile(p)
 		if err != nil {
-			return nil, clierr.New("read %s: %v", p, err)
+			return nil, clierr.New("%v", err)
 		}
 		text := TrimValue(string(b))
 		if text == "" {

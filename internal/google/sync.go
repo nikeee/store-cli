@@ -346,7 +346,7 @@ func Init(dir string, locales []string) (metadata.InitResult, error) {
 			case errors.Is(err, fs.ErrExist):
 				res.Existing = append(res.Existing, p)
 			case err != nil:
-				return res, clierr.New("create %s: %v", p, err)
+				return res, clierr.New("%v", err)
 			default:
 				res.Created = append(res.Created, p)
 			}

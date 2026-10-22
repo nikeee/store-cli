@@ -221,3 +221,21 @@ func TestReadReleaseNotesDirNoFiles(t *testing.T) {
 		}
 	}
 }
+
+// The *PathError of a failed file operation already names the path; the
+// message must not repeat it.
+func TestFileErrorsNameThePathOnce(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing")
+	_, err := ReadReleaseNotesDir(missing)
+	if err == nil || strings.Count(err.Error(), missing) != 1 {
+		t.Errorf("release notes: err = %v", err)
+	}
+	file := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(file, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = WriteTexts(filepath.Join(file, "sub"), AppleFields, Texts{"name": "x"})
+	if err == nil || strings.Count(err.Error(), file) != 1 {
+		t.Errorf("write: err = %v", err)
+	}
+}

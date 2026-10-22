@@ -163,3 +163,11 @@ func TestNotAZip(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 }
+
+func TestMissingFileNamesThePathOnce(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "app.ipa")
+	_, err := Read(missing)
+	if err == nil || strings.Count(err.Error(), missing) != 1 {
+		t.Errorf("err = %v", err)
+	}
+}

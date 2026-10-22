@@ -58,16 +58,16 @@ func (s *Service) uploadAsset(ctx context.Context, kind assetKind, parentID, pat
 	name := filepath.Base(path)
 	f, err := os.Open(path)
 	if err != nil {
-		return "", fmt.Errorf("open %s: %w", path, err)
+		return "", err
 	}
 	defer func() { _ = f.Close() }()
 	fi, err := f.Stat()
 	if err != nil {
-		return "", fmt.Errorf("stat %s: %w", path, err)
+		return "", err
 	}
 	h := md5.New() //nolint:gosec
 	if _, err := io.Copy(h, f); err != nil {
-		return "", fmt.Errorf("read %s: %w", path, err)
+		return "", err
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 

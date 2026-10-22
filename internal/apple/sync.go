@@ -503,7 +503,7 @@ func Init(dir, screenshotsDir string, locales []string) (metadata.InitResult, er
 	}
 	shots := screenshotsRoot(dir, screenshotsDir)
 	if err := os.MkdirAll(shots, 0o755); err != nil {
-		return res, clierr.New("create %s: %v", shots, err)
+		return res, clierr.New("%v", err)
 	}
 	for _, l := range locales {
 		p := filepath.Join(shots, l)
@@ -511,7 +511,7 @@ func Init(dir, screenshotsDir string, locales []string) (metadata.InitResult, er
 		case errors.Is(err, fs.ErrExist):
 			res.Existing = append(res.Existing, p)
 		case err != nil:
-			return res, clierr.New("create %s: %v", p, err)
+			return res, clierr.New("%v", err)
 		default:
 			res.Created = append(res.Created, p)
 		}

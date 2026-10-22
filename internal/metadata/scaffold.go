@@ -26,7 +26,7 @@ func (r *InitResult) Merge(other InitResult) {
 func ScaffoldDir(dir string, fields []Field) (InitResult, error) {
 	res := InitResult{Created: []string{}, Existing: []string{}}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return res, clierr.New("create %s: %v", dir, err)
+		return res, clierr.New("%v", err)
 	}
 	for _, f := range fields {
 		p := filepath.Join(dir, f.File)
@@ -35,10 +35,10 @@ func ScaffoldDir(dir string, fields []Field) (InitResult, error) {
 		case errors.Is(err, fs.ErrExist):
 			res.Existing = append(res.Existing, p)
 		case err != nil:
-			return res, clierr.New("create %s: %v", p, err)
+			return res, clierr.New("%v", err)
 		default:
 			if err := file.Close(); err != nil {
-				return res, clierr.New("create %s: %v", p, err)
+				return res, clierr.New("%v", err)
 			}
 			res.Created = append(res.Created, p)
 		}
