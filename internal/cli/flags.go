@@ -39,7 +39,7 @@ func (f *TextFlag) Set(s string) error {
 		path := s[1:]
 		b, err := f.readFile(path)
 		if err != nil {
-			return clierr.Usagef("--%s: cannot read %s", f.name, path)
+			return clierr.Usagef("--%s: %v", f.name, err)
 		}
 		s = strings.TrimRight(string(b), " \t\r\n")
 	}

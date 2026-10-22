@@ -1,8 +1,7 @@
 package cli_test
 
 import (
-	"errors"
-	"strings"
+	"io/fs"
 	"testing"
 
 	"github.com/nikeee/store-cli/internal/cli"
@@ -14,7 +13,7 @@ func TestTextFlag(t *testing.T) {
 		if name == "notes.txt" {
 			return []byte("line1\nline2\n\n"), nil
 		}
-		return nil, errors.New("not found")
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
 	}
 	tests := []struct {
 		in      string
@@ -24,14 +23,14 @@ func TestTextFlag(t *testing.T) {
 		{in: "hello", want: "hello"},
 		{in: "@notes.txt", want: "line1\nline2"},
 		{in: "@@x", want: "@x"},
-		{in: "@missing.txt", wantErr: "missing.txt"},
+		{in: "@missing.txt", wantErr: "--description: open missing.txt: file does not exist"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.in, func(t *testing.T) {
 			f := cli.NewTextFlag("description", read)
 			err := f.Set(tt.in)
 			if tt.wantErr != "" {
-				if err == nil || !strings.Contains(err.Error(), tt.wantErr) || !strings.Contains(err.Error(), "description") {
+				if err == nil || err.Error() != tt.wantErr {
 					t.Fatalf("err = %v", err)
 				}
 				if clierr.ExitCode(err) != 2 {
