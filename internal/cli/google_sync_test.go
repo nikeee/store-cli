@@ -482,6 +482,21 @@ func TestGooglePushOnly(t *testing.T) {
 	}
 }
 
+// A Play language that is not a locale name never becomes a path.
+func TestGooglePullSkipsNonLocaleNames(t *testing.T) {
+	srv := newPlayStore(t)
+	srv.listings["en-US"] = map[string]string{"title": "Title"}
+	srv.listings["../evil"] = map[string]string{"title": "x"}
+	dir := filepath.Join(t.TempDir(), "metadata")
+	code, stdout, stderr := runEnv(t, googleEnv(srv.Server, nil), false, "google", "pull", dir, "--app", "com.example.app", "-o", "json")
+	if code != 0 || strings.Contains(stdout, "evil") || !strings.Contains(stderr, `skipping Play language "../evil"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "evil")); !os.IsNotExist(err) {
+		t.Errorf("wrote outside android/: %v", err)
+	}
+}
+
 func TestGooglePullThenPushIsEmptyPlan(t *testing.T) {
 	srv := newPlayStore(t)
 	srv.listings["en-US"] = map[string]string{"title": "Title", "shortDescription": "Short", "fullDescription": "Line one\nLine two\n\n"}

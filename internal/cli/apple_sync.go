@@ -189,6 +189,7 @@ func newApplePullCmd() *cobra.Command {
 			"in the store stays cleared on the next push. Overwrites the files it writes and touches nothing\n" +
 			"else. Does not download screenshots (Apple re-encodes them, so they would never match the\n" +
 			"originals). Without --version: the editable version if there is one, else the live one.\n" +
+			"A store locale that is not a locale name is skipped with a warning.\n" +
 			"Result: ApplePullResult",
 		Example: "  store apple pull fastlane/metadata",
 		Args:    cobra.ExactArgs(1),

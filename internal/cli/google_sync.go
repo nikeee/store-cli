@@ -109,6 +109,7 @@ func newGooglePullCmd() *cobra.Command {
 		Long: "Writes the text files of every Play listing locale into <dir>/android/<locale>/ (Play codes). A\n" +
 			"field without a value in Play is written as an empty file, so a value cleared in Play stays cleared\n" +
 			"on the next push. Overwrites the files it writes and touches nothing else. No images in v1.\n" +
+			"A Play language that is not a locale name is skipped with a warning.\n" +
 			"Result: GooglePullResult",
 		Example: "  store google pull fastlane/metadata",
 		Args:    cobra.ExactArgs(1),

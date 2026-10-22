@@ -7,6 +7,7 @@ Write the Play listing into a metadata directory
 Writes the text files of every Play listing locale into <dir>/android/<locale>/ (Play codes). A
 field without a value in Play is written as an empty file, so a value cleared in Play stays cleared
 on the next push. Overwrites the files it writes and touches nothing else. No images in v1.
+A Play language that is not a locale name is skipped with a warning.
 
 Result: GooglePullResult
 

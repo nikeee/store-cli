@@ -432,9 +432,14 @@ func (s *Service) Pull(ctx context.Context, app App, v Version, dir string) (Pul
 	if err != nil {
 		return PullResult{}, err
 	}
-	res := PullResult{Locales: slices.Sorted(maps.Keys(listing))}
-	if res.Locales == nil {
-		res.Locales = []string{}
+	res := PullResult{Locales: []string{}}
+	for _, l := range slices.Sorted(maps.Keys(listing)) {
+		// The locale becomes a folder name: never one like "../x".
+		if !metadata.IsLocale(l) {
+			s.report.Warnf("skipping store locale %q: not a locale name", l)
+			continue
+		}
+		res.Locales = append(res.Locales, l)
 	}
 	write := func(sub string, fields []metadata.Field, t metadata.Texts) error {
 		written, err := metadata.WriteTexts(filepath.Join(dir, sub), fields, t)

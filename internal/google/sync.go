@@ -280,9 +280,14 @@ func (s *Service) Pull(ctx context.Context, dir string) (PullResult, error) {
 	if err != nil {
 		return PullResult{}, err
 	}
-	res := PullResult{Locales: slices.Sorted(maps.Keys(listings))}
-	if res.Locales == nil {
-		res.Locales = []string{}
+	res := PullResult{Locales: []string{}}
+	for _, l := range slices.Sorted(maps.Keys(listings)) {
+		// The language becomes a folder name: never one like "../x".
+		if !metadata.IsLocale(l) {
+			s.report.Warnf("skipping Play language %q: not a locale name", l)
+			continue
+		}
+		res.Locales = append(res.Locales, l)
 	}
 	for _, l := range res.Locales {
 		t := maps.Clone(listings[l])

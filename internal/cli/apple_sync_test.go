@@ -370,6 +370,26 @@ func TestApplePullWritesFiles(t *testing.T) {
 	}
 }
 
+// A store locale that is not a locale name never becomes a path.
+func TestApplePullSkipsNonLocaleNames(t *testing.T) {
+	srv := pushCLIServer(t)
+	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionLocalizations", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[
+			{"type":"appStoreVersionLocalizations","id":"vl-en","attributes":{"locale":"en-US","description":"An example app."}},
+			{"type":"appStoreVersionLocalizations","id":"vl-x","attributes":{"locale":"../evil","description":"x"}}],
+			"links":{"self":"x"}}`))
+	})
+	dir := filepath.Join(t.TempDir(), "metadata")
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "pull", dir, "-o", "json")
+	if code != 0 || strings.Contains(stdout, "evil") || !strings.Contains(stderr, `skipping store locale "../evil"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "..", "evil")); !os.IsNotExist(err) {
+		t.Errorf("wrote outside the directory: %v", err)
+	}
+}
+
 func TestApplePullThenPushIsEmptyPlan(t *testing.T) {
 	srv := pushCLIServer(t)
 	// the store has no notes and no de-DE marketing URL (cleared there)
