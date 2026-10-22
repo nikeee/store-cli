@@ -5,7 +5,7 @@ Do the whole App Store submission of a version
 ### Synopsis
 
 The whole App Store submission in one command:
-1. Find the build (--build, default latest = newest VALID build of <version>).
+1. Find the build (--build, default latest = newest VALID, unexpired build of <version>).
 2. Find or create the version. It must be editable (PREPARE_FOR_SUBMISSION, DEVELOPER_REJECTED,
    REJECTED, METADATA_REJECTED, INVALID_BINARY); otherwise exit 1 with its state.
 3. Attach the build. Set the release type only when --release is given (scheduled needs
@@ -31,7 +31,7 @@ store apple submit <version> [--build N|latest] [--metadata <dir>] [--screenshot
 ### Options
 
 ```
-      --build string           build number to submit, or latest (newest valid build of the version) (default "latest")
+      --build string           build number to submit, or latest (newest valid, unexpired build of the version) (default "latest")
       --dry-run                print what would change, change nothing
   -h, --help                   help for submit
       --metadata string        metadata directory to push to the version first

@@ -170,10 +170,11 @@ func TestSubmitNoBuild(t *testing.T) {
 
 func TestSubmitLatestIsNewestValidBuild(t *testing.T) {
 	srv := submitServer(t, "app_appStoreVersions.json", "builds_processing.json")
-	// Build 45 is newer but still processing; build 44 is the newest valid one.
+	// Build 45 is newer but still processing; build 44 is the newest valid,
+	// unexpired one.
 	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, r *http.Request) {
 		fixture := "builds_processing.json"
-		if r.URL.Query().Get("filter[processingState]") == "VALID" {
+		if q := r.URL.Query(); q.Get("filter[processingState]") == "VALID" && q.Get("filter[expired]") == "false" {
 			fixture = "builds_valid_older.json"
 		}
 		ascfake.JSON(http.StatusOK, fixture)(w, r)

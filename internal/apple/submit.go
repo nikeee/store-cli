@@ -266,12 +266,12 @@ func (s *Service) createOptions(o SubmitOptions) CreateVersionOptions {
 }
 
 // submitBuild resolves o.Build, which must be a valid build of o.Version;
-// "latest" (the default) is the newest valid build of o.Version.
+// "latest" (the default) is the newest valid, unexpired build of o.Version.
 func (s *Service) submitBuild(ctx context.Context, app App, o SubmitOptions) (Build, error) {
 	if o.Build != "" && o.Build != "latest" {
 		return s.ResolveBuild(ctx, app, o.Build, o.Version, o.Platform)
 	}
-	builds, err := s.ListBuilds(ctx, app, BuildFilter{Version: o.Version, State: "valid", Limit: 1, Platform: o.Platform})
+	builds, err := s.ListBuilds(ctx, app, BuildFilter{Version: o.Version, State: "valid", Limit: 1, Platform: o.Platform, ExcludeExpired: true})
 	if err != nil {
 		return Build{}, err
 	}

@@ -27,12 +27,14 @@ type Build struct {
 
 // BuildFilter narrows ListBuilds. State is a --state value (processing,
 // failed, invalid or valid), Platform a --platform value; empty fields do
-// not filter. Limit 0 means the API default.
+// not filter. Limit 0 means the API default. ExcludeExpired drops expired
+// builds.
 type BuildFilter struct {
-	Version  string
-	State    string
-	Limit    int
-	Platform string
+	Version        string
+	State          string
+	Limit          int
+	Platform       string
+	ExcludeExpired bool
 }
 
 // BuildCondition is what WaitForBuild waits for.
@@ -124,6 +126,9 @@ func buildQuery(app App, f BuildFilter) (asc.BuildsGetCollectionParams, error) {
 			return p, clierr.Usagef("invalid --state %q (use processing, failed, invalid or valid)", f.State)
 		}
 		p.FilterProcessingState = []string{string(state)}
+	}
+	if f.ExcludeExpired {
+		p.FilterExpired = []string{"false"}
 	}
 	if f.Platform != "" {
 		platform, ok := APIPlatform(f.Platform)
