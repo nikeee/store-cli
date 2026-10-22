@@ -107,7 +107,7 @@ func (s *Service) UploadBuild(ctx context.Context, o UploadOptions) (UploadResul
 	if err != nil && parent.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
 		err = clierr.New("timed out after %s while %s", o.Timeout, u.doing)
 	}
-	if err != nil && len(u.todo) > 0 {
+	if err != nil && res.Uploaded() {
 		err = u.afterUpload(res, err)
 	}
 	return res, err
@@ -121,7 +121,8 @@ func (r UploadResult) Uploaded() bool {
 
 // upload is the state of one UploadBuild call. doing names the current step
 // for timeout errors. todo holds, once Apple accepted the upload, the
-// commands that do the steps not done yet.
+// commands that do the steps not done yet; it is empty when nothing is left
+// to do, e.g. after processing failed.
 type upload struct {
 	*Service
 	plan  uploadPlan
@@ -237,14 +238,15 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 		return res, err
 	}
 
+	build := fmt.Sprintf("--version %s --platform %s", p.info.Version, o.Platform)
 	if o.Notes != "" {
-		u.todo = append(u.todo, "store apple testflight notes set "+p.info.Build+" --text <notes>")
+		u.todo = append(u.todo, fmt.Sprintf("store apple testflight notes set %s %s --locale %s --text <notes>", p.info.Build, build, o.NotesLocale))
 	}
 	if o.Encryption != nil {
-		u.todo = append(u.todo, fmt.Sprintf("store apple build set-encryption %s %t", p.info.Build, *o.Encryption))
+		u.todo = append(u.todo, fmt.Sprintf("store apple build set-encryption %s %t %s", p.info.Build, *o.Encryption, build))
 	}
 	if o.Wait {
-		u.todo = append(u.todo, "store apple build wait "+p.info.Build)
+		u.todo = append(u.todo, fmt.Sprintf("store apple build wait %s %s", p.info.Build, build))
 	}
 	if len(u.todo) == 0 {
 		return res, nil
@@ -271,7 +273,10 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 		u.report.Progressf("export compliance set")
 	}
 	if o.Wait {
-		if _, err := u.waitForBuild(ctx, BuildProcessed, "to be processed"); err != nil {
+		if b, err := u.waitForBuild(ctx, BuildProcessed, "to be processed"); err != nil {
+			if b.State == "failed" || b.State == "invalid" {
+				u.todo = nil
+			}
 			return res, err
 		}
 	}

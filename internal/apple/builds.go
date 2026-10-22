@@ -205,7 +205,8 @@ func (s *Service) findBuild(ctx context.Context, app App, ref, version, platform
 // WaitForBuild polls until build buildNumber (under version, if given, on
 // platform, a --platform value)
 // satisfies until. A build that ends FAILED or INVALID is an error when
-// waiting for BuildProcessed. It gives up after timeout.
+// waiting for BuildProcessed; the build is returned with it. It gives up
+// after timeout.
 func (s *Service) WaitForBuild(ctx context.Context, app App, buildNumber, version, platform string, until BuildCondition, timeout time.Duration) (Build, error) {
 	start := s.now()
 	for {
@@ -223,7 +224,7 @@ func (s *Service) WaitForBuild(ctx context.Context, app App, buildNumber, versio
 			case b.State == "valid":
 				return b, nil
 			case b.State == "failed" || b.State == "invalid":
-				return Build{}, clierr.New("build %s ended %s in App Store Connect", buildNumber, b.State)
+				return b, clierr.New("build %s ended %s in App Store Connect", buildNumber, b.State)
 			}
 		}
 		if elapsed >= timeout {

@@ -388,19 +388,25 @@ func TestUploadBuildStepAfterUploadFails(t *testing.T) {
 	}{
 		"never appears": {
 			builds: "builds_empty.json", want: "timed out after 5m0s waiting for build 45 to appear",
-			hint: "store apple testflight notes set 45 --text <notes> && store apple build set-encryption 45 false && store apple build wait 45",
+			hint: "store apple testflight notes set 45 --version 1.3.0 --platform ios --locale en-US --text <notes> && " +
+				"store apple build set-encryption 45 false --version 1.3.0 --platform ios && store apple build wait 45 --version 1.3.0 --platform ios",
 		},
 		"notes fail": {
 			builds: "builds_processing.json", failNotes: true, want: "set notes of build 45", status: http.StatusConflict,
-			hint: "store apple testflight notes set 45 --text <notes> && store apple build set-encryption 45 false && store apple build wait 45",
+			hint: "store apple testflight notes set 45 --version 1.3.0 --platform ios --locale en-US --text <notes> && " +
+				"store apple build set-encryption 45 false --version 1.3.0 --platform ios && store apple build wait 45 --version 1.3.0 --platform ios",
 		},
 		"encryption fails": {
 			builds: "builds_processing.json", failPatch: true, want: "An attribute value is invalid.", status: http.StatusConflict,
-			hint: "store apple build set-encryption 45 false && store apple build wait 45",
+			hint: "store apple build set-encryption 45 false --version 1.3.0 --platform ios && store apple build wait 45 --version 1.3.0 --platform ios",
 		},
 		"never processed": {
 			builds: "builds_processing.json", want: "timed out after 5m0s waiting for build 45 to be processed",
-			hint: "store apple build wait 45",
+			hint: "store apple build wait 45 --version 1.3.0 --platform ios",
+		},
+		// Nothing is left to do once processing failed: no hint to wait.
+		"processing failed": {
+			builds: "builds_failed.json", want: "build 45 ended failed in App Store Connect",
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
