@@ -86,6 +86,16 @@ func TestReadPushDirOnly(t *testing.T) {
 	}
 }
 
+// A folder named by the App Store code would fail only at Play.
+func TestReadPushDirWantsPlayCodes(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{"android/zh-Hans/title.txt": "App", "android/en-US/title.txt": "App"})
+	_, err := ReadPushDir(PushOptions{Dir: dir})
+	if err == nil || clierr.ExitCode(err) != 1 || err.Error() != "zh-Hans: Google Play calls this language zh-CN, rename the folder" {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestReadPushDirNeedsAndroidFolder(t *testing.T) {
 	dir := t.TempDir()
 	_, err := ReadPushDir(PushOptions{Dir: dir})

@@ -75,10 +75,18 @@ func (in *PushInput) pushes(part string) bool {
 	return len(in.opts.Only) == 0 || slices.Contains(in.opts.Only, part)
 }
 
-// validate checks the lengths of the texts and the number, format, size and
-// aspect ratio of the images. All problems are reported together.
+// validate checks the folder names, the lengths of the texts and the number,
+// format, size and aspect ratio of the images. All problems are reported
+// together.
 func (in *PushInput) validate() error {
 	var msgs []string
+	folders := slices.Concat(slices.Collect(maps.Keys(in.locales)), slices.Collect(maps.Keys(in.images)))
+	slices.Sort(folders)
+	for _, l := range slices.Compact(folders) {
+		if p := locale.ToPlay(l); p != l {
+			msgs = append(msgs, fmt.Sprintf("%s: Google Play calls this language %s, rename the folder", l, p))
+		}
+	}
 	for _, l := range slices.Sorted(maps.Keys(in.locales)) {
 		if err := metadata.ValidateLocaleTexts(l, metadata.GoogleFields, in.locales[l]); err != nil {
 			msgs = append(msgs, err.Error())
