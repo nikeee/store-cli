@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -367,6 +368,72 @@ func TestUploadBuildWaitForBuildTimeout(t *testing.T) {
 			}
 			if !strings.Contains(stderr.String(), "waiting for build 45") {
 				t.Errorf("stderr = %s", stderr)
+			}
+		})
+	}
+}
+
+// A step after Apple accepted the upload fails: the error says the build was
+// uploaded and the hint names the commands that finish the remaining steps.
+func TestUploadBuildStepAfterUploadFails(t *testing.T) {
+	const uploaded = "build 45 (1.3.0) was uploaded (build upload bu-1); then: "
+	for name, tc := range map[string]struct {
+		builds    string // GET /v1/builds fixture
+		failNotes bool
+		failPatch bool
+		wait      bool
+		want      string // in the message after uploaded
+		hint      string
+		status    int
+	}{
+		"never appears": {
+			builds: "builds_empty.json", want: "timed out after 5m0s waiting for build 45 to appear",
+			hint: "store apple testflight notes set 45 --text <notes> && store apple build set-encryption 45 false && store apple build wait 45",
+		},
+		"notes fail": {
+			builds: "builds_processing.json", failNotes: true, want: "set notes of build 45", status: http.StatusConflict,
+			hint: "store apple testflight notes set 45 --text <notes> && store apple build set-encryption 45 false && store apple build wait 45",
+		},
+		"encryption fails": {
+			builds: "builds_processing.json", failPatch: true, want: "An attribute value is invalid.", status: http.StatusConflict,
+			hint: "store apple build set-encryption 45 false && store apple build wait 45",
+		},
+		"never processed": {
+			builds: "builds_processing.json", want: "timed out after 5m0s waiting for build 45 to be processed",
+			hint: "store apple build wait 45",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := uploadServer(t, ascfake.JSON(http.StatusOK, "buildUploads_get_complete.json"))
+			srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, tc.builds))
+			srv.Handle("GET", "/v1/builds/{id}/betaBuildLocalizations", ascfake.JSON(http.StatusOK, "beta_build_localizations_empty.json"))
+			notes := ascfake.JSON(http.StatusCreated, "beta_build_localization.json")
+			if tc.failNotes {
+				notes = ascfake.JSON(http.StatusConflict, "error_409.json")
+			}
+			srv.Handle("POST", "/v1/betaBuildLocalizations", notes)
+			patch := ascfake.JSON(http.StatusOK, "build_updated.json")
+			if tc.failPatch {
+				patch = ascfake.JSON(http.StatusConflict, "error_409.json")
+			}
+			srv.Handle("PATCH", "/v1/builds/{id}", patch)
+			svc, _ := uploadService(t, srv)
+			o := opts(testIPA(t))
+			no := false
+			o.Timeout, o.Notes, o.Encryption, o.Wait = 5*time.Minute, "Fixed login", &no, true
+			res, err := svc.UploadBuild(t.Context(), o)
+			var ce *clierr.Error
+			if !errors.As(err, &ce) || clierr.ExitCode(err) != 1 {
+				t.Fatalf("err = %v", err)
+			}
+			if !strings.HasPrefix(ce.Message, uploaded) || !strings.Contains(ce.Message, tc.want) {
+				t.Errorf("message = %q", ce.Message)
+			}
+			if ce.Hint != tc.hint || ce.Status != tc.status {
+				t.Errorf("hint = %q, status = %d", ce.Hint, ce.Status)
+			}
+			if res.BuildUploadID != "bu-1" || res.State != "complete" {
+				t.Errorf("result = %+v", res)
 			}
 		})
 	}

@@ -14,6 +14,8 @@ compliance answer as soon as the build exists. --wait additionally waits until t
 processed (VALID). --timeout bounds the whole command.
 buildId of the result is empty when neither --wait, --notes nor --uses-non-exempt-encryption
 made the command wait for the build.
+When a step after the accepted upload fails, the error says that the build was uploaded and the
+hint names the commands for the remaining steps; json and toon also print the result.
 
 Result: BuildUpload
 

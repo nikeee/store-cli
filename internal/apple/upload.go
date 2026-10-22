@@ -105,19 +105,43 @@ func (s *Service) UploadBuild(ctx context.Context, o UploadOptions) (UploadResul
 	u := &upload{Service: s, plan: p, opts: o, start: start}
 	res, err := u.run(ctx)
 	if err != nil && parent.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
-		return res, clierr.New("timed out after %s while %s", o.Timeout, u.doing)
+		err = clierr.New("timed out after %s while %s", o.Timeout, u.doing)
+	}
+	if err != nil && len(u.todo) > 0 {
+		err = u.afterUpload(res, err)
 	}
 	return res, err
 }
 
+// Uploaded reports whether Apple accepted the upload: the build is in App
+// Store Connect even when a later step failed.
+func (r UploadResult) Uploaded() bool {
+	return r.State == strings.ToLower(string(asc.BuildUploadStateComplete))
+}
+
 // upload is the state of one UploadBuild call. doing names the current step
-// for timeout errors.
+// for timeout errors. todo holds, once Apple accepted the upload, the
+// commands that do the steps not done yet.
 type upload struct {
 	*Service
 	plan  uploadPlan
 	opts  UploadOptions
 	start time.Time
 	doing string
+	todo  []string
+}
+
+// afterUpload reports err of a step after Apple accepted the upload: it says
+// that the build was uploaded, and the hint names the commands for the rest.
+func (u *upload) afterUpload(res UploadResult, err error) error {
+	err = ascclient.MapError(err)
+	e := clierr.New("build %s (%s) was uploaded (build upload %s); then: %v", res.Build, res.Version, res.BuildUploadID, err)
+	var ce *clierr.Error
+	if errors.As(err, &ce) {
+		e.Status, e.Code, e.Detail = ce.Status, ce.Code, ce.Detail
+	}
+	e.Hint = strings.Join(u.todo, " && ")
+	return e
 }
 
 func (u *upload) run(ctx context.Context) (UploadResult, error) {
@@ -213,7 +237,16 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 		return res, err
 	}
 
-	if o.Notes == "" && o.Encryption == nil && !o.Wait {
+	if o.Notes != "" {
+		u.todo = append(u.todo, "store apple testflight notes set "+p.info.Build+" --text <notes>")
+	}
+	if o.Encryption != nil {
+		u.todo = append(u.todo, fmt.Sprintf("store apple build set-encryption %s %t", p.info.Build, *o.Encryption))
+	}
+	if o.Wait {
+		u.todo = append(u.todo, "store apple build wait "+p.info.Build)
+	}
+	if len(u.todo) == 0 {
 		return res, nil
 	}
 	b, err := u.waitForBuild(ctx, BuildExists, "to appear")
@@ -226,6 +259,7 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 		if _, err := u.SetBuildNotes(ctx, b, o.NotesLocale, o.Notes); err != nil {
 			return res, err
 		}
+		u.todo = u.todo[1:]
 		u.report.Progressf("notes set (%s)", o.NotesLocale)
 	}
 	if o.Encryption != nil {
@@ -233,6 +267,7 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 		if _, err := u.SetEncryption(ctx, b, *o.Encryption); err != nil {
 			return res, err
 		}
+		u.todo = u.todo[1:]
 		u.report.Progressf("export compliance set")
 	}
 	if o.Wait {

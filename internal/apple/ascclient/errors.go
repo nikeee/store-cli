@@ -2,6 +2,7 @@ package ascclient
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -32,4 +33,19 @@ func FromAPIError(e *asc.ResponseError) *clierr.Error {
 		Code:    errs[0].Code,
 		Detail:  strings.Join(details, "; "),
 	}
+}
+
+// MapError turns an App Store Connect error response anywhere in err's chain
+// into a clierr.Error, keeping the context added by wrappers
+// ("attach build 42: ..."); other errors pass unchanged.
+func MapError(err error) error {
+	var re *asc.ResponseError
+	if !errors.As(err, &re) {
+		return err
+	}
+	ce := FromAPIError(re)
+	if prefix, ok := strings.CutSuffix(err.Error(), re.Error()); ok {
+		ce.Message = prefix + ce.Message
+	}
+	return ce
 }

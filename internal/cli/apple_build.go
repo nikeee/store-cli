@@ -9,6 +9,7 @@ import (
 	"github.com/nikeee/store-cli/internal/apple"
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
+	"github.com/nikeee/store-cli/internal/output"
 )
 
 func newAppleBuildCmd(Deps) *cobra.Command {
@@ -43,6 +44,8 @@ func newAppleBuildUploadCmd() *cobra.Command {
 			"processed (VALID). --timeout bounds the whole command.\n" +
 			"buildId of the result is empty when neither --wait, --notes nor --uses-non-exempt-encryption\n" +
 			"made the command wait for the build.\n" +
+			"When a step after the accepted upload fails, the error says that the build was uploaded and the\n" +
+			"hint names the commands for the remaining steps; json and toon also print the result.\n" +
 			"Result: BuildUpload",
 		Example: "  store apple build upload app.ipa --notes @whats-new.txt --uses-non-exempt-encryption false",
 		Args:    cobra.ExactArgs(1),
@@ -80,6 +83,11 @@ func newAppleBuildUploadCmd() *cobra.Command {
 				res, err = svc.UploadBuild(cmd.Context(), o)
 			}
 			if err != nil {
+				// The build exists although a later step failed: json and toon
+				// show the result as push does; the text error says it.
+				if res.Uploaded() && printer(cmd).Mode() != output.ModeText {
+					_ = emit(cmd, res)
+				}
 				return err
 			}
 			return emit(cmd, res)

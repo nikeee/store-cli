@@ -163,6 +163,37 @@ func TestAppleBuildUpload(t *testing.T) {
 	}
 }
 
+// A step after the upload fails: exit 1, the error says the build was
+// uploaded and names the next command; json mode also prints the result.
+func TestAppleBuildUploadFailsAfterUpload(t *testing.T) {
+	for _, mode := range []string{"text", "json"} {
+		t.Run(mode, func(t *testing.T) {
+			srv := uploadCLIServer(t)
+			srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_processing.json"))
+			srv.Handle("PATCH", "/v1/builds/{id}", ascfake.JSON(http.StatusConflict, "error_409.json"))
+			code, stdout, stderr := runEnv(t, appleEnv(srv, nil), false, "apple", "build", "upload", uploadIPA(t),
+				"--uses-non-exempt-encryption", "false", "-o", mode)
+			if code != 1 || !strings.Contains(stderr, "build 45 (1.3.0) was uploaded (build upload bu-1); then: update build 45: An attribute value is invalid.") ||
+				!strings.Contains(stderr, "store apple build set-encryption 45 false") {
+				t.Fatalf("code=%d stderr=%q", code, stderr)
+			}
+			if mode == "text" {
+				if stdout != "" {
+					t.Errorf("stdout = %q", stdout)
+				}
+				return
+			}
+			var res map[string]string
+			if err := json.Unmarshal([]byte(stdout), &res); err != nil {
+				t.Fatalf("stdout = %q: %v", stdout, err)
+			}
+			if res["buildUploadId"] != "bu-1" || res["state"] != "complete" || res["buildId"] == "" {
+				t.Errorf("result = %v", res)
+			}
+		})
+	}
+}
+
 func TestAppleBuildUploadAppMismatchExits2(t *testing.T) {
 	srv := uploadCLIServer(t)
 	code, _, stderr := runEnv(t, appleEnv(srv, nil), false, "apple", "build", "upload", uploadIPA(t), "--app", "com.other.app")
