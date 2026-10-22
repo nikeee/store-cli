@@ -2,11 +2,17 @@ package google
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"google.golang.org/api/androidpublisher/v3"
+	"google.golang.org/api/googleapi"
 )
+
+// ErrCommitUnknown is in the error of a commit that got no answer from Play
+// (a transport error): the edit may have been committed.
+var ErrCommitUnknown = errors.New("the commit outcome is unknown, check Play Console")
 
 // CommitOptions configure how withEdit ends an edit.
 type CommitOptions struct {
@@ -19,7 +25,9 @@ type CommitOptions struct {
 
 // withEdit runs fn in a new edit of the app; fn gets the edit ID. Contract:
 // when fn succeeds the edit is committed. When fn or the commit fails, the
-// edit is deleted, so nothing is published, and that error is returned. With
+// edit is deleted, so nothing is published, and that error is returned; a
+// commit without an answer from Play may have gone through, so its error
+// wraps ErrCommitUnknown. With
 // opts.DryRun fn still runs and must itself skip uploads and every other
 // mutating call; the edit is then deleted instead of committed. The delete
 // runs even when ctx is cancelled; a failed delete is only a warning, since
@@ -43,6 +51,10 @@ func (s *Service) withEdit(ctx context.Context, opts CommitOptions, fn func(edit
 	}
 	if _, err := commit.Do(); err != nil {
 		s.deleteEdit(ctx, edit.Id)
+		var ge *googleapi.Error
+		if !errors.As(err, &ge) {
+			return fmt.Errorf("commit edit: %w (%w)", err, ErrCommitUnknown)
+		}
 		return fmt.Errorf("commit edit: %w", err)
 	}
 	return nil

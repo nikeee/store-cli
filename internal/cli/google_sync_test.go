@@ -409,6 +409,32 @@ func TestGooglePushDeletesEditOnFailure(t *testing.T) {
 	}
 }
 
+// A commit that got no answer from Play may have been applied: push must not
+// claim that nothing was published.
+func TestGooglePushCommitOutcomeUnknown(t *testing.T) {
+	for _, mode := range []string{"text", "json"} {
+		t.Run(mode, func(t *testing.T) {
+			dir, srv := googlePushSetup(t)
+			srv.Handle("POST", googleEditsPath+"/edit-1:commit", func(w http.ResponseWriter, _ *http.Request) {
+				if conn, _, err := http.NewResponseController(w).Hijack(); err == nil {
+					_ = conn.Close()
+				}
+			})
+			code, stdout, stderr := runEnv(t, googleEnv(srv.Server, nil), false, pushArgs(dir, "-o", mode)...)
+			if code != 1 || strings.Contains(stderr, "nothing was published") ||
+				!strings.Contains(stderr, "staged 7 of 7 changes: commit edit: ") ||
+				!strings.Contains(stderr, "the commit outcome is unknown, check Play Console") {
+				t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+			}
+			if mode == "json" {
+				if got := planLines(t, stdout); !slices.Equal(got, googlePushPlan) {
+					t.Errorf("plan = %v, want %v", got, googlePushPlan)
+				}
+			}
+		})
+	}
+}
+
 func TestGooglePushValidationBeforeAnyCall(t *testing.T) {
 	cases := []struct {
 		name  string

@@ -40,6 +40,34 @@ func editServer(t *testing.T) *playfake.Server {
 	return srv
 }
 
+// dropConnection answers a request by closing the connection: a transport
+// error for the client.
+func dropConnection(w http.ResponseWriter, _ *http.Request) {
+	conn, _, err := http.NewResponseController(w).Hijack()
+	if err == nil {
+		_ = conn.Close()
+	}
+}
+
+// A commit without an answer from Play may have gone through: the error must
+// not claim that nothing was published.
+func TestWithEditCommitWithoutAnswerIsUnknown(t *testing.T) {
+	srv := editServer(t)
+	srv.Handle("POST", commitPath, dropConnection)
+	err := newService(t, srv, io.Discard).withEdit(t.Context(), CommitOptions{}, func(string) error { return nil })
+	if !errors.Is(err, ErrCommitUnknown) || !strings.HasPrefix(err.Error(), "commit edit: ") ||
+		!strings.HasSuffix(err.Error(), "(the commit outcome is unknown, check Play Console)") {
+		t.Fatalf("err = %v", err)
+	}
+
+	srv = editServer(t)
+	srv.Handle("POST", commitPath, playfake.JSON(http.StatusBadRequest, "error_draft_app.json"))
+	err = newService(t, srv, io.Discard).withEdit(t.Context(), CommitOptions{}, func(string) error { return nil })
+	if err == nil || errors.Is(err, ErrCommitUnknown) {
+		t.Errorf("a rejected commit: err = %v", err)
+	}
+}
+
 // calls lists method and path of every request srv received.
 func calls(srv *playfake.Server) []string {
 	var list []string

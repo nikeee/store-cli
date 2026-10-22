@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -62,7 +63,8 @@ func newGooglePushCmd() *cobra.Command {
 			"is computed and printed (stderr in text mode), then the listings and the images are changed and the\n" +
 			"edit is committed; --dry-run stops after the plan. With nothing to change nothing is committed.\n" +
 			"When anything fails, the edit is deleted, so nothing is published: push exits 1 and the plan shows\n" +
-			"which changes had been staged (skip for the others).\n" +
+			"which changes had been staged (skip for the others). Only a commit that gets no answer from Play\n" +
+			"may have been applied: then the error says so, check Play Console.\n" +
 			"Result: Plan",
 		Example: "  store google push fastlane/metadata --dry-run\n" +
 			"  store google push fastlane/metadata --only texts",
@@ -86,8 +88,12 @@ func newGooglePushCmd() *cobra.Command {
 				}
 			})
 			if err != nil {
+				title := "result (skip = not staged, nothing was published)"
+				if errors.Is(err, google.ErrCommitUnknown) {
+					title = "result (commit outcome unknown)"
+				}
 				if planned && text {
-					printChanges(cmd, "result (skip = not staged, nothing was published)", res)
+					printChanges(cmd, title, res)
 				} else if planned {
 					_ = emit(cmd, res)
 				}

@@ -16,7 +16,8 @@ All texts and images are checked before any API call. Everything runs in one edi
 is computed and printed (stderr in text mode), then the listings and the images are changed and the
 edit is committed; --dry-run stops after the plan. With nothing to change nothing is committed.
 When anything fails, the edit is deleted, so nothing is published: push exits 1 and the plan shows
-which changes had been staged (skip for the others).
+which changes had been staged (skip for the others). Only a commit that gets no answer from Play
+may have been applied: then the error says so, check Play Console.
 
 Result: Plan
 

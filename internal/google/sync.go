@@ -224,7 +224,8 @@ func (s *Service) applyPush(ctx context.Context, editID string, p *pushPlan) (in
 // change the edit is deleted without a commit. On any failure the edit is
 // deleted, so nothing is published; the error says so and how many changes
 // had been staged, and the returned plan keeps the action of the staged
-// changes and has skip for the others.
+// changes and has skip for the others. A commit without an answer from Play
+// (ErrCommitUnknown) is not said to have published nothing.
 func (s *Service) Push(ctx context.Context, in *PushInput, c CommitOptions, onPlan func(metadata.Plan)) (metadata.Plan, error) {
 	var (
 		p      *pushPlan
@@ -255,6 +256,9 @@ func (s *Service) Push(ctx context.Context, in *PushInput, c CommitOptions, onPl
 	res := metadata.Plan{Changes: slices.Clone(p.plan.Changes)}
 	for i := staged; i < len(res.Changes); i++ {
 		res.Changes[i].Action = metadata.ActionSkip
+	}
+	if errors.Is(err, ErrCommitUnknown) {
+		return res, fmt.Errorf("staged %d of %d changes: %w", staged, len(res.Changes), err)
 	}
 	return res, fmt.Errorf("staged %d of %d changes, then the edit was discarded, nothing was published: %w", staged, len(res.Changes), err)
 }
