@@ -50,7 +50,7 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 	if err != nil {
 		return nil, err
 	}
-	names := map[string]string{} // version ID -> version string
+	names := map[string]string{}       // version ID -> version string
 	includedItems := map[string]bool{} // IDs of the included review submission items
 	for _, inc := range resp.Included {
 		switch inc.Type {

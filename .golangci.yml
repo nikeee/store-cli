@@ -5,3 +5,6 @@ linters:
     - errorlint
     - gocritic
     - misspell
+formatters:
+  enable:
+    - gofmt
