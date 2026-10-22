@@ -21,7 +21,9 @@ func allowedQueryKey(k string) bool {
 }
 
 // redactedURL renders u for logs: scheme, host, path and the query with every
-// value hidden unless its key is allowlisted. Userinfo and fragment are dropped.
+// value hidden unless its key is allowlisted; a key without value is hidden
+// unless allowlisted, since it may be the secret itself. Userinfo and
+// fragment are dropped.
 func redactedURL(u *url.URL) string {
 	var b strings.Builder
 	b.WriteString(u.Scheme)
@@ -41,10 +43,15 @@ func redactedURL(u *url.URL) string {
 		if err != nil {
 			key = rawKey
 		}
-		b.WriteString(rawKey)
 		if !hasVal {
+			if allowedQueryKey(key) {
+				b.WriteString(rawKey)
+			} else {
+				b.WriteString("***")
+			}
 			continue
 		}
+		b.WriteString(rawKey)
 		b.WriteByte('=')
 		if allowedQueryKey(key) {
 			b.WriteString(rawVal)
