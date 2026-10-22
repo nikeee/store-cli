@@ -145,3 +145,14 @@ func TestAppleTestflightSubmitAlreadySubmitted(t *testing.T) {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 }
+
+func TestAppleTestflightSubmit409WithoutSubmissionFails(t *testing.T) {
+	srv := distServer(t)
+	srv.Handle("POST", "/v1/betaAppReviewSubmissions", ascfake.JSON(http.StatusConflict, "error_409_beta_review.json"))
+	srv.Handle("GET", "/v1/builds/{id}/betaAppReviewSubmission", ascfake.JSON(http.StatusOK, "beta_app_review_submission_none.json"))
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "testflight", "submit", "45")
+	if code != 1 || stdout != "" || !strings.Contains(stderr, "submit build 45 to Beta App Review") ||
+		!strings.Contains(stderr, "The build has already been submitted for Beta App Review.") {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}

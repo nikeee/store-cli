@@ -315,17 +315,16 @@ func (s *Service) SubmitBetaReview(ctx context.Context, b Build, dryRun bool) (B
 		}
 		return BetaReview{Build: b.Build, State: state}, nil
 	case errors.As(err, &re) && re.StatusCode == http.StatusConflict:
-		// The spec documents no error code for a 409 on this POST, so any 409
-		// counts as "already submitted"; the state lookup below reports the
-		// real situation when a submission exists.
+		// The spec documents no error code for a 409 on this POST, so a 409
+		// counts as "already submitted" only when the build has a submission;
+		// otherwise Apple's error stands.
 		state, found, lerr := s.betaReviewState(ctx, b)
 		if lerr != nil {
 			return BetaReview{}, lerr
 		}
-		if !found {
-			state = stateSubmitted
+		if found {
+			return BetaReview{Build: b.Build, State: state}, nil
 		}
-		return BetaReview{Build: b.Build, State: state}, nil
 	}
 	return BetaReview{}, fmt.Errorf("submit build %s to Beta App Review: %w", b.Build, err)
 }

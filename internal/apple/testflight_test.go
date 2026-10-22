@@ -2,10 +2,12 @@ package apple
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 )
@@ -275,16 +277,17 @@ func TestBetaReviewAlreadySubmitted(t *testing.T) {
 	}
 }
 
-func TestBetaReviewOther409IsStillAlreadySubmittedWithoutState(t *testing.T) {
+func TestBetaReview409WithoutSubmissionFails(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("POST", "/v1/betaAppReviewSubmissions", ascfake.JSON(http.StatusConflict, "error_409_beta_review.json"))
 	srv.Handle("GET", "/v1/builds/{id}/betaAppReviewSubmission", ascfake.JSON(http.StatusOK, "beta_app_review_submission_none.json"))
-	got, err := newService(t, srv).SubmitBetaReview(t.Context(), testBuild, false)
-	if err != nil {
-		t.Fatal(err)
+	_, err := newService(t, srv).SubmitBetaReview(t.Context(), testBuild, false)
+	var re *asc.ResponseError
+	if !errors.As(err, &re) || re.StatusCode != http.StatusConflict {
+		t.Fatalf("err = %v, want the 409 from the POST", err)
 	}
-	if got.State != "submitted" {
-		t.Errorf("result = %+v", got)
+	if !strings.HasPrefix(err.Error(), "submit build 44 to Beta App Review: ") {
+		t.Errorf("err = %v", err)
 	}
 }
 
