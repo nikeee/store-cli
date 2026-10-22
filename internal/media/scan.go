@@ -5,14 +5,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/nikeee/store-cli/internal/clierr"
+	"github.com/nikeee/store-cli/internal/metadata"
 )
-
-var localeRe = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
 
 func isImageFile(name string) bool {
 	if strings.HasPrefix(name, ".") {
@@ -58,7 +56,7 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 		return nil, clierr.New("read %s: %v", dir, err)
 	}
 	for _, e := range entries {
-		if !e.IsDir() || !localeRe.MatchString(e.Name()) {
+		if !e.IsDir() || !metadata.IsLocale(e.Name()) {
 			continue
 		}
 		locale := e.Name()
@@ -110,7 +108,7 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 // paths from <dir>/android/<locale>/images/.
 func ScanGoogleImages(dir string) (map[string]map[string][]string, error) {
 	out := map[string]map[string][]string{}
-	root := filepath.Join(dir, "android")
+	root := filepath.Join(dir, metadata.AndroidDir)
 	entries, err := os.ReadDir(root)
 	if errors.Is(err, fs.ErrNotExist) {
 		return out, nil
@@ -119,7 +117,7 @@ func ScanGoogleImages(dir string) (map[string]map[string][]string, error) {
 		return nil, clierr.New("read %s: %v", root, err)
 	}
 	for _, e := range entries {
-		if !e.IsDir() || !localeRe.MatchString(e.Name()) {
+		if !e.IsDir() || !metadata.IsLocale(e.Name()) {
 			continue
 		}
 		sets := map[string][]string{}

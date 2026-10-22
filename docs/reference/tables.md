@@ -105,7 +105,7 @@ Per locale. Files live in `<dir>/android/<locale>/`; flags belong to `store goog
 
 | `--type` | Folder or file | API image type | Count | Size | Alpha |
 |---|---|---|---|---|---|
-| `phone` | `images/phoneScreenshots` | `phoneScreenshots` | up to 8 | 320-3840 px per side, long side at most 2x the short side | no |
+| `phone` | `images/phoneScreenshots` | `phoneScreenshots` | 2 to 8 | 320-3840 px per side, long side at most 2x the short side | no |
 | `tablet-7` | `images/sevenInchScreenshots` | `sevenInchScreenshots` | up to 8 | 320-3840 px per side, long side at most 2x the short side | no |
 | `tablet-10` | `images/tenInchScreenshots` | `tenInchScreenshots` | up to 8 | 320-3840 px per side, long side at most 2x the short side | no |
 | `tv` | `images/tvScreenshots` | `tvScreenshots` | up to 8 | 320-3840 px per side, long side at most 2x the short side | no |

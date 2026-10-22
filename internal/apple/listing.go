@@ -33,9 +33,6 @@ type LocaleResult struct {
 	Action metadata.Action `json:"action"`
 }
 
-// ActionDelete is the LocaleResult action of a removed locale.
-const ActionDelete metadata.Action = "delete"
-
 // The tables below map metadata.Field.API names to the generated attribute
 // structs. They are the only place that knows the generated field names; read
 // (ListingTexts) and write (ApplyTextChanges) both use them.
@@ -606,7 +603,7 @@ func (s *Service) RemoveLocale(ctx context.Context, app App, v Version, locale s
 			return LocaleResult{}, err
 		}
 	}
-	res.Action = ActionDelete
+	res.Action = metadata.ActionDelete
 	if dryRun {
 		return res, nil
 	}

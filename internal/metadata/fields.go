@@ -24,6 +24,7 @@ type Field struct {
 	MaxChars int // 0 = no limit; counted in runes
 	Help     string
 	Secret   bool // value is masked in output (see MaskSecrets)
+	Bool     bool // value is "true" or "false"; empty means no change
 }
 
 // Texts maps Field.API to the value, only for files that exist.
@@ -31,36 +32,36 @@ type Texts map[string]string
 
 // AppleFields are the per-locale App Store text fields.
 var AppleFields = []Field{
-	{"name.txt", "name", "name", LevelAppInfo, 30, "App name", false},
-	{"subtitle.txt", "subtitle", "subtitle", LevelAppInfo, 30, "App subtitle", false},
-	{"privacy_url.txt", "privacy-url", "privacyPolicyUrl", LevelAppInfo, 0, "Privacy policy URL", false},
-	{"privacy_choices_url.txt", "privacy-choices-url", "privacyChoicesUrl", LevelAppInfo, 0, "Privacy choices URL", false},
-	{"description.txt", "description", "description", LevelVersion, 4000, "App description", false},
-	{"keywords.txt", "keywords", "keywords", LevelVersion, 100, "Search keywords, comma separated", false},
-	{"promotional_text.txt", "promotional-text", "promotionalText", LevelVersion, 170, "Promotional text", false},
-	{"marketing_url.txt", "marketing-url", "marketingUrl", LevelVersion, 0, "Marketing URL", false},
-	{"support_url.txt", "support-url", "supportUrl", LevelVersion, 0, "Support URL", false},
-	{"release_notes.txt", "", "whatsNew", LevelVersion, 4000, "What's New text (set with release-notes set)", false},
+	{"name.txt", "name", "name", LevelAppInfo, 30, "App name", false, false},
+	{"subtitle.txt", "subtitle", "subtitle", LevelAppInfo, 30, "App subtitle", false, false},
+	{"privacy_url.txt", "privacy-url", "privacyPolicyUrl", LevelAppInfo, 0, "Privacy policy URL", false, false},
+	{"privacy_choices_url.txt", "privacy-choices-url", "privacyChoicesUrl", LevelAppInfo, 0, "Privacy choices URL", false, false},
+	{"description.txt", "description", "description", LevelVersion, 4000, "App description", false, false},
+	{"keywords.txt", "keywords", "keywords", LevelVersion, 100, "Search keywords, comma separated", false, false},
+	{"promotional_text.txt", "promotional-text", "promotionalText", LevelVersion, 170, "Promotional text", false, false},
+	{"marketing_url.txt", "marketing-url", "marketingUrl", LevelVersion, 0, "Marketing URL", false, false},
+	{"support_url.txt", "support-url", "supportUrl", LevelVersion, 0, "Support URL", false, false},
+	{"release_notes.txt", "", "whatsNew", LevelVersion, 4000, "What's New text (set with release-notes set)", false, false},
 }
 
 // AppleReviewFields are the files of the review_information/ folder.
 var AppleReviewFields = []Field{
-	{"first_name.txt", "first-name", "contactFirstName", LevelReview, 0, "Review contact first name", false},
-	{"last_name.txt", "last-name", "contactLastName", LevelReview, 0, "Review contact last name", false},
-	{"phone_number.txt", "phone", "contactPhone", LevelReview, 0, "Review contact phone number", false},
-	{"email_address.txt", "email", "contactEmail", LevelReview, 0, "Review contact email address", false},
-	{"demo_required.txt", "demo-required", "demoAccountRequired", LevelReview, 0, "Whether a demo account is needed: true or false", false},
-	{"demo_user.txt", "demo-user", "demoAccountName", LevelReview, 0, "Demo account user name", false},
-	{"demo_password.txt", "demo-password", "demoAccountPassword", LevelReview, 0, "Demo account password", true},
-	{"notes.txt", "notes", "notes", LevelReview, 4000, "Notes for the App Review team", false},
+	{"first_name.txt", "first-name", "contactFirstName", LevelReview, 0, "Review contact first name", false, false},
+	{"last_name.txt", "last-name", "contactLastName", LevelReview, 0, "Review contact last name", false, false},
+	{"phone_number.txt", "phone", "contactPhone", LevelReview, 0, "Review contact phone number", false, false},
+	{"email_address.txt", "email", "contactEmail", LevelReview, 0, "Review contact email address", false, false},
+	{"demo_required.txt", "demo-required", "demoAccountRequired", LevelReview, 0, "Whether a demo account is needed: true or false", false, true},
+	{"demo_user.txt", "demo-user", "demoAccountName", LevelReview, 0, "Demo account user name", false, false},
+	{"demo_password.txt", "demo-password", "demoAccountPassword", LevelReview, 0, "Demo account password", true, false},
+	{"notes.txt", "notes", "notes", LevelReview, 4000, "Notes for the App Review team", false, false},
 }
 
 // GoogleFields are the per-locale Google Play listing text fields.
 var GoogleFields = []Field{
-	{"title.txt", "title", "title", LevelListing, 30, "App title", false},
-	{"short_description.txt", "short-description", "shortDescription", LevelListing, 80, "Short description", false},
-	{"full_description.txt", "full-description", "fullDescription", LevelListing, 4000, "Full description", false},
-	{"video.txt", "video", "video", LevelListing, 0, "Promo video URL", false},
+	{"title.txt", "title", "title", LevelListing, 30, "App title", false, false},
+	{"short_description.txt", "short-description", "shortDescription", LevelListing, 80, "Short description", false, false},
+	{"full_description.txt", "full-description", "fullDescription", LevelListing, 4000, "Full description", false, false},
+	{"video.txt", "video", "video", LevelListing, 0, "Promo video URL", false, false},
 }
 
 // FieldByFlag returns the field with the given listing set flag. An empty
@@ -87,8 +88,11 @@ func FieldByFile(fields []Field, file string) (Field, bool) {
 	return Field{}, false
 }
 
+// Mask replaces a secret value in output.
+const Mask = "***"
+
 // MaskSecrets returns a copy of changes with Old and New of secret fields
-// replaced by "***" when non-empty.
+// replaced by Mask when non-empty.
 func MaskSecrets(fields []Field, changes []Change) []Change {
 	out := slices.Clone(changes)
 	for i, c := range out {
@@ -96,10 +100,10 @@ func MaskSecrets(fields []Field, changes []Change) []Change {
 			continue
 		}
 		if c.Old != "" {
-			out[i].Old = "***"
+			out[i].Old = Mask
 		}
 		if c.New != "" {
-			out[i].New = "***"
+			out[i].New = Mask
 		}
 	}
 	return out

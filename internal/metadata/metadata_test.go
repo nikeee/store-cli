@@ -183,6 +183,18 @@ func TestReadReleaseNotesDir(t *testing.T) {
 	}
 }
 
+// The true/false rule follows the Bool mark of the field, not a file name.
+func TestValidateBoolField(t *testing.T) {
+	fields := []Field{{File: "flag.txt", API: "flag", Bool: true}, {File: "text.txt", API: "text"}}
+	err := ValidateLocaleTexts("en-US", fields, Texts{"flag": "yes", "text": "yes"})
+	if err == nil || err.Error() != "en-US/flag.txt: must be true or false" {
+		t.Fatalf("err = %v", err)
+	}
+	if f, ok := FieldByFile(AppleReviewFields, "demo_required.txt"); !ok || !f.Bool {
+		t.Errorf("demo_required.txt is not a Bool field: %+v", f)
+	}
+}
+
 func TestMaskSecrets(t *testing.T) {
 	in := []Change{
 		{Field: "demoAccountPassword", Old: "old", New: "new"},
@@ -190,7 +202,7 @@ func TestMaskSecrets(t *testing.T) {
 		{Field: "notes", Old: "a", New: "b"},
 	}
 	got := MaskSecrets(AppleReviewFields, in)
-	if got[0].Old != "***" || got[0].New != "***" || got[1].Old != "" || got[1].New != "" || got[2].Old != "a" || got[2].New != "b" {
+	if got[0].Old != Mask || got[0].New != Mask || got[1].Old != "" || got[1].New != "" || got[2].Old != "a" || got[2].New != "b" {
 		t.Errorf("got = %+v", got)
 	}
 	if in[0].New != "new" {

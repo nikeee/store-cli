@@ -212,7 +212,10 @@ func imageTypeTable() table {
 	}
 	for _, it := range media.ImageTypes {
 		count := "1"
-		if it.Multiple {
+		switch {
+		case it.Multiple && it.Min > 0:
+			count = fmt.Sprintf("%d to %d", it.Min, it.Max)
+		case it.Multiple:
 			count = fmt.Sprintf("up to %d", it.Max)
 		}
 		var size string

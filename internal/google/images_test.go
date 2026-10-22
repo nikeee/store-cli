@@ -207,6 +207,19 @@ func TestSyncImagesAppendExceedsMax(t *testing.T) {
 	}
 }
 
+func TestSyncImagesAppendBelowMin(t *testing.T) {
+	paths, _ := shots(t, 640, 1280, 5)
+	srv := newImageServer(t)
+	s := newService(t, srv.Server, io.Discard)
+	_, _, err := s.UploadImages(t.Context(), "en-US", phoneType(), paths, false, CommitOptions{})
+	if err == nil || err.Error() != "en-US phone would hold 1 image, Play needs at least 2" || clierr.ExitCode(err) != 1 {
+		t.Fatalf("err = %v", err)
+	}
+	if len(srv.uploads) != 0 {
+		t.Error("uploaded below the minimum")
+	}
+}
+
 func TestImagesAspectRejectedLocally(t *testing.T) {
 	good, _ := shots(t, 640, 1280, 1)
 	bad, _ := shots(t, 320, 1000, 2) // aspect 3.1:1
@@ -228,6 +241,7 @@ func TestImageCountsRejectedLocally(t *testing.T) {
 	}
 	many, _ := shots(t, 640, 1280, nine...)
 	one, _ := shots(t, 640, 1280, 1)
+	pair, _ := shots(t, 640, 1280, 1, 2)
 	icon, _ := media.ImageTypeByAlias("icon")
 	two, _ := shots(t, 512, 512, 1, 2)
 	tests := []struct {
@@ -237,7 +251,9 @@ func TestImageCountsRejectedLocally(t *testing.T) {
 		want  string
 	}{
 		{"too many", phoneType(), many, "at most 8"},
-		{"phone needs two", phoneType(), one, "at least 2"},
+		{"phone needs two", phoneType(), one, "phone needs at least 2 screenshots, got 1"},
+		{"minimum of the type", media.ImageType{Alias: "x", APIType: "phoneScreenshots", Multiple: true, Max: 8, Min: 3, MinSide: 320, MaxSide: 3840, MaxAspect: 2},
+			pair, "x needs at least 3 screenshots, got 2"},
 		{"single type takes one", icon, two, "exactly one"},
 		{"none", phoneType(), nil, "no image files"},
 	}

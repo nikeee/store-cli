@@ -472,7 +472,7 @@ func TestDeleteScreenshots(t *testing.T) {
 	v := Version{ID: "v1", Version: "1.3.0"}
 
 	res, ch, err := svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, true)
-	if err != nil || res.Deleted || ch.Action != ActionDelete || ch.Old != "1 screenshot" || len(mutations(srv.Server)) != 0 {
+	if err != nil || res.Deleted || ch.Action != metadata.ActionDelete || ch.Old != "1 screenshot" || len(mutations(srv.Server)) != 0 {
 		t.Fatalf("dry run: res=%+v ch=%+v err=%v", res, ch, err)
 	}
 	res, _, err = svc.DeleteScreenshots(t.Context(), v, "en-US", iphone69, false)

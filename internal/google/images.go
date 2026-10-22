@@ -18,14 +18,8 @@ import (
 	"github.com/nikeee/store-cli/internal/output"
 )
 
-// ActionDelete is the action of the change planned by DeleteImages.
-const ActionDelete metadata.Action = "delete"
-
 // scopeImages is the metadata.Change scope of image changes.
 const scopeImages = "images"
-
-// phoneMinImages is the fewest phone screenshots Play accepts (docs/reference/tables.md).
-const phoneMinImages = 2
 
 // Image is one image of a listing as Play stores it.
 type Image struct {
@@ -96,7 +90,7 @@ func imageCount(n int) string {
 
 // CheckImageFiles validates the files of an image type locally: their number
 // and each file's format, size and aspect ratio. replace tells whether they
-// become the whole set (then a phone set needs its minimum of two).
+// become the whole set (then it needs the type's minimum).
 func CheckImageFiles(t media.ImageType, paths []string, replace bool) error {
 	switch {
 	case len(paths) == 0:
@@ -105,8 +99,8 @@ func CheckImageFiles(t media.ImageType, paths []string, replace bool) error {
 		return clierr.New("%s takes exactly one image, got %d", t.Alias, len(paths))
 	case len(paths) > t.Max:
 		return clierr.New("%s takes at most %d images, got %d", t.Alias, t.Max, len(paths))
-	case replace && t.Alias == "phone" && len(paths) < phoneMinImages:
-		return clierr.New("phone needs at least %d screenshots, got %d", phoneMinImages, len(paths))
+	case replace && len(paths) < t.Min:
+		return clierr.New("%s needs at least %d screenshots, got %d", t.Alias, t.Min, len(paths))
 	}
 	for _, p := range paths {
 		if err := media.ValidateGoogleImage(p, t); err != nil {
@@ -194,8 +188,8 @@ func (s *Service) syncImages(ctx context.Context, editID, language string, t med
 			return change, clierr.New("%s %s already holds %d images, adding %d would exceed the maximum of %d (use --replace)",
 				language, t.Alias, len(remote), len(paths), t.Max)
 		}
-		if t.Alias == "phone" && total < phoneMinImages {
-			return change, clierr.New("%s phone would hold %d screenshot, Play needs at least %d", language, total, phoneMinImages)
+		if total < t.Min {
+			return change, clierr.New("%s %s would hold %s, Play needs at least %d", language, t.Alias, imageCount(total), t.Min)
 		}
 		change.New = imageCount(total)
 	}
@@ -300,7 +294,7 @@ func (s *Service) DeleteImages(ctx context.Context, language string, t media.Ima
 		if len(imgs) == 0 {
 			return clierr.New("%s has no %s images", language, t.Alias)
 		}
-		change = metadata.Change{Action: ActionDelete, Scope: scopeImages, Locale: language, Field: t.Alias, Old: imageCount(len(imgs))}
+		change = metadata.Change{Action: metadata.ActionDelete, Scope: scopeImages, Locale: language, Field: t.Alias, Old: imageCount(len(imgs))}
 		if c.DryRun {
 			return nil
 		}

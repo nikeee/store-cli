@@ -205,7 +205,7 @@ func TestLocaleAddRemove(t *testing.T) {
 	srv.Handle("DELETE", "/v1/appStoreVersionLocalizations/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
 	svc := newService(t, srv)
 	res, err := svc.RemoveLocale(t.Context(), listingApp, listingVersion, "de-DE", false)
-	if err != nil || res.Action != ActionDelete {
+	if err != nil || res.Action != metadata.ActionDelete {
 		t.Fatalf("res=%+v err=%v", res, err)
 	}
 	var paths []string

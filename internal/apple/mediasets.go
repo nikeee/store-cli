@@ -310,7 +310,7 @@ func (s *Service) deleteMedia(ctx context.Context, k mediaKind, v Version, local
 	if err != nil {
 		return metadata.Change{}, false, fmt.Errorf("list %s of %s %s: %w", k.plural, locale, d.Alias, err)
 	}
-	change := metadata.Change{Action: ActionDelete, Scope: k.scope, Locale: locale, Field: d.Alias, Old: k.count(len(items))}
+	change := metadata.Change{Action: metadata.ActionDelete, Scope: k.scope, Locale: locale, Field: d.Alias, Old: k.count(len(items))}
 	if dryRun {
 		return change, false, nil
 	}

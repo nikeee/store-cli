@@ -238,7 +238,7 @@ func TestDeletePreviews(t *testing.T) {
 	srv := previewServer(t, "appPreviewSets_two.json", []remoteShot{{"a", "01.mp4", "s1"}}, "")
 	svc, _ := uploadService(t, srv)
 	res, ch, err := svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, true)
-	if err != nil || res.Deleted || ch.Action != ActionDelete || ch.Old != "1 preview" || len(mutations(srv)) != 0 {
+	if err != nil || res.Deleted || ch.Action != metadata.ActionDelete || ch.Old != "1 preview" || len(mutations(srv)) != 0 {
 		t.Fatalf("dry run: res=%+v ch=%+v err=%v", res, ch, err)
 	}
 	res, _, err = svc.DeletePreviews(t.Context(), testVersion, "en-US", iphone69, false)

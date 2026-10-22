@@ -8,6 +8,7 @@ const (
 	ActionUpdate  Action = "update"
 	ActionReplace Action = "replace"
 	ActionSkip    Action = "skip"
+	ActionDelete  Action = "delete"
 )
 
 // Change is one planned or applied modification.

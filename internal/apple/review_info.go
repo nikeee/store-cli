@@ -29,9 +29,6 @@ type ReviewInfo struct {
 	Attachments  []string `json:"attachments"`
 }
 
-// maskedPassword replaces a demo password in output.
-const maskedPassword = "***"
-
 const (
 	apiDemoRequired = "demoAccountRequired"
 	apiDemoPassword = "demoAccountPassword"
@@ -297,7 +294,7 @@ func fillReviewInfo(info *ReviewInfo, t metadata.Texts, reveal bool) {
 	}
 	info.DemoRequired = t[apiDemoRequired] == "true"
 	if !reveal && info.DemoPassword != "" {
-		info.DemoPassword = maskedPassword
+		info.DemoPassword = metadata.Mask
 	}
 }
 
