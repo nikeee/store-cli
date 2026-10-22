@@ -7,7 +7,8 @@ Manage apps in Google Play
 Manage apps in Google Play with a service account. The credentials come from the environment:
 GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (the service account needs access to the app in the Play Console).
 Every mutating command runs in its own edit: create, change, commit. If anything fails, the edit is
-deleted and nothing is published. Mutating commands accept --changes-not-sent-for-review (passed to
+deleted and nothing is published. Only a commit that gets no answer from Play may have been applied:
+then the error says so, check Play Console. Mutating commands accept --changes-not-sent-for-review (passed to
 the commit; needed when the Play Console requires changes to be sent for review manually).
 
 ```
