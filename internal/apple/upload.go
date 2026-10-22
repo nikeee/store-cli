@@ -333,7 +333,7 @@ func (u *upload) waitForUpload(ctx context.Context, id string) (string, error) {
 			return state, clierr.New("timed out after %s waiting for Apple to accept the upload (state %s)", u.opts.Timeout, state)
 		}
 		u.report.Progressf("waiting for Apple to accept the upload (%s, %s elapsed)", state, shortDuration(elapsed))
-		if err := u.poll.Sleep(ctx, u.poll.Interval); err != nil {
+		if err := u.poll.Sleep(ctx, min(u.poll.Interval, u.opts.Timeout-elapsed)); err != nil {
 			return state, err
 		}
 	}

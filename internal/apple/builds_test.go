@@ -196,6 +196,22 @@ func TestWaitForBuildTimeout(t *testing.T) {
 	}
 }
 
+// The last poll sleeps only what is left of the timeout.
+func TestWaitForBuildLastSleepIsCapped(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_processing.json"))
+	var sleeps atomic.Int32
+	svc := clockService(t, srv, &sleeps)
+	start := svc.now()
+	_, err := svc.WaitForBuild(t.Context(), testApp, "45", "", "ios", BuildProcessed, 90*time.Second)
+	if err == nil || clierr.ExitCode(err) != 1 {
+		t.Fatalf("err = %v", err)
+	}
+	if waited := svc.now().Sub(start); waited != 90*time.Second {
+		t.Errorf("waited %s, want 1m30s", waited)
+	}
+}
+
 func TestSetEncryptionPatchBody(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("PATCH", "/v1/builds/{id}", ascfake.JSON(http.StatusOK, "build_updated.json"))

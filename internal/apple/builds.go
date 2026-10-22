@@ -235,7 +235,7 @@ func (s *Service) WaitForBuild(ctx context.Context, app App, buildNumber, versio
 			return Build{}, clierr.New("timed out after %s waiting for build %s %s", timeout, buildNumber, what)
 		}
 		s.report.Progressf("waiting for build %s (%s, %s elapsed)", buildNumber, state, shortDuration(elapsed))
-		if err := s.poll.Sleep(ctx, s.poll.Interval); err != nil {
+		if err := s.poll.Sleep(ctx, min(s.poll.Interval, timeout-elapsed)); err != nil {
 			return Build{}, err
 		}
 	}

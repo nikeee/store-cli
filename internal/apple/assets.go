@@ -145,7 +145,7 @@ func (s *Service) waitForAsset(ctx context.Context, kind assetKind, id, name str
 			return clierr.New("timed out after %s waiting for Apple to process %s %s (state %s)", timeout, kind.name, name, state)
 		}
 		s.report.Progressf("waiting for Apple to process %s %s (%s, %s elapsed)", kind.name, name, state, shortDuration(elapsed))
-		if err := s.poll.Sleep(ctx, s.poll.Interval); err != nil {
+		if err := s.poll.Sleep(ctx, min(s.poll.Interval, timeout-elapsed)); err != nil {
 			return err
 		}
 	}
