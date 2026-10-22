@@ -148,6 +148,14 @@ func TestBundleUploadNotesTooLong(t *testing.T) {
 	}
 }
 
+// Two files for one Play language would silently overwrite each other.
+func TestValidateReleaseNotesRejectsTwoLocalesForOneLanguage(t *testing.T) {
+	err := ValidateReleaseNotes(map[string]string{"es-MX": "a", "es-419": "b"})
+	if err == nil || clierr.ExitCode(err) != 1 || !strings.Contains(err.Error(), "release notes es-419 and es-MX are both for Play language es-419") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestSetReleaseKeepsRules(t *testing.T) {
 	const current = `{"track":"TRACK","releases":[
 		{"name":"c","status":"completed","versionCodes":["1"]},

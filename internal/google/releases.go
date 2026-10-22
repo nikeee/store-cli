@@ -46,12 +46,19 @@ type ReleaseNote struct {
 }
 
 // ValidateReleaseNotes checks the limit of 500 characters (runes) per
-// language, locally and before any request.
+// language and that no two locales map to one Play language, locally and
+// before any request.
 func ValidateReleaseNotes(notes map[string]string) error {
+	byLang := map[string]string{}
 	for _, l := range slices.Sorted(mapKeys(notes)) {
 		if n := utf8.RuneCountInString(notes[l]); n > maxReleaseNoteRunes {
 			return clierr.New("release notes %s: %d characters, the limit is %d", l, n, maxReleaseNoteRunes)
 		}
+		lang := locale.ToPlay(l)
+		if prev, ok := byLang[lang]; ok {
+			return clierr.New("release notes %s and %s are both for Play language %s", prev, l, lang)
+		}
+		byLang[lang] = l
 	}
 	return nil
 }
