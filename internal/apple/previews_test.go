@@ -272,3 +272,11 @@ func TestPreviewWatchRejected(t *testing.T) {
 		t.Errorf("iphone: %+v %v", d, err)
 	}
 }
+
+// A set without a type (nil attributes) belongs to no device, not to the
+// first device without previews.
+func TestPreviewDeviceNameOfEmptyType(t *testing.T) {
+	if got := previewMedia.deviceName(""); got != "" {
+		t.Errorf("deviceName(\"\") = %q", got)
+	}
+}

@@ -48,8 +48,11 @@ func (k mediaKind) count(n int) string {
 }
 
 // rank is the position of the device with set type typ in media.Devices;
-// unknown types sort last.
+// unknown and empty types sort last (devices without previews have none).
 func (k mediaKind) rank(typ string) int {
+	if typ == "" {
+		return len(media.Devices)
+	}
 	if i := slices.IndexFunc(media.Devices, func(d media.Device) bool { return k.typeOf(d) == typ }); i >= 0 {
 		return i
 	}
