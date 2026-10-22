@@ -80,7 +80,7 @@ func newGoogleBundleUploadCmd() *cobra.Command {
 func bundleOptions(cmd *cobra.Command, aab string) (google.BundleUploadOptions, error) {
 	f := cmd.Flags()
 	o := google.BundleUploadOptions{Path: aab, Commit: commitOptions(cmd)}
-	o.Tracks, _ = f.GetStringArray("track")
+	o.Tracks = stringArray(f, "track")
 	o.ReleaseName, _ = f.GetString("release-name")
 	var err error
 	if o.Status, o.UserFraction, err = releaseStatus(cmd); err != nil {

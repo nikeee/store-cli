@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -44,4 +45,17 @@ func (f *TextFlag) Set(s string) error {
 	}
 	f.Value, f.Changed = s, true
 	return nil
+}
+
+// stringArray returns the values of the repeatable flag name, each once, in
+// the order given.
+func stringArray(f *pflag.FlagSet, name string) []string {
+	vs, _ := f.GetStringArray(name)
+	var out []string
+	for _, v := range vs {
+		if !slices.Contains(out, v) {
+			out = append(out, v)
+		}
+	}
+	return out
 }

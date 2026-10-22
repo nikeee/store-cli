@@ -241,7 +241,7 @@ func newGoogleTrackTestersCmd() *cobra.Command {
 			if err := requireFlags(cmd, "group"); err != nil {
 				return err
 			}
-			groups, _ := cmd.Flags().GetStringArray("group")
+			groups := stringArray(cmd.Flags(), "group")
 			for _, g := range groups {
 				if !groupEmailRe.MatchString(g) {
 					return clierr.Usagef("invalid --group %q (expected a Google Group email address)", g)

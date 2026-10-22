@@ -55,7 +55,7 @@ func TestGoogleTestersDetailsGolden(t *testing.T) {
 func TestGoogleTestersSet(t *testing.T) {
 	srv := detailsCLIServer(t)
 	code, stdout, stderr := runEnv(t, googleEnv(srv, nil), false,
-		"google", "track", "testers", "set", "internal", "--app", "com.example.app", "--group", "a@googlegroups.com", "--group", "b@example.com", "-o", "json")
+		"google", "track", "testers", "set", "internal", "--app", "com.example.app", "--group", "a@googlegroups.com", "--group", "b@example.com", "--group", "a@googlegroups.com", "-o", "json")
 	if code != 0 {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
@@ -65,7 +65,7 @@ func TestGoogleTestersSet(t *testing.T) {
 			put = string(r.Body)
 		}
 	}
-	if !strings.Contains(put, "a@googlegroups.com") || !strings.Contains(put, "b@example.com") || !strings.Contains(stdout, "b@example.com") {
+	if strings.Count(put, "a@googlegroups.com") != 1 || !strings.Contains(put, "b@example.com") || !strings.Contains(stdout, "b@example.com") {
 		t.Errorf("put=%s stdout=%s", put, stdout)
 	}
 }

@@ -59,7 +59,7 @@ func methods(srv *playfake.Server, method string) int {
 func TestBundleUploadMultipleTracks(t *testing.T) {
 	srv := bundleCLIServer(t)
 	code, stdout, stderr := runEnv(t, googleEnv(srv, nil), false,
-		bundleArgs(aabFile(t), "--track", "internal", "--track", "alpha", "-o", "json")...)
+		bundleArgs(aabFile(t), "--track", "internal", "--track", "alpha", "--track", "internal", "-o", "json")...)
 	if code != 0 {
 		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
