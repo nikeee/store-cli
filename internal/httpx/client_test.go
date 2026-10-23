@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -243,5 +244,42 @@ func TestQuietWithoutVerbose(t *testing.T) {
 	do(t, c, "GET", srv.URL, nil)
 	if log.Len() != 0 {
 		t.Fatalf("log=%q", log.String())
+	}
+}
+
+// A DELETE retried after the connection dropped may have gone through:
+// a 404 on the retry means it is deleted.
+func TestRetriedDeleteNotFoundIsSuccess(t *testing.T) {
+	var n atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if n.Add(1) == 1 {
+			conn, _, err := w.(http.Hijacker).Hijack()
+			if err == nil {
+				_ = conn.Close() // deleted, but the answer is lost
+			}
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(srv.Close)
+	resp := do(t, newClient(&sleeper{}, nil), "DELETE", srv.URL+"/v1/x/1", nil)
+	if resp.StatusCode != http.StatusNoContent || n.Load() != 2 {
+		t.Fatalf("status=%d requests=%d", resp.StatusCode, n.Load())
+	}
+
+	// a 404 on the first try stays a 404
+	srv2, _ := seqServer(t, []int{404}, nil, nil)
+	if resp := do(t, newClient(&sleeper{}, nil), "DELETE", srv2.URL, nil); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("first try: status=%d", resp.StatusCode)
+	}
+}
+
+// The retry log shows the wait rounded to milliseconds.
+func TestVerboseLogRoundsWait(t *testing.T) {
+	srv, _ := seqServer(t, []int{503, 200}, nil, nil)
+	var log bytes.Buffer
+	do(t, newClient(&sleeper{}, &log), "GET", srv.URL, nil)
+	if !regexp.MustCompile(`retry 2/5 after \d+(\.\d{1,3})?s \(503\)`).MatchString(log.String()) {
+		t.Errorf("log:\n%s", log.String())
 	}
 }

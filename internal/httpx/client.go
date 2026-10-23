@@ -26,9 +26,6 @@ type Options struct {
 	Log         io.Writer
 	MaxAttempts int                                              // default 5
 	Sleep       func(ctx context.Context, d time.Duration) error // injectable for tests
-
-	// jitter returns a factor in [0, 1) scaling the 20% jitter; test hook.
-	jitter func() float64
 }
 
 // NewClient returns an http.Client whose transport retries and logs.
@@ -38,9 +35,6 @@ func NewClient(opts Options) *http.Client {
 	}
 	if opts.Sleep == nil {
 		opts.Sleep = sleepCtx
-	}
-	if opts.jitter == nil {
-		opts.jitter = rand.Float64
 	}
 	return &http.Client{Transport: &transport{opts: opts, base: http.DefaultTransport}}
 }
@@ -72,6 +66,9 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	target := redactedURL(req.URL)
 	t.logf("--> %s %s", req.Method, target)
 
+	// unsure is set once a DELETE is retried after a failure that it may
+	// have survived (a lost answer or a 5xx).
+	unsure := false
 	for attempt := 1; ; attempt++ {
 		r := req
 		if attempt > 1 && req.GetBody != nil {
@@ -92,9 +89,16 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			t.logf("<-- %d %s %s %s", resp.StatusCode, req.Method, req.URL.EscapedPath(), elapsed)
 		}
 
+		if unsure && err == nil && resp.StatusCode == http.StatusNotFound {
+			t.logf("<-- 404 after a retried %s: already deleted", req.Method)
+			_ = resp.Body.Close()
+			return &http.Response{Status: "204 No Content", StatusCode: http.StatusNoContent, Proto: resp.Proto,
+				ProtoMajor: resp.ProtoMajor, ProtoMinor: resp.ProtoMinor, Header: http.Header{}, Body: http.NoBody, Request: req}, nil
+		}
 		if attempt >= t.opts.MaxAttempts || !replayable || !retryable(req.Method, resp, err) {
 			return resp, err
 		}
+		unsure = unsure || req.Method == http.MethodDelete && (err != nil || resp.StatusCode >= http.StatusInternalServerError)
 		if err != nil && req.Context().Err() != nil {
 			return resp, err
 		}
@@ -107,7 +111,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
 			_ = resp.Body.Close()
 		}
-		t.logf("retry %d/%d after %s (%s)", attempt+1, t.opts.MaxAttempts, wait, reason)
+		t.logf("retry %d/%d after %s (%s)", attempt+1, t.opts.MaxAttempts, wait.Round(time.Millisecond), reason)
 		if serr := t.opts.Sleep(req.Context(), wait); serr != nil {
 			return nil, serr
 		}
@@ -142,7 +146,7 @@ func (t *transport) wait(attempt int, resp *http.Response) time.Duration {
 		d *= 2
 	}
 	d = min(d, maxBackoff)
-	return d + time.Duration(float64(d)*jitterFraction*t.opts.jitter())
+	return d + time.Duration(float64(d)*jitterFraction*rand.Float64())
 }
 
 func parseRetryAfter(v string, now time.Time) (time.Duration, bool) {
