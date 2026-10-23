@@ -228,9 +228,13 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 	// keeps its checksum, so only COMPLETE items count as done.
 	remoteSums := make([]string, len(remote))
 	allComplete := true
+	var leftovers []Screenshot // reserved by an earlier run but never uploaded
 	for i, r := range remote {
 		remoteSums[i] = r.Checksum
 		allComplete = allComplete && r.State == string(asc.AppMediaAssetStateStateComplete)
+		if r.State == string(asc.AppMediaAssetStateStateAwaitingUpload) {
+			leftovers = append(leftovers, r)
+		}
 	}
 	switch {
 	case o.replace && allComplete && slices.Equal(remoteSums, local):
@@ -239,11 +243,14 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 	case o.replace:
 		change.New = k.count(len(local))
 	default:
-		if total := len(remote) + len(local); total > k.max {
-			return change, setID, clierr.New("%s %s already holds %d %s, adding %d would exceed the maximum of %d (use --replace)",
-				o.locale, o.device.Alias, len(remote), k.plural, len(local), k.max)
+		kept := len(remote) - len(leftovers)
+		if total := kept + len(local); total > k.max {
+			e := clierr.New("%s %s already holds %d %s, adding %d would exceed the maximum of %d (use --replace)",
+				o.locale, o.device.Alias, kept, k.plural, len(local), k.max)
+			e.Hint = fmt.Sprintf("store apple %s upload --locale %s --device %s --replace <files>", k.plural, o.locale, o.device.Alias)
+			return change, setID, e
 		}
-		change.New = k.count(len(remote) + len(local))
+		change.New = k.count(kept + len(local))
 	}
 	switch {
 	case len(remote) == 0:
@@ -270,13 +277,15 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 		}
 		changed = true
 	}
+	stale := leftovers
 	if o.replace {
-		for _, r := range remote {
-			if err := k.deleteItem(ctx, s.client, r.ID); err != nil {
-				return change, setID, fail(fmt.Errorf("delete %s %s: %w", k.name, r.FileName, err))
-			}
-			changed = true
+		stale = remote
+	}
+	for _, r := range stale {
+		if err := k.deleteItem(ctx, s.client, r.ID); err != nil {
+			return change, setID, fail(fmt.Errorf("delete %s %s: %w", k.name, r.FileName, err))
 		}
+		changed = true
 	}
 	for i, p := range o.paths {
 		s.report.Progressf("%s %s: %s %d of %d", o.locale, o.device.Alias, k.name, i+1, len(o.paths))

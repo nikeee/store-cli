@@ -2,6 +2,7 @@ package apple
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -551,4 +552,34 @@ func TestScreenshotSetsRenderText(t *testing.T) {
 		t.Fatal(err)
 	}
 	golden.Assert(t, "screenshot_sets.text", []byte(b.String()))
+}
+
+// Screenshots an earlier run reserved but never uploaded do not count toward
+// the limit of 10; appending deletes them first.
+func TestAppendScreenshotsIgnoresLeftovers(t *testing.T) {
+	var remote []remoteShot
+	for i := range 10 {
+		remote = append(remote, remoteShot{fmt.Sprintf("r%d", i), fmt.Sprintf("%02d.png", i), "x"})
+	}
+	paths := shotFiles(t, 1)
+	o := mediaSync{localizationID: "vl-en", mediaUpload: mediaUpload{locale: "en-US", device: iphone69, paths: paths, timeout: time.Minute, asset: screenshotKind}}
+
+	srv := newShotServer(t, "appScreenshotSets_two.json", remote, instantly)
+	srv.remoteState = "AWAITING_UPLOAD"
+	svc, _ := uploadService(t, srv.Server)
+	ch, _, err := svc.syncMedia(t.Context(), screenshotMedia, o)
+	if err != nil || ch.Action != metadata.ActionUpdate || ch.New != "1 screenshot" {
+		t.Fatalf("change=%+v err=%v", ch, err)
+	}
+	if m := mutations(srv.Server); len(m) != 12 || m[0] != "DELETE /v1/appScreenshots/r0" || m[10] != "POST /v1/appScreenshots" {
+		t.Errorf("mutations = %v", m)
+	}
+
+	full := newShotServer(t, "appScreenshotSets_two.json", remote, instantly)
+	svc, _ = uploadService(t, full.Server)
+	_, _, err = svc.syncMedia(t.Context(), screenshotMedia, o)
+	var ce *clierr.Error
+	if !errors.As(err, &ce) || ce.Hint != "store apple screenshots upload --locale en-US --device iphone-6.9 --replace <files>" {
+		t.Errorf("err = %v (%#v)", err, ce)
+	}
 }
