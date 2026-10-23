@@ -6,7 +6,7 @@ Make the Play listing match a metadata directory
 
 Makes the Play listing match <dir>/android/ (fastlane layout, locale folders named by Play codes):
 - A file that exists is the desired value; an empty file clears the field; a missing file leaves
-  the field alone.
+  the field alone. title.txt of a language Play has must not be empty (Play requires a title).
 - A locale folder without a Play listing creates it (its empty files are skipped). Play languages
   without a folder are left alone; no language is deleted.
 - Images (<locale>/images/): per type, the ordered SHA-256 list is compared with Play's; any

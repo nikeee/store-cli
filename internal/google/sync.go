@@ -136,6 +136,9 @@ func (s *Service) planPush(ctx context.Context, editID string, in *PushInput) (*
 		return nil, err
 	}
 	p := &pushPlan{texts: planTexts(in.locales, remote)}
+	if err := in.checkTitles(remote); err != nil {
+		return nil, err
+	}
 	if p.images, err = s.planImages(ctx, editID, in.images, remote, p.texts); err != nil {
 		return nil, err
 	}
@@ -162,6 +165,24 @@ func planTexts(local, remote map[string]metadata.Texts) []metadata.Change {
 		changes = append(changes, metadata.DiffTexts(metadata.LevelListing, l, metadata.GoogleFields, t, r)...)
 	}
 	return changes
+}
+
+// checkTitles rejects an empty title.txt of a language Play has: it would
+// clear the title, which Play requires. For a new language empty files are
+// skipped (see planTexts), so a scaffolded language passes.
+func (in *PushInput) checkTitles(remote map[string]metadata.Texts) error {
+	title, ok := metadata.FieldByFile(metadata.GoogleFields, "title.txt")
+	if !ok {
+		return clierr.New("internal error: no title field")
+	}
+	var c clierr.Collector
+	for _, l := range slices.Sorted(maps.Keys(in.locales)) {
+		if v, ok := in.locales[l][title.API]; ok && v == "" && remote[l] != nil {
+			file := filepath.Join(in.opts.Dir, metadata.AndroidDir, l, title.File)
+			c.Add(clierr.At(l+"/"+title.File, clierr.Issue{File: file, Message: "must not be empty, Google Play requires a title"}))
+		}
+	}
+	return c.Err()
 }
 
 // trimmed returns t with every value trimmed like a value read from a file;

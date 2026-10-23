@@ -30,8 +30,8 @@ as part of a submission.
 ## What a file means
 
 - **Missing file:** the field is left alone.
-- **Empty file:** the field is cleared. `name.txt` cannot be empty; an empty `demo_required.txt`
-  changes nothing.
+- **Empty file:** the field is cleared. `name.txt` cannot be empty, nor `title.txt` of a language
+  Play has; an empty `demo_required.txt` changes nothing.
 - Trailing whitespace is trimmed on both sides of the comparison.
 - `init` creates empty files: fill them or delete them before a push, or the push clears fields.
 

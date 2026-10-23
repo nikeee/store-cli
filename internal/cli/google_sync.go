@@ -53,7 +53,7 @@ func newGooglePushCmd() *cobra.Command {
 		Short: "Make the Play listing match a metadata directory",
 		Long: "Makes the Play listing match <dir>/android/ (fastlane layout, locale folders named by Play codes):\n" +
 			"- A file that exists is the desired value; an empty file clears the field; a missing file leaves\n" +
-			"  the field alone.\n" +
+			"  the field alone. title.txt of a language Play has must not be empty (Play requires a title).\n" +
 			"- A locale folder without a Play listing creates it (its empty files are skipped). Play languages\n" +
 			"  without a folder are left alone; no language is deleted.\n" +
 			"- Images (<locale>/images/): per type, the ordered SHA-256 list is compared with Play's; any\n" +

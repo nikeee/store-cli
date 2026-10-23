@@ -602,3 +602,18 @@ func TestGoogleInitOffline(t *testing.T) {
 		}
 	}
 }
+
+// An empty title.txt of a listing Play has would clear the title, which Play
+// requires: an error before anything is staged. For a new language the empty
+// file is skipped like the other empty files of a scaffold.
+func TestGooglePushEmptyTitle(t *testing.T) {
+	dir := t.TempDir()
+	writeListingTree(t, dir, map[string]string{"android/en-US/title.txt": "\n", "android/fr-FR/title.txt": "", "android/fr-FR/short_description.txt": "Court"})
+	srv := newPlayStore(t)
+	srv.listings["en-US"] = map[string]string{"title": "Title"}
+	code, _, stderr := runEnv(t, googleEnv(srv.Server, nil), false, pushArgs(dir, "--dry-run")...)
+	if code != 1 || !strings.Contains(stderr, "en-US/title.txt: must not be empty, Google Play requires a title") || strings.Contains(stderr, "fr-FR") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+	assertRequests(t, googleCalls(srv.Server, true), []string{"POST /edits", "DELETE /edits/edit-1"})
+}
