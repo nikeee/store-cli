@@ -214,3 +214,42 @@ func TestReviewSubmissionsReadAllPages(t *testing.T) {
 		t.Fatalf("subs=%+v err=%v", subs, err)
 	}
 }
+
+// With two open drafts, the one holding the version wins, else an empty one;
+// drafts holding only other versions are an error.
+func TestPlanSubmitPrefersDraft(t *testing.T) {
+	draft := func(id, versionID string) string {
+		rel := ""
+		if versionID != "" {
+			rel = fmt.Sprintf(`,"relationships":{"appStoreVersionForReview":{"data":{"type":"appStoreVersions","id":%q}}}`, versionID)
+		}
+		return fmt.Sprintf(`{"type":"reviewSubmissions","id":%q,"attributes":{"state":"READY_FOR_REVIEW"}%s}`, id, rel)
+	}
+	tests := []struct {
+		name, drafts, want string
+		add             bool
+	}{
+		{"holds v second", draft("d1", "other") + "," + draft("d2", editableV.ID), "d2", false},
+		{"empty first", draft("d1", "") + "," + draft("d2", "other"), "d1", true},
+		{"only others", draft("d1", "other") + "," + draft("d2", "other2"), "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := ascfake.New(t)
+			srv.Handle("GET", "/v1/apps/{id}/reviewSubmissions", func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, `{"data":[`+tt.drafts+`],"links":{"self":"x"}}`)
+			})
+			p, err := newService(t, srv).planSubmit(t.Context(), versionsApp, editableV)
+			if tt.want == "" {
+				if err == nil || !strings.Contains(err.Error(), "already holds version") {
+					t.Fatalf("err = %v", err)
+				}
+				return
+			}
+			if err != nil || p.draft == nil || p.draft.id != tt.want || p.addItem != tt.add {
+				t.Fatalf("plan = %+v, err = %v", p, err)
+			}
+		})
+	}
+}

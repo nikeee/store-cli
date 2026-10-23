@@ -299,3 +299,55 @@ func TestBetaReviewOtherErrorFails(t *testing.T) {
 		t.Fatal("expected an error")
 	}
 }
+
+// noMutation fails when srv got anything but GETs.
+func noMutation(t *testing.T, srv *ascfake.Server) {
+	t.Helper()
+	for _, r := range srv.Requests() {
+		if r.Method != http.MethodGet {
+			t.Errorf("dry run sent %s %s", r.Method, r.Path)
+		}
+	}
+}
+
+func TestTestflightDryRuns(t *testing.T) {
+	srv := ascfake.New(t)
+	g, err := newService(t, srv).CreateGroup(t.Context(), testApp, GroupSpec{Name: "Friends"}, true)
+	if err != nil || g.Name != "Friends" {
+		t.Errorf("create: %+v, %v", g, err)
+	}
+	gb, err := newService(t, srv).AddBuildToGroup(t.Context(), testGroup, testBuild, true)
+	if err != nil || gb != (GroupBuild{Group: "Beta", Build: "44"}) {
+		t.Errorf("add-build: %+v, %v", gb, err)
+	}
+	noMutation(t, srv)
+
+	// a new tester: both lookups find nothing, the create is planned
+	srv = testerServer(t, "beta_testers_empty.json", "beta_testers_empty.json")
+	tr, err := newService(t, srv).AddTester(t.Context(), testGroup, "grace@example.com", "Grace", "Hopper", true)
+	if err != nil || tr != (Tester{Email: "grace@example.com", FirstName: "Grace", LastName: "Hopper"}) || len(srv.Requests()) != 2 {
+		t.Errorf("add new: %+v, %v, %d requests", tr, err, len(srv.Requests()))
+	}
+	noMutation(t, srv)
+	// an existing tester outside the group would join it
+	srv = testerServer(t, "beta_testers_empty.json", "beta_testers_one.json")
+	if tr, err := newService(t, srv).AddTester(t.Context(), testGroup, "ada@example.com", "", "", true); err != nil || tr.ID != "tester-1" {
+		t.Errorf("add existing: %+v, %v", tr, err)
+	}
+	noMutation(t, srv)
+
+	srv = testerServer(t, "beta_testers_one.json", "beta_testers_one.json")
+	rm, err := newService(t, srv).RemoveTester(t.Context(), testGroup, "ada@example.com", true)
+	if err != nil || rm.Action != metadata.ActionDelete {
+		t.Errorf("remove: %+v, %v", rm, err)
+	}
+	noMutation(t, srv)
+
+	srv = ascfake.New(t)
+	srv.Handle("GET", "/v1/builds/{id}/betaAppReviewSubmission", ascfake.JSON(http.StatusOK, "beta_app_review_submission_none.json"))
+	br, err := newService(t, srv).SubmitBetaReview(t.Context(), testBuild, true)
+	if err != nil || br != (BetaReview{Build: "44", State: "waiting_for_review"}) {
+		t.Errorf("submit: %+v, %v", br, err)
+	}
+	noMutation(t, srv)
+}

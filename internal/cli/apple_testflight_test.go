@@ -73,7 +73,15 @@ func distServer(t *testing.T) *ascfake.Server {
 	srv := buildServer(t)
 	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_valid.json"))
 	srv.Handle("GET", "/v1/apps/{id}/betaGroups", ascfake.JSON(http.StatusOK, "beta_groups.json"))
-	srv.Handle("GET", "/v1/betaTesters", ascfake.JSON(http.StatusOK, "beta_testers.json"))
+	// new@example.com is no tester yet; the other lookups find the testers
+	testers, none := ascfake.JSON(http.StatusOK, "beta_testers.json"), ascfake.JSON(http.StatusOK, "beta_testers_empty.json")
+	srv.Handle("GET", "/v1/betaTesters", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("filter[email]") == "new@example.com" {
+			none(w, r)
+			return
+		}
+		testers(w, r)
+	})
 	srv.Handle("GET", "/v1/builds/{id}/betaAppReviewSubmission", ascfake.JSON(http.StatusOK, "beta_app_review_submission_none.json"))
 	srv.Handle("POST", "/v1/betaGroups", ascfake.JSON(http.StatusCreated, "beta_group.json"))
 	srv.Handle("POST", "/v1/betaGroups/{id}/relationships/builds", ascfake.JSON(http.StatusNoContent, "empty.json"))
@@ -116,9 +124,13 @@ func TestAppleTestflightDistributionDryRun(t *testing.T) {
 		t.Run(args[0]+" "+args[1], func(t *testing.T) {
 			srv := distServer(t)
 			full := append([]string{"apple", "testflight"}, args...)
-			code, _, stderr := runEnv(t, buildEnv(srv), false, append(full, "--dry-run")...)
+			code, stdout, stderr := runEnv(t, buildEnv(srv), false, append(full, "--dry-run", "-o", "json")...)
 			if code != 0 {
 				t.Fatalf("code=%d stderr=%q", code, stderr)
+			}
+			// the new tester is planned without an ID: the create path
+			if args[1] == "add" && args[0] == "tester" && (!strings.Contains(stdout, `"email": "new@example.com"`) || strings.Contains(stdout, `"id": "tester`)) {
+				t.Errorf("tester add plans no create: %s", stdout)
 			}
 			for _, r := range srv.Requests() {
 				if r.Method != http.MethodGet {

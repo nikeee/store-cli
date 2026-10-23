@@ -313,3 +313,17 @@ func TestResolveBuildSharedNumberAcrossPlatforms(t *testing.T) {
 		t.Fatalf("mac=%+v err=%v", mac, err)
 	}
 }
+
+// WaitForBuild looks for the build on the given platform only.
+func TestWaitForBuildFiltersPlatform(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_valid.json"))
+	var sleeps atomic.Int32
+	if _, err := clockService(t, srv, &sleeps).WaitForBuild(t.Context(), testApp, "45", "1.3.0", "macos", BuildExists, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+	q := srv.Requests()[0].Query
+	if q.Get("filter[preReleaseVersion.platform]") != "MAC_OS" || q.Get("filter[preReleaseVersion.version]") != "1.3.0" || q.Get("filter[version]") != "45" {
+		t.Errorf("query = %s", q.Encode())
+	}
+}
