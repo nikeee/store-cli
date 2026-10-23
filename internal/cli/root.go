@@ -11,6 +11,10 @@ import (
 	"github.com/nikeee/store-cli/internal/httpx"
 )
 
+// Run the root hook together with the nearest group hook (apple validates
+// --platform). A package setting, so set once and not per NewRootCmd.
+func init() { cobra.EnableTraverseRunHooks = true }
+
 // NewRootCmd builds the full command tree.
 func NewRootCmd(d Deps) *cobra.Command {
 	root := &cobra.Command{
@@ -23,8 +27,6 @@ func NewRootCmd(d Deps) *cobra.Command {
 		SilenceErrors: true,
 	}
 	makeGroup(root)
-	// Run the root hook together with the nearest group hook (apple validates --platform).
-	cobra.EnableTraverseRunHooks = true
 	root.PersistentPreRunE = withDeps(d, resolvePrinter(d))
 	root.SetOut(d.Stdout)
 	root.SetErr(d.Stderr)

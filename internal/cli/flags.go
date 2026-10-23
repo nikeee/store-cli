@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"slices"
 	"strings"
 
@@ -17,7 +18,7 @@ type TextFlag struct {
 	Changed bool // true once the flag was given; named Changed because Set is the pflag method
 
 	name     string
-	readFile func(string) ([]byte, error)
+	readFile func(string) ([]byte, error) // nil: os.ReadFile
 }
 
 var _ pflag.Value = (*TextFlag)(nil)
@@ -37,7 +38,11 @@ func (f *TextFlag) Set(s string) error {
 		s = s[1:]
 	case strings.HasPrefix(s, "@"):
 		path := s[1:]
-		b, err := f.readFile(path)
+		read := f.readFile
+		if read == nil {
+			read = os.ReadFile
+		}
+		b, err := read(path)
 		if err != nil {
 			return clierr.Usagef("--%s: %v", f.name, err)
 		}

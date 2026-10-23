@@ -2,6 +2,8 @@ package cli_test
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/nikeee/store-cli/internal/cli"
@@ -42,5 +44,17 @@ func TestTextFlag(t *testing.T) {
 				t.Fatalf("value=%q err=%v", f.Value, err)
 			}
 		})
+	}
+}
+
+// A zero TextFlag reads files with os.ReadFile instead of panicking.
+func TestTextFlagZeroValueReadsFiles(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "notes.txt")
+	if err := os.WriteFile(p, []byte("hi\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var f cli.TextFlag
+	if err := f.Set("@" + p); err != nil || f.Value != "hi" {
+		t.Fatalf("value=%q err=%v", f.Value, err)
 	}
 }
