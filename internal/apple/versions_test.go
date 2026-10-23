@@ -245,10 +245,10 @@ func TestListVersionsNewestFirst(t *testing.T) {
 	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.URL.Query().Get("cursor") != "" {
-			fmt.Fprintf(w, `{"data":[%s],"links":{"self":"x"}}`, version("v3", "1.2.0", "2026-09-01T08:30:00Z"))
+			_, _ = fmt.Fprintf(w, `{"data":[%s],"links":{"self":"x"}}`, version("v3", "1.2.0", "2026-09-01T08:30:00Z"))
 			return
 		}
-		fmt.Fprintf(w, `{"data":[%s,%s],"links":{"self":"x","next":"%s/v1/apps/%s/appStoreVersions?cursor=2"}}`,
+		_, _ = fmt.Fprintf(w, `{"data":[%s,%s],"links":{"self":"x","next":"%s/v1/apps/%s/appStoreVersions?cursor=2"}}`,
 			version("v1", "1.0.0", "2026-01-01T08:30:00Z"), version("v2", "1.1.0", "2026-06-15T11:00:00Z"), srv.URL, versionsApp.ID)
 	})
 	vs, err := newService(t, srv).ListVersions(t.Context(), versionsApp, "ios", 2)
