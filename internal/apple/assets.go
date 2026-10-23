@@ -65,21 +65,42 @@ func (s *Service) uploadAsset(ctx context.Context, kind assetKind, parentID, pat
 	if err != nil {
 		return "", err
 	}
-	h := md5.New() //nolint:gosec
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-	sum := hex.EncodeToString(h.Sum(nil))
-
 	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	doing := "reserving " + kind.name + " " + name
-	id, err := s.runAsset(ctx, kind, parentID, name, f, fi.Size(), sum, timeout, &doing)
+	doing := "hashing " + kind.name + " " + name
+	sum, err := md5Sum(ctx, f)
+	id := ""
+	if err == nil {
+		doing = "reserving " + kind.name + " " + name
+		id, err = s.runAsset(ctx, kind, parentID, name, f, fi.Size(), sum, timeout, &doing)
+	}
 	if err != nil && parent.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
 		return id, clierr.New("timed out after %s while %s", timeout, doing)
 	}
 	return id, err
+}
+
+// ctxReader stops reading when ctx is done.
+type ctxReader struct {
+	ctx context.Context
+	r   io.Reader
+}
+
+func (c ctxReader) Read(p []byte) (int, error) {
+	if err := c.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return c.r.Read(p)
+}
+
+// md5Sum returns the hex MD5 of r; it stops when ctx is done.
+func md5Sum(ctx context.Context, r io.Reader) (string, error) {
+	h := md5.New() //nolint:gosec
+	if _, err := io.Copy(h, ctxReader{ctx, r}); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func (s *Service) runAsset(ctx context.Context, kind assetKind, parentID, name string, f io.ReaderAt, size int64, sum string, timeout time.Duration, doing *string) (string, error) {

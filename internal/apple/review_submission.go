@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
+	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
 )
 
@@ -46,13 +47,24 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 		FilterPlatform: []string{string(p)},
 		FilterState:    states,
 		Include:        []string{"items", "appStoreVersionForReview"},
+		Limit:          200,
+	})
+	if err != nil {
+		return nil, err
+	}
+	data, included := resp.Data, resp.Included
+	err = ascclient.Paginate(ctx, s.client, resp, func(r *asc.ReviewSubmissionsResponse) *string {
+		if r != resp {
+			data, included = append(data, r.Data...), append(included, r.Included...)
+		}
+		return r.Links.Next
 	})
 	if err != nil {
 		return nil, err
 	}
 	names := map[string]string{}       // version ID -> version string
 	includedItems := map[string]bool{} // IDs of the included review submission items
-	for _, inc := range resp.Included {
+	for _, inc := range included {
 		switch inc.Type {
 		case asc.ResourceTypeAppStoreVersions:
 			var v asc.AppStoreVersion
@@ -66,8 +78,8 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 			includedItems[inc.ID] = true
 		}
 	}
-	subs := make([]reviewSubmission, 0, len(resp.Data))
-	for _, d := range resp.Data {
+	subs := make([]reviewSubmission, 0, len(data))
+	for _, d := range data {
 		sub := reviewSubmission{id: d.ID}
 		if a := d.Attributes; a != nil {
 			sub.state = string(deref(a.State))
@@ -85,7 +97,7 @@ func (s *Service) listReviewSubmissions(ctx context.Context, app App, platform s
 				}
 			}
 		}
-		if len(resp.Data) == 1 && sub.items == 0 {
+		if len(data) == 1 && sub.items == 0 {
 			// Without a usable items relationship, a lone submission owns
 			// every included item.
 			sub.items = len(includedItems)

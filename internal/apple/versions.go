@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
+	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
 )
 
@@ -20,9 +21,11 @@ var releasedVersionStates = []string{"READY_FOR_DISTRIBUTION", "REPLACED_WITH_NE
 
 const stateLive = "READY_FOR_DISTRIBUTION"
 
-// maxVersions is the most versions of one platform a lookup looks at (the
-// API's page maximum); the API lists newest first.
+// maxVersions is the most versions of one platform a lookup looks at.
 const maxVersions = 200
+
+// versionPage is the API's page maximum.
+const versionPage = 200
 
 // releaseTypes maps the --release values to App Store Connect release types.
 var releaseTypes = map[string]string{
@@ -67,7 +70,7 @@ func (s *Service) listVersions(ctx context.Context, app App, platform, versionSt
 		FilterPlatform: []string{string(p)},
 		Include:        []string{"build"},
 		FieldsBuilds:   []string{"version"},
-		Limit:          limit,
+		Limit:          versionPage,
 	}
 	if versionString != "" {
 		params.FilterVersionString = []string{versionString}
@@ -76,7 +79,33 @@ func (s *Service) listVersions(ctx context.Context, app App, platform, versionSt
 	if err != nil {
 		return nil, err
 	}
-	return versionsFromAPI(resp.Data, resp.Included)
+	// The API has no sort for versions: read all, newest first by creation.
+	data, included := resp.Data, resp.Included
+	err = ascclient.Paginate(ctx, s.client, resp, func(r *asc.AppStoreVersionsResponse) *string {
+		if r != resp {
+			data, included = append(data, r.Data...), append(included, r.Included...)
+		}
+		return r.Links.Next
+	})
+	if err != nil {
+		return nil, err
+	}
+	slices.SortStableFunc(data, func(a, b asc.AppStoreVersion) int {
+		return createdDate(b).Compare(createdDate(a))
+	})
+	vs, err := versionsFromAPI(data, included)
+	if err != nil || len(vs) <= limit {
+		return vs, err
+	}
+	return vs[:limit], nil
+}
+
+// createdDate is the creation time of v, the zero time if unknown.
+func createdDate(v asc.AppStoreVersion) time.Time {
+	if v.Attributes == nil || v.Attributes.CreatedDate == nil {
+		return time.Time{}
+	}
+	return *v.Attributes.CreatedDate
 }
 
 // ListVersions returns the newest limit versions of app on platform.

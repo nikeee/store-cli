@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -124,6 +125,28 @@ func TestResolveBuildAmbiguous(t *testing.T) {
 	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "", "ios")
 	if clierr.ExitCode(err) != 2 || err.Error() != "build 42 exists for versions 1.0, 1.1; pass --version" {
 		t.Fatalf("err = %v (exit %d)", err, clierr.ExitCode(err))
+	}
+}
+
+// A build number on the second page still counts: versions of both pages.
+func TestResolveBuildReadsAllPages(t *testing.T) {
+	srv := ascfake.New(t)
+	page := func(id, pre, version, links string) string {
+		return fmt.Sprintf(`{"data":[{"type":"builds","id":%q,"attributes":{"version":"42","uploadedDate":"2026-10-20T09:30:00Z","processingState":"VALID"},`+
+			`"relationships":{"preReleaseVersion":{"data":{"type":"preReleaseVersions","id":%q}}}}],`+
+			`"included":[{"type":"preReleaseVersions","id":%q,"attributes":{"version":%q,"platform":"IOS"}}],"links":%s}`, id, pre, pre, version, links)
+	}
+	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Query().Get("cursor") != "" {
+			_, _ = io.WriteString(w, page("b-b", "pre-10", "1.0", `{"self":"x"}`))
+			return
+		}
+		_, _ = io.WriteString(w, page("b-a", "pre-11", "1.1", fmt.Sprintf(`{"self":"x","next":"%s/v1/builds?cursor=2"}`, srv.URL)))
+	})
+	_, err := newService(t, srv).ResolveBuild(t.Context(), testApp, "42", "", "ios")
+	if err == nil || err.Error() != "build 42 exists for versions 1.0, 1.1; pass --version" {
+		t.Fatalf("err = %v", err)
 	}
 }
 

@@ -274,6 +274,39 @@ func TestUploadBuildDeadlineWhileUploading(t *testing.T) {
 	}
 }
 
+// The deadline starts before the app is resolved.
+func TestUploadBuildDeadlineWhileResolving(t *testing.T) {
+	srv := uploadServer(t, ascfake.JSON(http.StatusOK, "buildUploads_get_complete.json"))
+	apps := ascfake.JSON(http.StatusOK, "apps_one.json")
+	srv.Handle("GET", "/v1/apps", func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-time.After(time.Second):
+			apps(w, r)
+		}
+	})
+	svc, _ := uploadService(t, srv)
+	o := opts(testIPA(t))
+	o.Timeout = 100 * time.Millisecond
+	_, err := svc.UploadBuild(t.Context(), o)
+	if err == nil || !strings.Contains(err.Error(), "timed out after 100ms while resolving the app") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+// Hashing stops when the context ends.
+func TestMD5SumStopsOnCancel(t *testing.T) {
+	sum, err := md5Sum(t.Context(), strings.NewReader("abc"))
+	if err != nil || sum != "900150983cd24fb0d6963f7d28e17f72" {
+		t.Fatalf("sum = %s, err = %v", sum, err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if _, err := md5Sum(ctx, strings.NewReader("abc")); !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v", err)
+	}
+}
+
 func TestUploadBuildMismatch(t *testing.T) {
 	for name, tc := range map[string]struct {
 		app, platform, want string

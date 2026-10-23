@@ -3,6 +3,7 @@ package apple
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -192,5 +193,24 @@ func TestReviewSubmissionsCountItemsPerSubmission(t *testing.T) {
 	}
 	if subs[0].items != 2 || subs[1].items != 0 {
 		t.Errorf("items = %d and %d, want 2 and 0", subs[0].items, subs[1].items)
+	}
+}
+
+func TestReviewSubmissionsReadAllPages(t *testing.T) {
+	srv := ascfake.New(t)
+	page := func(id, links string) string {
+		return fmt.Sprintf(`{"data":[{"type":"reviewSubmissions","id":%q,"attributes":{"state":"READY_FOR_REVIEW"}}],"links":%s}`, id, links)
+	}
+	srv.Handle("GET", "/v1/apps/{id}/reviewSubmissions", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Query().Get("cursor") != "" {
+			_, _ = io.WriteString(w, page("sub-2", `{"self":"x"}`))
+			return
+		}
+		_, _ = io.WriteString(w, page("sub-1", fmt.Sprintf(`{"self":"x","next":"%s/v1/apps/%s/reviewSubmissions?cursor=2"}`, srv.URL, versionsApp.ID)))
+	})
+	subs, err := newService(t, srv).listReviewSubmissions(t.Context(), versionsApp, "ios", []string{"READY_FOR_REVIEW"})
+	if err != nil || len(subs) != 2 || subs[0].id != "sub-1" || subs[1].id != "sub-2" {
+		t.Fatalf("subs=%+v err=%v", subs, err)
 	}
 }

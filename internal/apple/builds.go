@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
+	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
 )
 
@@ -183,7 +184,20 @@ func (s *Service) findBuild(ctx context.Context, app App, ref, version, platform
 	if err != nil {
 		return Build{}, false, err
 	}
-	builds, err := buildsFromAPI(resp.Data, resp.Included)
+	data, included := resp.Data, resp.Included
+	// latest wants one build; a build number may span pages
+	if ref != "latest" {
+		err = ascclient.Paginate(ctx, s.client, resp, func(r *asc.BuildsResponse) *string {
+			if r != resp {
+				data, included = append(data, r.Data...), append(included, r.Included...)
+			}
+			return r.Links.Next
+		})
+		if err != nil {
+			return Build{}, false, err
+		}
+	}
+	builds, err := buildsFromAPI(data, included)
 	if err != nil || len(builds) == 0 {
 		return Build{}, false, err
 	}

@@ -2,11 +2,8 @@ package apple
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,17 +90,16 @@ func (s *Service) PreviewUpload(ctx context.Context, o UploadOptions) (UploadRes
 // Apple accepted it; with Wait, notes or Encryption also until the build
 // exists (and with Wait until it is processed).
 func (s *Service) UploadBuild(ctx context.Context, o UploadOptions) (UploadResult, error) {
-	p, err := s.planUpload(ctx, o)
-	if err != nil {
-		return UploadResult{}, err
-	}
-	start := s.now()
 	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, o.Timeout)
 	defer cancel()
 
-	u := &upload{Service: s, plan: p, opts: o, start: start}
-	res, err := u.run(ctx)
+	u := &upload{Service: s, opts: o, start: s.now(), doing: "resolving the app"}
+	var res UploadResult
+	var err error
+	if u.plan, err = s.planUpload(ctx, o); err == nil {
+		res, err = u.run(ctx)
+	}
 	if err != nil && parent.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
 		err = clierr.New("timed out after %s while %s", o.Timeout, u.doing)
 	}
@@ -157,8 +153,10 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 	if err != nil {
 		return UploadResult{}, err
 	}
-	checksum := md5.New()
-	if _, err := io.Copy(checksum, f); err != nil {
+	u.doing = "hashing " + name
+	u.report.Progressf("hashing %s (%.1f MB)", name, float64(fi.Size())/1e6)
+	sum, err := md5Sum(ctx, f)
+	if err != nil {
 		return UploadResult{}, err
 	}
 
@@ -221,7 +219,7 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 			Attributes: &asc.BuildUploadFileUpdateRequestDataAttributes{
 				Uploaded: asc.Value(true),
 				SourceFileChecksums: asc.Value(asc.Checksums{File: &asc.ChecksumsFile{
-					Hash:      new(hex.EncodeToString(checksum.Sum(nil))),
+					Hash:      new(sum),
 					Algorithm: new(asc.ChecksumAlgorithmMd5),
 				}}),
 			},

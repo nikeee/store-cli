@@ -3,6 +3,7 @@ package apple
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -231,5 +232,27 @@ func TestSetVersionBuild(t *testing.T) {
 	r := srv.Requests()[0]
 	if r.Path != "/v1/appStoreVersions/v1/relationships/build" || !strings.Contains(string(r.Body), `"type":"builds"`) || !strings.Contains(string(r.Body), `"id":"b1"`) {
 		t.Errorf("request = %s %s", r.Path, r.Body)
+	}
+}
+
+// The API has no sort for versions, so the list is sorted by creation,
+// newest first, before it is cut to the limit.
+func TestListVersionsNewestFirst(t *testing.T) {
+	srv := ascfake.New(t)
+	version := func(id, v, created string) string {
+		return fmt.Sprintf(`{"type":"appStoreVersions","id":%q,"attributes":{"platform":"IOS","versionString":%q,"appVersionState":"READY_FOR_DISTRIBUTION","createdDate":%q}}`, id, v, created)
+	}
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Query().Get("cursor") != "" {
+			fmt.Fprintf(w, `{"data":[%s],"links":{"self":"x"}}`, version("v3", "1.2.0", "2026-09-01T08:30:00Z"))
+			return
+		}
+		fmt.Fprintf(w, `{"data":[%s,%s],"links":{"self":"x","next":"%s/v1/apps/%s/appStoreVersions?cursor=2"}}`,
+			version("v1", "1.0.0", "2026-01-01T08:30:00Z"), version("v2", "1.1.0", "2026-06-15T11:00:00Z"), srv.URL, versionsApp.ID)
+	})
+	vs, err := newService(t, srv).ListVersions(t.Context(), versionsApp, "ios", 2)
+	if err != nil || len(vs) != 2 || vs[0].Version != "1.2.0" || vs[1].Version != "1.1.0" {
+		t.Fatalf("versions = %+v, err = %v", vs, err)
 	}
 }

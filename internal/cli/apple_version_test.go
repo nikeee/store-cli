@@ -26,7 +26,7 @@ func TestAppleVersionListGolden(t *testing.T) {
 			}
 			golden.Assert(t, "apple_version_list."+mode, []byte(stdout))
 			q := srv.Requests()[1].Query
-			if q.Get("limit") != "10" || q.Get("filter[platform]") != "IOS" {
+			if q.Get("limit") != "200" || q.Get("filter[platform]") != "IOS" {
 				t.Errorf("query = %s", q.Encode())
 			}
 		})
