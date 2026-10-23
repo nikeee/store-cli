@@ -107,7 +107,7 @@ func TestShowApp(t *testing.T) {
 		t.Fatalf("%d requests", len(reqs))
 	}
 	if q := reqs[0].Query; reqs[0].Path != "/v1/apps/1234567890/appStoreVersions" ||
-		q.Get("filter[platform]") != "TV_OS" || q.Get("include") != "build" || q.Get("limit") != "5" {
+		q.Get("filter[platform]") != "TV_OS" || q.Get("include") != "build" || q.Get("limit") != "200" {
 		t.Errorf("versions request = %s?%s", reqs[0].Path, q.Encode())
 	}
 	// The editable app info, not the live one.

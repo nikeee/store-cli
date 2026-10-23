@@ -6,7 +6,6 @@ import (
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/apple/ascclient"
-	"github.com/nikeee/store-cli/internal/clierr"
 )
 
 // shownVersions is how many versions app show lists.
@@ -53,22 +52,7 @@ type AppDetails struct {
 // ShowApp returns app with its newest versions for platform (a --platform
 // value) and the locales of its app info.
 func (s *Service) ShowApp(ctx context.Context, app App, platform string) (AppDetails, error) {
-	p, ok := APIPlatform(platform)
-	if !ok {
-		return AppDetails{}, clierr.Usagef("invalid --platform %q", platform)
-	}
-	// The API lists versions newest first.
-	vs, err := s.client.AppsAppStoreVersionsGetToManyRelated(ctx, asc.AppsAppStoreVersionsGetToManyRelatedParams{
-		ID:             app.ID,
-		FilterPlatform: []string{string(p)},
-		Include:        []string{"build"},
-		FieldsBuilds:   []string{"version"},
-		Limit:          shownVersions,
-	})
-	if err != nil {
-		return AppDetails{}, err
-	}
-	versions, err := versionsFromAPI(vs.Data, vs.Included)
+	versions, err := s.listVersions(ctx, app, platform, "", shownVersions)
 	if err != nil {
 		return AppDetails{}, err
 	}
