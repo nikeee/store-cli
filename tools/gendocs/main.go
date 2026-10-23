@@ -1,6 +1,7 @@
 // Command gendocs writes the command reference: one page per command from
-// the cobra tree, an index, and tables.md from the code tables. Run it with
-// go generate (see internal/cli/doc.go). The output is deterministic.
+// the cobra tree, an index, and tables.md from the code tables, plus the
+// command list of the agent skill. Run it with go generate (see
+// internal/cli/doc.go). The output is deterministic.
 package main
 
 import (
@@ -24,8 +25,12 @@ import (
 
 func main() {
 	out := flag.String("out", "docs/reference", "output directory")
+	skill := flag.String("skill", "skills/store-cli/references/commands.md", "command list of the agent skill")
 	flag.Parse()
 	if err := run(*out); err != nil {
+		log.Fatal(err)
+	}
+	if err := os.WriteFile(*skill, []byte(skillCommands(cli.NewRootCmd(cli.DefaultDeps()))), 0o644); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -93,6 +98,33 @@ func index(root *cobra.Command) string {
 		}
 	}
 	walk(root, 0)
+	return b.String()
+}
+
+// skillCommands lists every command with its arguments and summary, grouped
+// by top-level command, for the agent skill, which ships without the
+// reference pages.
+func skillCommands(root *cobra.Command) string {
+	var b bytes.Buffer
+	b.WriteString("# store commands\n\n")
+	b.WriteString("Generated from the command help by `go generate ./...`; do not edit.\n")
+	b.WriteString("`store <command> --help` shows the flags, an example and the result of each command.\n")
+	var walk func(c *cobra.Command)
+	walk = func(c *cobra.Command) {
+		if c.Parent() == root {
+			fmt.Fprintf(&b, "\n## %s\n\n", c.CommandPath())
+		}
+		if !c.HasAvailableSubCommands() {
+			fmt.Fprintf(&b, "- `%s` - %s\n", strings.TrimSuffix(c.UseLine(), " [flags]"), c.Short)
+			return
+		}
+		for _, s := range c.Commands() {
+			if s.IsAvailableCommand() && s.Name() != "help" && s.Name() != "completion" {
+				walk(s)
+			}
+		}
+	}
+	walk(root)
 	return b.String()
 }
 

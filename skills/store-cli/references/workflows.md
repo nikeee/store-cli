@@ -1,4 +1,4 @@
-# Releasing with store
+# Common workflows
 
 Every mutating line below gets a `--dry-run` run first; the ones marked (ask) reach users or
 reviewers and need the user's go after the dry run.
@@ -78,7 +78,5 @@ below it.
     APPLE_APPSTORE_BUNDLE_ID: com.example.app
 ```
 
-To try store next to an existing pipeline, add a separate job with the same command and
-`--dry-run`, `continue-on-error: true`, and let the real job `needs:` it with
-`if: ${{ !cancelled() }}` so the dry run sees the state before the real step. Keep it out of the
-real job: an action that cannot be resolved fails the whole job at setup.
+The action runs on Linux and macOS runners (X64, ARM64). Store the credentials as repository
+secrets and pass them as environment variables; nothing else is needed.

@@ -47,18 +47,19 @@ or in GitHub Actions `uses: nikeee/store-cli@<tag>`.
 - "applied N of M changes": a partial failure. `push` and `submit` are declarative, so running
   them again converges; do not patch the rest by hand.
 
-## Quick reference
+## Commands
 
-| Task | Command |
-|---|---|
-| Upload a build | `store apple build upload app.ipa --wait` (Linux works, no Xcode) / `store google bundle upload app.aab --track internal` |
-| Find builds and versions | `store apple build list`, `store apple version list`, `store google track list` |
-| Whole App Store submission | `store apple submit 1.4.0 --metadata <dir> --release-notes <dir> --release after-approval` |
-| Promote on Play | `store google track promote v1.4.0 --from internal --to production --rollout 0.1` |
-| Listing texts and images | `store apple pull <dir>` / `push <dir>`, same for `google` |
+Shape: `store <apple|google> <noun> <verb> [args] [flags]`. Verbs mean the same everywhere:
+`list`, `show`, `create`, `set`, `add`, `remove`, `upload`, `delete`, `wait`, `push`, `pull`.
 
-Release flows, waiting and CI: [references/releasing.md](references/releasing.md).
-Metadata directory, locales, limits and screenshots: [references/listings.md](references/listings.md).
+Every command with its arguments: [references/commands.md](references/commands.md) (generated
+from the command help). Entry points: `store apple submit` (the whole App Store submission),
+`store apple build upload`, `store google bundle upload`, `store google track promote`, and
+`store <apple|google> pull|push` for the metadata directory.
+
+Common workflows (builds, TestFlight, submission, release, Play tracks, CI):
+[references/workflows.md](references/workflows.md). Metadata directory, locales, limits and
+screenshots: [references/listings.md](references/listings.md).
 
 ## Common mistakes
 
