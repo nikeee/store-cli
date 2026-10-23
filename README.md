@@ -40,7 +40,8 @@ export APPLE_APPSTORE_BUNDLE_ID=com.example.app                      # default f
 1. In Google Cloud create a service account and a JSON key for it, and enable the Google Play
    Android Developer API for the project.
 2. In the Play Console open Users and permissions and invite the service account's email address
-   with the permissions for releases and for the store listing of your app.
+   with the permissions for releases and for the store listing of your app. New permissions can
+   take up to a day to apply; until then Play answers 403.
 3. Export the key and the package name:
 
 ```
@@ -106,7 +107,7 @@ The setup action of this repository downloads a release, checks its checksum, pu
 on Linux and macOS runners, X64 and ARM64.
 
 ```yaml
-- uses: nikeee/store-cli@main
+- uses: nikeee/store-cli@v0.1.1
   with:
     version: 0.1.1 # or latest (the default); pin it for reproducible builds
 ```
@@ -120,7 +121,8 @@ image files point at the file, and for texts over a limit at the line and column
 character too much.
 
 A release workflow that runs on every `v*` tag, uploads both builds and submits them. The builds
-themselves are up to you.
+themselves are up to you. The secrets hold the credentials from [Credentials](#credentials), with
+the access described there.
 
 ```yaml
 name: release
@@ -140,7 +142,7 @@ jobs:
       GOOGLE_PLAY_PACKAGE_NAME: com.example.app
     steps:
       - uses: actions/checkout@v4
-      - uses: nikeee/store-cli@main
+      - uses: nikeee/store-cli@v0.1.1
         with:
           version: 0.1.1
 
@@ -196,7 +198,7 @@ jobs:
           java-version: 17
       - run: npm ci
       - run: npx expo prebuild
-      - uses: nikeee/store-cli@main
+      - uses: nikeee/store-cli@v0.1.1
         with:
           version: 0.1.1
 

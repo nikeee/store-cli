@@ -5,7 +5,9 @@ Manage apps in App Store Connect
 ### Synopsis
 
 Manage apps in App Store Connect with a team API key. Credentials come from the environment:
-APPLE_APPSTORE_ISSUER_ID, APPLE_APPSTORE_API_KEY_ID and APPLE_APPSTORE_API_PRIVATE_KEY.
+- APPLE_APPSTORE_ISSUER_ID: Issuer ID from App Store Connect, Users and Access, Integrations
+- APPLE_APPSTORE_API_KEY_ID: Key ID of the team API key
+- APPLE_APPSTORE_API_PRIVATE_KEY: The .p8 key: PEM content, or a path to the file
 
 ```
 store apple [flags]

@@ -5,7 +5,7 @@ Manage apps in Google Play
 ### Synopsis
 
 Manage apps in Google Play with a service account. The credentials come from the environment:
-GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (the service account needs access to the app in the Play Console).
+- GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: Service account key: JSON content, or a path to the file; the account needs access to the app in Play Console
 Every mutating command runs in its own edit: create, change, commit. If anything fails, the edit is
 deleted and nothing is published. Only a commit that gets no answer from Play may have been applied:
 then the error says so, check Play Console. Mutating commands accept --changes-not-sent-for-review (passed to

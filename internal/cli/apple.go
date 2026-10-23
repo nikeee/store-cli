@@ -22,7 +22,7 @@ func newAppleCmd(d Deps) *cobra.Command {
 		Use:   "apple",
 		Short: "Manage apps in App Store Connect",
 		Long: "Manage apps in App Store Connect with a team API key. Credentials come from the environment:\n" +
-			config.EnvAppleIssuerID + ", " + config.EnvAppleKeyID + " and " + config.EnvApplePrivateKey + ".",
+			config.CredentialHelp("store apple"),
 	}
 	makeGroup(cmd)
 	cmd.PersistentFlags().String("app", "", "bundle ID of the app, e.g. com.example.app (default $APPLE_APPSTORE_BUNDLE_ID)")

@@ -175,22 +175,15 @@ func tables() string {
 }
 
 func envTable() table {
-	return table{
-		title: "Environment variables",
-		head:  []string{"Variable", "Used by", "Content"},
-		rows: [][]string{
-			{code(config.EnvAppleIssuerID), "`store apple`", "Issuer ID from App Store Connect, Users and Access, Integrations"},
-			{code(config.EnvAppleKeyID), "`store apple`", "Key ID of the team API key"},
-			{code(config.EnvApplePrivateKey), "`store apple`", "The `.p8` key: PEM content, or a path to the file"},
-			{code(config.EnvAppleBundleID), "`store apple`", "Default for `--app`"},
-			{code(config.EnvGoogleServiceAccount), "`store google`", "Service account key: JSON content, or a path to the file"},
-			{code(config.EnvGooglePackageName), "`store google`", "Default for `--app`"},
-			{code(config.EnvOutput), "all", "Default for `--output`"},
-			{code(config.EnvNoColor), "all", "Disables colors in text output"},
-			{code(config.EnvGitHubActions), "all", "`true` (set by GitHub Actions): errors and warnings also become annotations"},
-			{code(config.EnvGitHubWorkspace), "all", "Set by GitHub Actions: annotations name files relative to it"},
-		},
+	t := table{title: "Environment variables", head: []string{"Variable", "Used by", "Content"}}
+	for _, v := range config.Vars {
+		usedBy := "all"
+		if v.UsedBy != "" {
+			usedBy = code(v.UsedBy)
+		}
+		t.rows = append(t.rows, []string{code(v.Name), usedBy, v.Content})
 	}
+	return t
 }
 
 func agentTable() table {

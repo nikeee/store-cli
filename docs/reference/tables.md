@@ -10,7 +10,7 @@ Generated from the code tables by `go generate ./...`; do not edit.
 | `APPLE_APPSTORE_API_KEY_ID` | `store apple` | Key ID of the team API key |
 | `APPLE_APPSTORE_API_PRIVATE_KEY` | `store apple` | The `.p8` key: PEM content, or a path to the file |
 | `APPLE_APPSTORE_BUNDLE_ID` | `store apple` | Default for `--app` |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | `store google` | Service account key: JSON content, or a path to the file |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | `store google` | Service account key: JSON content, or a path to the file; the account needs access to the app in Play Console |
 | `GOOGLE_PLAY_PACKAGE_NAME` | `store google` | Default for `--app` |
 | `STORE_OUTPUT` | all | Default for `--output` |
 | `NO_COLOR` | all | Disables colors in text output |

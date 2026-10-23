@@ -128,18 +128,6 @@ recommend (exit 1 only with `--strict`).
 
 ## Typical CI flow
 
-```
-# after the iOS build
-store apple build upload app.ipa --notes @notes.txt --uses-non-exempt-encryption false
-store apple testflight group add-build "Beta" latest
-
-# after the Android build
-store google bundle upload app.aab --track internal --release-name "$TAG" --release-notes release-notes
-
-# release
-store apple lint fastlane/metadata --release-notes release-notes
-store google lint fastlane/metadata --release-notes release-notes
-store apple submit "$VERSION" --metadata fastlane/metadata --release-notes release-notes --release after-approval
-store google push fastlane/metadata
-store google track promote "$TAG" --from internal --to production --rollout 0.2 --release-notes release-notes
-```
+A complete release workflow (builds, TestFlight, lint, submission, Play rollout) is in the
+[README](../README.md#github-actions); the agent skill has the same steps per platform in
+[workflows](../skills/store-cli/references/workflows.md).
