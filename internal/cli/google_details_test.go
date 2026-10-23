@@ -40,6 +40,8 @@ func TestGoogleTestersDetailsGolden(t *testing.T) {
 			for name, args := range map[string][]string{
 				"google_track_testers_show": {"google", "track", "testers", "show", "internal"},
 				"google_details_show":       {"google", "details", "show"},
+				"google_track_testers_set":  {"google", "track", "testers", "set", "internal", "--group", "a@googlegroups.com"},
+				"google_details_set":        {"google", "details", "set", "--email", "x@example.com"},
 			} {
 				srv := detailsCLIServer(t)
 				code, stdout, stderr := runEnv(t, googleEnv(srv, nil), false, append(args, "--app", "com.example.app", "-o", mode)...)

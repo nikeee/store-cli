@@ -114,6 +114,10 @@ func TestWithEditDeletesOnError(t *testing.T) {
 		{name: "delete fails too", fnErr: errFn, deleteFail: true, wantErr: "fn failed",
 			wantCalls: "POST /edits, DELETE /edits/edit-1",
 			wantWarn:  "warning: could not delete edit edit-1: The caller does not have permission\n"},
+		{name: "commit and delete fail", commit: playfake.JSON(http.StatusBadRequest, "error_draft_app.json"), deleteFail: true,
+			wantErr:   "commit edit: Only releases with status draft may be created on draft app.",
+			wantCalls: "POST /edits, POST /edits/edit-1:commit, DELETE /edits/edit-1",
+			wantWarn:  "warning: could not delete edit edit-1: The caller does not have permission\n"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

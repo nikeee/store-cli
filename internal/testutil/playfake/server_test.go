@@ -249,5 +249,17 @@ func TestServerWithClient(t *testing.T) {
 		if q := srv.Requests()[len(srv.Requests())-1].Query.Get("uploadType"); q != name {
 			t.Errorf("%s: uploadType=%q", name, q)
 		}
+		if method != "POST" {
+			t.Errorf("%s: handler got %s", name, method)
+		}
+	}
+	// the real client asks for 200 instead of 308 on resumable chunks, which
+	// the fake must honor
+	no308 := false
+	for _, r := range srv.Requests() {
+		no308 = no308 || r.Header.Get("X-GUploader-No-308") == "yes"
+	}
+	if !no308 {
+		t.Error("no chunk carried X-GUploader-No-308")
 	}
 }

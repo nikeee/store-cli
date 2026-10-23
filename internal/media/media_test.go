@@ -381,3 +381,42 @@ func TestFileErrorsNameThePathOnce(t *testing.T) {
 		}
 	}
 }
+
+// A preview type is the display type without "APP_"; watches have none.
+func TestPreviewTypeIsDisplayTypeWithoutPrefix(t *testing.T) {
+	for _, d := range Devices {
+		want := strings.TrimPrefix(d.DisplayType, "APP_")
+		if strings.HasPrefix(d.Alias, "watch-") {
+			want = ""
+		}
+		if d.PreviewType != want {
+			t.Errorf("%s: preview type %q, want %q", d.Alias, d.PreviewType, want)
+		}
+	}
+}
+
+func TestDeviceByAlias(t *testing.T) {
+	if d, ok := DeviceByAlias("ipad-13"); !ok || d.DisplayType != "APP_IPAD_PRO_3GEN_129" {
+		t.Errorf("ipad-13: %+v, %v", d, ok)
+	}
+	if _, ok := DeviceByAlias("iphone-99"); ok {
+		t.Error("unknown alias found")
+	}
+}
+
+// Play takes the icon only as PNG.
+func TestValidateGoogleIconJPEG(t *testing.T) {
+	icon, _ := ImageTypeByAlias("icon")
+	p := filepath.Join(t.TempDir(), "icon.png")
+	f, err := os.Create(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := jpeg.Encode(f, image.NewGray(image.Rect(0, 0, 512, 512)), nil); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	if err := ValidateGoogleImage(p, icon); err == nil || err.Error() != p+": must be a PNG" {
+		t.Errorf("err = %v", err)
+	}
+}
