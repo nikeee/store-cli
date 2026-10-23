@@ -14,6 +14,7 @@ import (
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 	"github.com/nikeee/store-cli/internal/testutil/golden"
 )
 
@@ -48,7 +49,7 @@ func submitMutations(srv *ascfake.Server) []string {
 func submitInputs(t *testing.T) SubmitOptions {
 	t.Helper()
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/en-US/description.txt": "Changed.",
 		"notes/en-US.txt":                "Fixes",
 	})
@@ -199,7 +200,7 @@ func TestSubmitLatestIsNewestValidBuild(t *testing.T) {
 func TestSubmitInvalidInputMakesNoRequest(t *testing.T) {
 	srv := submitServer(t, "app_appStoreVersions.json", "builds_valid.json")
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{"metadata/en-US/subtitle.txt": strings.Repeat("x", 31)})
+	filetree.Write(t, root, map[string]string{"metadata/en-US/subtitle.txt": strings.Repeat("x", 31)})
 	_, err := newService(t, srv).Submit(t.Context(), listingApp, SubmitOptions{Version: "1.3.0", Platform: "ios", MetadataDir: filepath.Join(root, "metadata")})
 	if err == nil || clierr.ExitCode(err) != 1 {
 		t.Fatalf("err = %v", err)
@@ -293,7 +294,7 @@ func TestSubmitFailureNamesDoneStepsAndSkipsRest(t *testing.T) {
 		ascfake.JSON(http.StatusOK, "app_appStoreVersions.json")(w, r)
 	})
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/en-US/description.txt":                "Changed.",
 		"metadata/review_information/first_name.txt":    "Ada",
 		"metadata/review_information/demo_password.txt": "secret",

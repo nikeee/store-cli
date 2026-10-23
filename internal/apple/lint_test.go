@@ -9,6 +9,7 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/lint"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 	"github.com/nikeee/store-cli/internal/testutil/pngfake"
 )
 
@@ -17,7 +18,7 @@ import (
 func healthyDir(t *testing.T) (root, dir string) {
 	t.Helper()
 	root = t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/en-US/name.txt":        "Holz",
 		"metadata/en-US/subtitle.txt":    "Track your wood",
 		"metadata/en-US/description.txt": "A wood tracker.",
@@ -62,7 +63,7 @@ func TestLintHealthyDirHasNoFindings(t *testing.T) {
 // Everything push rejects is an error, with its place in the file.
 func TestLintReportsPushProblems(t *testing.T) {
 	root, dir := healthyDir(t)
-	writeTree(t, dir, map[string]string{"de-DE/subtitle.txt": strings.Repeat("ü", 31), "de-DE/keywords.txt": strings.Repeat("ä", 51)})
+	filetree.Write(t, dir, map[string]string{"de-DE/subtitle.txt": strings.Repeat("ü", 31), "de-DE/keywords.txt": strings.Repeat("ä", 51)})
 	alpha := filepath.Join(root, "screenshots", "en-US", "02.png")
 	pngfake.WriteAlpha(t, alpha, 1320, 2868)
 	r := runLint(t, PushOptions{Dir: dir}, "")
@@ -78,7 +79,7 @@ func TestLintReportsPushProblems(t *testing.T) {
 
 func TestLintRequiredFiles(t *testing.T) {
 	_, dir := healthyDir(t)
-	writeTree(t, dir, map[string]string{"en-US/description.txt": "\n", "en-US/support_url.txt": ""})
+	filetree.Write(t, dir, map[string]string{"en-US/description.txt": "\n", "en-US/support_url.txt": ""})
 	r := runLint(t, PushOptions{Dir: dir}, "")
 	want := []lint.Finding{
 		{Severity: lint.Error, File: filepath.Join(dir, "en-US", "description.txt"), Message: "must not be empty, App Store Connect requires it to submit"},
@@ -106,7 +107,7 @@ func TestLintWatchSizes(t *testing.T) {
 func TestLintDevicePresence(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "metadata")
-	writeTree(t, dir, map[string]string{"en-US/name.txt": "Holz"})
+	filetree.Write(t, dir, map[string]string{"en-US/name.txt": "Holz"})
 	shot(t, root, "en-US/01.png", 1668, 2388) // ipad-11
 	r := runLint(t, PushOptions{Dir: dir}, "")
 	want := []lint.Finding{
@@ -119,7 +120,7 @@ func TestLintDevicePresence(t *testing.T) {
 
 	// no iPhone rule for a Mac app, none at all without screenshots
 	mac := t.TempDir()
-	writeTree(t, filepath.Join(mac, "metadata"), map[string]string{"en-US/name.txt": "Holz"})
+	filetree.Write(t, filepath.Join(mac, "metadata"), map[string]string{"en-US/name.txt": "Holz"})
 	shot(t, mac, "en-US/01.png", 2880, 1800)
 	if r := runLint(t, PushOptions{Dir: filepath.Join(mac, "metadata"), Platform: "macos"}, ""); len(r.Findings) != 0 {
 		t.Errorf("macos: %+v", r.Findings)
@@ -175,7 +176,7 @@ func TestKeywordIssues(t *testing.T) {
 func TestLintReleaseNotes(t *testing.T) {
 	_, dir := healthyDir(t)
 	notes := t.TempDir()
-	writeTree(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 4001)})
+	filetree.Write(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 4001)})
 	r := runLint(t, PushOptions{Dir: dir}, notes)
 	want := []lint.Finding{{Severity: lint.Error, File: filepath.Join(notes, "en-US.txt"), Line: 1, Col: 4001, Message: "4001 characters, limit 4000"}}
 	if !reflect.DeepEqual(r.Findings, want) {

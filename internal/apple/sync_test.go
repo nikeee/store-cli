@@ -13,22 +13,9 @@ import (
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 	"github.com/nikeee/store-cli/internal/testutil/pngfake"
 )
-
-// writeTree writes files (path relative to root -> content) below root.
-func writeTree(t *testing.T, root string, files map[string]string) {
-	t.Helper()
-	for p, c := range files {
-		full := filepath.Join(root, filepath.FromSlash(p))
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(full, []byte(c), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
 
 func changeLines(changes []metadata.Change) []string {
 	out := make([]string, len(changes))
@@ -40,7 +27,7 @@ func changeLines(changes []metadata.Change) []string {
 
 func TestReadPushDirReportsAllProblems(t *testing.T) {
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/de-DE/subtitle.txt":                   strings.Repeat("ü", 31),
 		"metadata/en-US/name.txt":                       "\n",
 		"metadata/review_information/demo_required.txt": "yes",
@@ -119,7 +106,7 @@ func newLocaleServer(t *testing.T) *shotServer {
 
 func TestPushScreenshotsOfNewLocale(t *testing.T) {
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{"metadata/fr-FR/name.txt": "Mon App", "metadata/fr-FR/description.txt": "Une app."})
+	filetree.Write(t, root, map[string]string{"metadata/fr-FR/name.txt": "Mon App", "metadata/fr-FR/description.txt": "Une app."})
 	if err := os.MkdirAll(filepath.Join(root, "screenshots", "fr-FR"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +152,7 @@ func TestPushScreenshotsOfNewLocale(t *testing.T) {
 
 func TestPushReviewWithoutDetail(t *testing.T) {
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/review_information/first_name.txt":    "Ada",
 		"metadata/review_information/phone_number.txt":  "",
 		"metadata/review_information/demo_required.txt": "",
@@ -195,7 +182,7 @@ func TestPushReviewWithoutDetail(t *testing.T) {
 func TestPushDryRunOnlyReads(t *testing.T) {
 	srv := newLocaleServer(t)
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{"metadata/fr-FR/name.txt": "Mon App"})
+	filetree.Write(t, root, map[string]string{"metadata/fr-FR/name.txt": "Mon App"})
 	plan, err := newService(t, srv.Server).Push(t.Context(), listingApp, PushOptions{Dir: filepath.Join(root, "metadata"), Platform: "ios", DryRun: true})
 	if err != nil || len(plan.Changes) != 1 {
 		t.Fatalf("plan=%v err=%v", plan, err)
@@ -230,7 +217,7 @@ func TestInitScaffolds(t *testing.T) {
 
 func TestPushSkipsWhatsNewBeforeFirstRelease(t *testing.T) {
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{"metadata/en-US/release_notes.txt": "Fixes", "metadata/en-US/description.txt": "Changed."})
+	filetree.Write(t, root, map[string]string{"metadata/en-US/release_notes.txt": "Fixes", "metadata/en-US/description.txt": "Changed."})
 	o := PushOptions{Dir: filepath.Join(root, "metadata"), Platform: "ios", Version: "1.3.0", DryRun: true}
 	cases := []struct {
 		versions string
@@ -278,7 +265,7 @@ func TestPushIgnoresTrailingWhitespace(t *testing.T) {
 	})
 	// files as pull writes them: value plus a newline, trimmed when read
 	root := t.TempDir()
-	writeTree(t, root, map[string]string{
+	filetree.Write(t, root, map[string]string{
 		"metadata/en-US/subtitle.txt":           "Do things \t\n",
 		"metadata/en-US/description.txt":        "An app.\n\n\n",
 		"metadata/review_information/notes.txt": "Use the demo.\r\n\n",

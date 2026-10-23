@@ -1,7 +1,6 @@
 package google
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,36 +9,14 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/metadata"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 	"github.com/nikeee/store-cli/internal/testutil/pngfake"
 )
-
-// writeTree writes files (path relative to root -> content) below root; a
-// path ending in .png gets an opaque PNG of the size in the content ("WxH").
-func writeTree(t *testing.T, root string, files map[string]string) {
-	t.Helper()
-	for p, c := range files {
-		full := filepath.Join(root, filepath.FromSlash(p))
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if strings.HasSuffix(p, ".png") {
-			var w, h int
-			if _, err := fmt.Sscanf(c, "%dx%d", &w, &h); err != nil {
-				t.Fatal(err)
-			}
-			pngfake.Write(t, full, w, h, 1)
-			continue
-		}
-		if err := os.WriteFile(full, []byte(c), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
 
 // problemDir is a metadata directory with one problem per locale.
 func problemDir(t *testing.T) (dir, alpha, icon string) {
 	dir = t.TempDir()
-	writeTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/de-DE/title.txt":                      strings.Repeat("ü", 31),
 		"android/en-US/images/phoneScreenshots/02.png": "640x1280",
 		"android/fr-FR/images/phoneScreenshots/01.png": "640x1280",
@@ -89,7 +66,7 @@ func TestReadPushDirOnly(t *testing.T) {
 // A folder named by the App Store code would fail only at Play.
 func TestReadPushDirWantsPlayCodes(t *testing.T) {
 	dir := t.TempDir()
-	writeTree(t, dir, map[string]string{"android/zh-Hans/title.txt": "App", "android/en-US/title.txt": "App"})
+	filetree.Write(t, dir, map[string]string{"android/zh-Hans/title.txt": "App", "android/en-US/title.txt": "App"})
 	_, err := ReadPushDir(PushOptions{Dir: dir})
 	if err == nil || clierr.ExitCode(err) != 1 || err.Error() != "zh-Hans: Google Play calls this language zh-CN, rename the folder" {
 		t.Fatalf("err = %v", err)

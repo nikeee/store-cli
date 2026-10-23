@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nikeee/store-cli/internal/config"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 )
 
 func githubEnv(ws string, env map[string]string) map[string]string {
@@ -19,7 +20,7 @@ func githubEnv(ws string, env map[string]string) map[string]string {
 func TestGitHubAnnotatesPushProblems(t *testing.T) {
 	ws := t.TempDir()
 	dir := filepath.Join(ws, "metadata")
-	writeListingTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/de-DE/title.txt":       "Titel\n" + strings.Repeat("ü", 30),
 		"android/en-US/images/icon.png": "500x500/1",
 	})
@@ -35,7 +36,7 @@ func TestGitHubAnnotatesPushProblems(t *testing.T) {
 func TestGitHubAnnotatesReleaseNotes(t *testing.T) {
 	ws := t.TempDir()
 	dir := filepath.Join(ws, "release-notes")
-	writeListingTree(t, dir, map[string]string{"en-US.txt": "New:\n- " + strings.Repeat("x", 500) + "\n"})
+	filetree.Write(t, dir, map[string]string{"en-US.txt": "New:\n- " + strings.Repeat("x", 500) + "\n"})
 	srv := newPlayStore(t)
 	args := []string{"google", "release-notes", "set", "internal", "--dir", dir, "--app", "com.example.app", "-o", "json"}
 	code, _, stderr := runEnv(t, githubEnv(ws, googleEnv(srv.Server, nil)), false, args...)

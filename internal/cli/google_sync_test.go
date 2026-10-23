@@ -15,9 +15,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 	"github.com/nikeee/store-cli/internal/testutil/golden"
 	"github.com/nikeee/store-cli/internal/testutil/playfake"
-	"github.com/nikeee/store-cli/internal/testutil/pngfake"
 )
 
 const playAppPath = "/androidpublisher/v3/applications/com.example.app"
@@ -137,34 +137,6 @@ func sha256Hex(b []byte) string {
 	return hex.EncodeToString(s[:])
 }
 
-// writeListingTree writes files (path relative to root -> content) below
-// root; a path ending in .png gets an opaque PNG of the size and shade in the
-// content ("WxH/shade"). It returns the SHA-256 of every PNG by path.
-func writeListingTree(t *testing.T, root string, files map[string]string) map[string]string {
-	t.Helper()
-	sums := map[string]string{}
-	for p, c := range files {
-		full := filepath.Join(root, filepath.FromSlash(p))
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if !strings.HasSuffix(p, ".png") {
-			if err := os.WriteFile(full, []byte(c), 0o600); err != nil {
-				t.Fatal(err)
-			}
-			continue
-		}
-		var w, h int
-		var shade uint8
-		if _, err := fmt.Sscanf(c, "%dx%d/%d", &w, &h, &shade); err != nil {
-			t.Fatal(err)
-		}
-		pngfake.Write(t, full, w, h, shade)
-		sums[p] = sha256Hex([]byte(readFile(t, full)))
-	}
-	return sums
-}
-
 // googlePushSetup returns a metadata directory and a store it differs from:
 // en-US title, video (cleared) and phone screenshots, a new en-US icon, the
 // de-DE full description, and the new locale fr-FR with a title (its empty
@@ -173,7 +145,7 @@ func writeListingTree(t *testing.T, root string, files map[string]string) map[st
 func googlePushSetup(t *testing.T) (dir string, srv *playStore) {
 	t.Helper()
 	dir = filepath.Join(t.TempDir(), "metadata")
-	sums := writeListingTree(t, filepath.Join(dir, "android"), map[string]string{
+	sums := filetree.Write(t, filepath.Join(dir, "android"), map[string]string{
 		"en-US/title.txt":                      "New title\n",
 		"en-US/short_description.txt":          "Short\n",
 		"en-US/video.txt":                      "\n",
@@ -453,7 +425,7 @@ func TestGooglePushValidationBeforeAnyCall(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			dir := filepath.Join(t.TempDir(), "metadata")
-			writeListingTree(t, dir, c.files)
+			filetree.Write(t, dir, c.files)
 			srv := newPlayStore(t)
 			code, _, stderr := runEnv(t, googleEnv(srv.Server, nil), false, pushArgs(dir, c.args...)...)
 			if code != c.code || !strings.Contains(stderr, c.msg) {
@@ -530,7 +502,7 @@ func TestGooglePullThenPushIsEmptyPlan(t *testing.T) {
 	srv.images["en-US/phoneScreenshots"] = []string{"aa", "bb"}
 	dir := filepath.Join(t.TempDir(), "metadata")
 	// files of an earlier pull with a value Play no longer has, and a file pull does not own
-	writeListingTree(t, filepath.Join(dir, "android"), map[string]string{
+	filetree.Write(t, filepath.Join(dir, "android"), map[string]string{
 		"de-DE/short_description.txt": "Old\n",
 		"en-US/notes.md":              "mine\n",
 	})
@@ -608,7 +580,7 @@ func TestGoogleInitOffline(t *testing.T) {
 // file is skipped like the other empty files of a scaffold.
 func TestGooglePushEmptyTitle(t *testing.T) {
 	dir := t.TempDir()
-	writeListingTree(t, dir, map[string]string{"android/en-US/title.txt": "\n", "android/fr-FR/title.txt": "", "android/fr-FR/short_description.txt": "Court"})
+	filetree.Write(t, dir, map[string]string{"android/en-US/title.txt": "\n", "android/fr-FR/title.txt": "", "android/fr-FR/short_description.txt": "Court"})
 	srv := newPlayStore(t)
 	srv.listings["en-US"] = map[string]string{"title": "Title"}
 	code, _, stderr := runEnv(t, googleEnv(srv.Server, nil), false, pushArgs(dir, "--dry-run")...)

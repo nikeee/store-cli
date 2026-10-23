@@ -8,13 +8,14 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/lint"
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 )
 
 // healthyDir returns a metadata directory without findings.
 func healthyDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	writeTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/en-US/title.txt":                      "Holz Tracker",
 		"android/en-US/short_description.txt":          "Track your wood",
 		"android/en-US/full_description.txt":           "A wood tracker.",
@@ -70,7 +71,7 @@ func TestLintReportsPushProblems(t *testing.T) {
 
 func TestLintPresence(t *testing.T) {
 	dir := t.TempDir()
-	writeTree(t, dir, map[string]string{"android/en-US/images/icon.png": "512x512"})
+	filetree.Write(t, dir, map[string]string{"android/en-US/images/icon.png": "512x512"})
 	r := runLint(t, PushOptions{Dir: dir}, "")
 	want := []lint.Finding{
 		{Severity: lint.Warning, Message: "no feature graphic; Google Play requires one to publish"},
@@ -82,7 +83,7 @@ func TestLintPresence(t *testing.T) {
 
 	// a directory without images manages none, so nothing is missing
 	texts := t.TempDir()
-	writeTree(t, texts, map[string]string{"android/en-US/title.txt": "Holz"})
+	filetree.Write(t, texts, map[string]string{"android/en-US/title.txt": "Holz"})
 	if r := runLint(t, PushOptions{Dir: texts}, ""); len(r.Findings) != 0 {
 		t.Errorf("texts only: %+v", r.Findings)
 	}
@@ -91,7 +92,7 @@ func TestLintPresence(t *testing.T) {
 // Play promotes apps with 4 screenshots of at least 1080 px in 9:16 or 16:9.
 func TestLintPhoneRecommendations(t *testing.T) {
 	dir := t.TempDir()
-	writeTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/en-US/images/phoneScreenshots/01.png": "1080x1920",
 		"android/en-US/images/phoneScreenshots/02.png": "1080x2160",
 		"android/en-US/images/phoneScreenshots/03.png": "720x1280",
@@ -140,7 +141,7 @@ func TestTitleIssues(t *testing.T) {
 
 func TestLintTitlesAreWarnings(t *testing.T) {
 	dir := healthyDir(t)
-	writeTree(t, dir, map[string]string{"android/en-US/title.txt": "Best Holz"})
+	filetree.Write(t, dir, map[string]string{"android/en-US/title.txt": "Best Holz"})
 	r := runLint(t, PushOptions{Dir: dir}, "")
 	want := []lint.Finding{{Severity: lint.Warning, File: filepath.Join(dir, "android", "en-US", "title.txt"), Line: 1, Col: 1,
 		Message: `"Best" suggests ranking or a promotion; Google Play does not allow it in the title`}}
@@ -151,7 +152,7 @@ func TestLintTitlesAreWarnings(t *testing.T) {
 
 func TestLintReleaseNotes(t *testing.T) {
 	notes := t.TempDir()
-	writeTree(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 501)})
+	filetree.Write(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 501)})
 	r := runLint(t, PushOptions{Dir: healthyDir(t)}, notes)
 	want := []lint.Finding{{Severity: lint.Error, File: filepath.Join(notes, "en-US.txt"), Line: 1, Col: 501, Message: "501 characters, limit 500"}}
 	if !reflect.DeepEqual(r.Findings, want) {
@@ -159,7 +160,7 @@ func TestLintReleaseNotes(t *testing.T) {
 	}
 
 	// two files for one Play language
-	writeTree(t, notes, map[string]string{"en-US.txt": "ok", "es-MX.txt": "uno", "es-419.txt": "dos"})
+	filetree.Write(t, notes, map[string]string{"en-US.txt": "ok", "es-MX.txt": "uno", "es-419.txt": "dos"})
 	if r := runLint(t, PushOptions{Dir: healthyDir(t)}, notes); r.Errors != 1 || r.Findings[0].File != "" {
 		t.Errorf("findings: %+v", r.Findings)
 	}

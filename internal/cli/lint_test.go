@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/nikeee/store-cli/internal/testutil/filetree"
 )
 
 // appleLintDir writes an App Store metadata directory with one iphone-6.9
@@ -20,7 +22,7 @@ func appleLintDir(t *testing.T, files map[string]string) string {
 	for p, c := range files {
 		tree[p] = c
 	}
-	writeListingTree(t, root, tree)
+	filetree.Write(t, root, tree)
 	return filepath.Join(root, "metadata")
 }
 
@@ -65,12 +67,12 @@ func TestAppleLintExitCodes(t *testing.T) {
 
 func TestGoogleLintJSON(t *testing.T) {
 	dir := t.TempDir()
-	writeListingTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/en-US/title.txt":       "Best Holz",
 		"android/en-US/images/icon.png": "500x500/1",
 	})
 	notes := t.TempDir()
-	writeListingTree(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 501)})
+	filetree.Write(t, notes, map[string]string{"en-US.txt": strings.Repeat("x", 501)})
 	code, stdout, _ := runEnv(t, nil, false, "google", "lint", dir, "--release-notes", notes, "-o", "json")
 	var res struct {
 		Findings []struct {
@@ -95,7 +97,7 @@ func TestGoogleLintJSON(t *testing.T) {
 func TestLintGitHubAnnotatesEachFindingOnce(t *testing.T) {
 	ws := t.TempDir()
 	dir := filepath.Join(ws, "metadata")
-	writeListingTree(t, dir, map[string]string{
+	filetree.Write(t, dir, map[string]string{
 		"android/en-US/title.txt":                      "Holz!!",
 		"android/en-US/images/featureGraphic.png":      "1000x500/1",
 		"android/en-US/images/phoneScreenshots/01.png": "1080x1920/1",
