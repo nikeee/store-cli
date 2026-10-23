@@ -22,7 +22,7 @@ func notesServer(t *testing.T, list string) *ascfake.Server {
 
 func TestSetBuildNotesCreates(t *testing.T) {
 	srv := notesServer(t, "beta_build_localizations_empty.json")
-	got, err := newService(t, srv).SetBuildNotes(t.Context(), testBuild, "en-US", "Fixed login")
+	got, err := newService(t, srv).SetBuildNotes(t.Context(), testBuild, "en-US", "Fixed login", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestSetBuildNotesCreates(t *testing.T) {
 
 func TestSetBuildNotesUpdates(t *testing.T) {
 	srv := notesServer(t, "beta_build_localizations_one.json")
-	got, err := newService(t, srv).SetBuildNotes(t.Context(), testBuild, "en-US", "Fixed login")
+	got, err := newService(t, srv).SetBuildNotes(t.Context(), testBuild, "en-US", "Fixed login", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,10 +71,10 @@ func TestSetBuildNotesTooLong(t *testing.T) {
 	if err := CheckBuildNotes(strings.Repeat("é", 4000)); err != nil {
 		t.Fatalf("4000 characters: %v", err)
 	}
-	if _, err := svc.PreviewBuildNotes(t.Context(), testBuild, "en-US", strings.Repeat("é", 4001)); err == nil {
+	if _, err := svc.SetBuildNotes(t.Context(), testBuild, "en-US", strings.Repeat("é", 4001), true); err == nil {
 		t.Fatal("want error for 4001 characters")
 	}
-	_, err := svc.SetBuildNotes(t.Context(), testBuild, "en-US", strings.Repeat("é", 4001))
+	_, err := svc.SetBuildNotes(t.Context(), testBuild, "en-US", strings.Repeat("é", 4001), false)
 	if err == nil || !strings.Contains(err.Error(), "4000") {
 		t.Fatalf("err = %v", err)
 	}

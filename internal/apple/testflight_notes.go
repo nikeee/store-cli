@@ -23,14 +23,18 @@ type BuildNotes struct {
 
 // SetBuildNotes sets the "What to Test" text of b for locale, creating the
 // localization when the build has none for that locale. It does not wait for
-// the build to finish processing.
-func (s *Service) SetBuildNotes(ctx context.Context, b Build, locale, text string) (BuildNotes, error) {
+// the build to finish processing. With dryRun it validates and looks the
+// localization up but sends no change.
+func (s *Service) SetBuildNotes(ctx context.Context, b Build, locale, text string, dryRun bool) (BuildNotes, error) {
 	if err := CheckBuildNotes(text); err != nil {
 		return BuildNotes{}, err
 	}
 	id, err := s.findBuildNotes(ctx, b, locale)
 	if err != nil {
 		return BuildNotes{}, err
+	}
+	if dryRun {
+		return BuildNotes{Build: b.Build, Locale: locale, Text: text}, nil
 	}
 	if id != "" {
 		_, err = s.client.BetaBuildLocalizationsUpdateInstance(ctx, asc.BetaBuildLocalizationsUpdateInstanceParams{ID: id}, asc.BetaBuildLocalizationUpdateRequest{
@@ -55,18 +59,6 @@ func (s *Service) SetBuildNotes(ctx context.Context, b Build, locale, text strin
 	}
 	if err != nil {
 		return BuildNotes{}, fmt.Errorf("set notes of build %s (%s): %w", b.Build, locale, err)
-	}
-	return BuildNotes{Build: b.Build, Locale: locale, Text: text}, nil
-}
-
-// PreviewBuildNotes validates the text and looks up the existing localization
-// like SetBuildNotes, but sends no change. It returns what SetBuildNotes would set.
-func (s *Service) PreviewBuildNotes(ctx context.Context, b Build, locale, text string) (BuildNotes, error) {
-	if err := CheckBuildNotes(text); err != nil {
-		return BuildNotes{}, err
-	}
-	if _, err := s.findBuildNotes(ctx, b, locale); err != nil {
-		return BuildNotes{}, err
 	}
 	return BuildNotes{Build: b.Build, Locale: locale, Text: text}, nil
 }

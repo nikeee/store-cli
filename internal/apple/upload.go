@@ -265,7 +265,7 @@ func (u *upload) run(ctx context.Context) (UploadResult, error) {
 	res.BuildID = b.ID
 	if o.Notes != "" {
 		u.doing = "setting the notes"
-		if _, err := u.SetBuildNotes(ctx, b, o.NotesLocale, o.Notes); err != nil {
+		if _, err := u.SetBuildNotes(ctx, b, o.NotesLocale, o.Notes, false); err != nil {
 			return res, err
 		}
 		u.todo = u.todo[1:]

@@ -168,11 +168,19 @@ func (s *Service) AddBuildToGroup(ctx context.Context, g BetaGroup, b Build, dry
 
 // ListTesters returns the testers of app, or of the group with ID groupID if set.
 func (s *Service) ListTesters(ctx context.Context, app App, groupID string) ([]Tester, error) {
-	p := asc.BetaTestersGetCollectionParams{FilterApps: []string{app.ID}, Limit: 200}
+	p := testersQuery(groupID)
+	p.FilterApps = []string{app.ID}
+	return s.collectTesters(ctx, p)
+}
+
+// testersQuery is the tester list query, within the group with ID groupID
+// if set.
+func testersQuery(groupID string) asc.BetaTestersGetCollectionParams {
+	p := asc.BetaTestersGetCollectionParams{Limit: 200}
 	if groupID != "" {
 		p.FilterBetaGroups = []string{groupID}
 	}
-	return s.collectTesters(ctx, p)
+	return p
 }
 
 func (s *Service) collectTesters(ctx context.Context, params asc.BetaTestersGetCollectionParams) ([]Tester, error) {
@@ -195,10 +203,8 @@ func (s *Service) collectTesters(ctx context.Context, params asc.BetaTestersGetC
 
 // findTester returns the tester with email, inside group g if g is non-empty.
 func (s *Service) findTester(ctx context.Context, email, groupID string) (Tester, bool, error) {
-	p := asc.BetaTestersGetCollectionParams{FilterEmail: []string{email}, Limit: 200}
-	if groupID != "" {
-		p.FilterBetaGroups = []string{groupID}
-	}
+	p := testersQuery(groupID)
+	p.FilterEmail = []string{email}
 	testers, err := s.collectTesters(ctx, p)
 	if err != nil || len(testers) == 0 {
 		return Tester{}, false, err

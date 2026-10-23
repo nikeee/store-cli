@@ -54,14 +54,7 @@ func newAppleTestflightNotesSetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if dryRun(cmd) {
-				n, err := svc.PreviewBuildNotes(cmd.Context(), b, locale, text.Value)
-				if err != nil {
-					return err
-				}
-				return emit(cmd, n)
-			}
-			n, err := svc.SetBuildNotes(cmd.Context(), b, locale, text.Value)
+			n, err := svc.SetBuildNotes(cmd.Context(), b, locale, text.Value, dryRun(cmd))
 			if err != nil {
 				return err
 			}
