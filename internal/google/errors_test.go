@@ -1,6 +1,7 @@
 package google
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"reflect"
 	"testing"
 
+	"golang.org/x/oauth2"
 	"google.golang.org/api/googleapi"
 
 	"github.com/nikeee/store-cli/internal/clierr"
@@ -100,6 +102,43 @@ func TestFromAPIErrorKeepsContextAfter(t *testing.T) {
 		t.Fatalf("not a clierr.Error: %v", err)
 	}
 	if want := "staged 1 of 2 changes: en-US phone: upload a.png: Invalid request (image set incomplete, run again)"; ce.Message != want || ce.Code != "INVALID_ARGUMENT" {
+		t.Errorf("got %+v", *ce)
+	}
+}
+
+// A 403 gets the hint that fits its reason.
+func TestGoogle403HintByReason(t *testing.T) {
+	tests := []struct{ name, body, hint string }{
+		{"no access", `{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}`,
+			"grant the service account access to the app in Play Console, Users and permissions"},
+		{"api disabled", `{"error":{"code":403,"message":"Google Play Android Developer API has not been used in project 1 before or it is disabled.",` +
+			`"errors":[{"reason":"accessNotConfigured"}],"status":"PERMISSION_DENIED"}}`,
+			"enable the Google Play Android Developer API in the Google Cloud project of the service account"},
+		{"rate limit", `{"error":{"code":403,"message":"Rate Limit Exceeded","errors":[{"reason":"rateLimitExceeded"}]}}`,
+			"Google Play limits requests per app; wait a minute and run the command again"},
+	}
+	for _, tt := range tests {
+		ge := &googleapi.Error{Code: http.StatusForbidden, Body: tt.body}
+		_ = json.Unmarshal([]byte(tt.body), &struct {
+			Error *googleapi.Error `json:"error"`
+		}{ge})
+		if got := fromGoogleAPIError(ge).Hint; got != tt.hint {
+			t.Errorf("%s: hint = %q", tt.name, got)
+		}
+	}
+}
+
+// A token the account server refuses (revoked key, wrong clock) names the
+// credentials.
+func TestGoogleTokenErrorHint(t *testing.T) {
+	re := &oauth2.RetrieveError{ErrorCode: "invalid_grant", ErrorDescription: "Invalid JWT Signature."}
+	err := &url.Error{Op: "Post", URL: "https://oauth2.googleapis.com/token", Err: fmt.Errorf("oauth2: cannot fetch token: %w", re)}
+	var ce *clierr.Error
+	if !errors.As(FromAPIError(fmt.Errorf("create edit: %w", err)), &ce) {
+		t.Fatalf("not a clierr.Error: %v", err)
+	}
+	if ce.Code != "invalid_grant" || ce.Hint != "check GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: the key may be deleted or revoked, or the clock of this machine is off" ||
+		ce.Message != "create edit: google play token: invalid_grant: Invalid JWT Signature." {
 		t.Errorf("got %+v", *ce)
 	}
 }
