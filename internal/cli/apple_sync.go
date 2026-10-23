@@ -71,6 +71,8 @@ func (r initResult) RenderText(w io.Writer, s output.Styles) error {
 			_, _ = fmt.Fprintf(tw, "  %s%c\n", p, filepath.Separator)
 		case f.MaxChars > 0:
 			_, _ = fmt.Fprintf(tw, "  %s\t%s, max %d characters\n", p, f.Help, f.MaxChars)
+		case f.MaxBytes > 0:
+			_, _ = fmt.Fprintf(tw, "  %s\t%s, max %d bytes\n", p, f.Help, f.MaxBytes)
 		default:
 			_, _ = fmt.Fprintf(tw, "  %s\t%s\n", p, f.Help)
 		}

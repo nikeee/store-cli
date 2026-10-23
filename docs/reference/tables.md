@@ -34,24 +34,24 @@ If any of these environment variables is set, the default output format is `toon
 
 Per locale. Files live in `<dir>/<locale>/`; flags belong to `store apple listing set`. `app-info` fields need an editable app info.
 
-| File | Flag | API field | Level | Max chars |
+| File | Flag | API field | Level | Limit |
 |---|---|---|---|---|
-| `name.txt` | `--name` | `name` | app-info | 30 |
-| `subtitle.txt` | `--subtitle` | `subtitle` | app-info | 30 |
+| `name.txt` | `--name` | `name` | app-info | 2 to 30 characters |
+| `subtitle.txt` | `--subtitle` | `subtitle` | app-info | 30 characters |
 | `privacy_url.txt` | `--privacy-url` | `privacyPolicyUrl` | app-info | - |
 | `privacy_choices_url.txt` | `--privacy-choices-url` | `privacyChoicesUrl` | app-info | - |
-| `description.txt` | `--description` | `description` | version | 4000 |
-| `keywords.txt` | `--keywords` | `keywords` | version | 100 |
-| `promotional_text.txt` | `--promotional-text` | `promotionalText` | version | 170 |
+| `description.txt` | `--description` | `description` | version | 4000 characters |
+| `keywords.txt` | `--keywords` | `keywords` | version | 100 bytes |
+| `promotional_text.txt` | `--promotional-text` | `promotionalText` | version | 170 characters |
 | `marketing_url.txt` | `--marketing-url` | `marketingUrl` | version | - |
 | `support_url.txt` | `--support-url` | `supportUrl` | version | - |
-| `release_notes.txt` | - | `whatsNew` | version | 4000 |
+| `release_notes.txt` | - | `whatsNew` | version | 4000 characters |
 
 ## App Review information fields
 
 Files live in `<dir>/review_information/`; flags belong to `store apple review-info set`. The demo password is masked in output.
 
-| File | Flag | API field | Level | Max chars |
+| File | Flag | API field | Level | Limit |
 |---|---|---|---|---|
 | `first_name.txt` | `--first-name` | `contactFirstName` | review | - |
 | `last_name.txt` | `--last-name` | `contactLastName` | review | - |
@@ -60,17 +60,17 @@ Files live in `<dir>/review_information/`; flags belong to `store apple review-i
 | `demo_required.txt` | `--demo-required` | `demoAccountRequired` | review | - |
 | `demo_user.txt` | `--demo-user` | `demoAccountName` | review | - |
 | `demo_password.txt` | `--demo-password` | `demoAccountPassword` | review | - |
-| `notes.txt` | `--notes` | `notes` | review | 4000 |
+| `notes.txt` | `--notes` | `notes` | review | 4000 characters |
 
 ## Google Play listing fields
 
 Per locale. Files live in `<dir>/android/<locale>/`; flags belong to `store google listing set`.
 
-| File | Flag | API field | Level | Max chars |
+| File | Flag | API field | Level | Limit |
 |---|---|---|---|---|
-| `title.txt` | `--title` | `title` | listing | 30 |
-| `short_description.txt` | `--short-description` | `shortDescription` | listing | 80 |
-| `full_description.txt` | `--full-description` | `fullDescription` | listing | 4000 |
+| `title.txt` | `--title` | `title` | listing | 30 characters |
+| `short_description.txt` | `--short-description` | `shortDescription` | listing | 80 characters |
+| `full_description.txt` | `--full-description` | `fullDescription` | listing | 4000 characters |
 | `video.txt` | `--video` | `video` | listing | - |
 
 ## App Store screenshot and preview devices
@@ -113,7 +113,7 @@ Per locale. Files live in `<dir>/android/<locale>/`; flags belong to `store goog
 | `tv` | `images/tvScreenshots` | `tvScreenshots` | up to 8 | 320-3840 px per side, long side at most 2x the short side | no |
 | `wear` | `images/wearScreenshots` | `wearScreenshots` | up to 8 | square, 384-3840 px per side | no |
 | `feature-graphic` | `images/featureGraphic.png` | `featureGraphic` | 1 | 1024x500 | no |
-| `icon` | `images/icon.png` | `icon` | 1 | 512x512 | yes |
+| `icon` | `images/icon.png` | `icon` | 1 | 512x512, at most 1024 KB | yes |
 | `promo-graphic` | `images/promoGraphic.png` | `promoGraphic` | 1 | 180x120 | no |
 | `tv-banner` | `images/tvBanner.png` | `tvBanner` | 1 | 1280x720 | no |
 

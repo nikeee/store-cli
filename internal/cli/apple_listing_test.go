@@ -118,7 +118,7 @@ func TestAppleListingSetErrors(t *testing.T) {
 		code  int
 		msg   string
 	}{
-		{"locked", "app_appInfos_locked.json", []string{"--name", "X"}, 1, "app metadata is locked"},
+		{"locked", "app_appInfos_locked.json", []string{"--name", "Xy"}, 1, "app metadata is locked"},
 		{"too long", "app_appInfos.json", []string{"--subtitle", strings.Repeat("x", 31)}, 1, "en-US/subtitle.txt: 31 characters, limit 30"},
 		{"no fields", "app_appInfos.json", nil, 2, "no field given"},
 		{"no locale", "app_appInfos.json", []string{"--name", "X", "--locale", ""}, 2, ""},

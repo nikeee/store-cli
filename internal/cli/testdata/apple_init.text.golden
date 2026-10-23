@@ -4,7 +4,7 @@ created:
   <tmp>/metadata/en-US/privacy_url.txt                 Privacy policy URL
   <tmp>/metadata/en-US/privacy_choices_url.txt         Privacy choices URL
   <tmp>/metadata/en-US/description.txt                 App description, max 4000 characters
-  <tmp>/metadata/en-US/keywords.txt                    Search keywords, comma separated, max 100 characters
+  <tmp>/metadata/en-US/keywords.txt                    Search keywords, comma separated, max 100 bytes
   <tmp>/metadata/en-US/promotional_text.txt            Promotional text, max 170 characters
   <tmp>/metadata/en-US/marketing_url.txt               Marketing URL
   <tmp>/metadata/en-US/support_url.txt                 Support URL
@@ -14,7 +14,7 @@ created:
   <tmp>/metadata/de-DE/privacy_url.txt                 Privacy policy URL
   <tmp>/metadata/de-DE/privacy_choices_url.txt         Privacy choices URL
   <tmp>/metadata/de-DE/description.txt                 App description, max 4000 characters
-  <tmp>/metadata/de-DE/keywords.txt                    Search keywords, comma separated, max 100 characters
+  <tmp>/metadata/de-DE/keywords.txt                    Search keywords, comma separated, max 100 bytes
   <tmp>/metadata/de-DE/promotional_text.txt            Promotional text, max 170 characters
   <tmp>/metadata/de-DE/marketing_url.txt               Marketing URL
   <tmp>/metadata/de-DE/support_url.txt                 Support URL

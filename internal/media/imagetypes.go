@@ -17,6 +17,8 @@ type ImageType struct {
 	MaxAspect float64
 	// AllowAlpha is true only where Play accepts a transparent image.
 	AllowAlpha bool
+	// MaxBytes limits the file size; 0 = no limit.
+	MaxBytes int64
 }
 
 // ImageTypes lists the Play image types in the order of docs/reference/tables.md.
@@ -29,7 +31,8 @@ type ImageType struct {
 //     two screenshots" to publish, required here of the phone set;
 //   - wear screenshots: 1:1, at least 384x384 px;
 //   - feature graphic: 1024x500, JPEG or 24-bit PNG without alpha;
-//   - icon: 512x512 32-bit PNG (alpha allowed);
+//   - icon: 512x512 32-bit PNG (alpha allowed), "maximum 1024 KB" (retrieved
+//     2026-10-23);
 //   - TV banner: 1280x720, JPEG or 24-bit PNG without alpha;
 //   - promo graphic: not on that page; 180x120 is the legacy Play Console
 //     requirement (JPEG or 24-bit PNG without alpha).
@@ -40,7 +43,7 @@ var ImageTypes = []ImageType{
 	{Alias: "tv", APIType: "tvScreenshots", Path: "images/tvScreenshots", Multiple: true, Max: 8, MinSide: 320, MaxSide: 3840, MaxAspect: 2},
 	{Alias: "wear", APIType: "wearScreenshots", Path: "images/wearScreenshots", Multiple: true, Max: 8, MinSide: 384, MaxSide: 3840, MaxAspect: 1},
 	{Alias: "feature-graphic", APIType: "featureGraphic", Path: "images/featureGraphic.png", Max: 1, Min: 1, Width: 1024, Height: 500},
-	{Alias: "icon", APIType: "icon", Path: "images/icon.png", Max: 1, Min: 1, Width: 512, Height: 512, AllowAlpha: true},
+	{Alias: "icon", APIType: "icon", Path: "images/icon.png", Max: 1, Min: 1, Width: 512, Height: 512, AllowAlpha: true, MaxBytes: 1024 * 1024},
 	{Alias: "promo-graphic", APIType: "promoGraphic", Path: "images/promoGraphic.png", Max: 1, Min: 1, Width: 180, Height: 120},
 	{Alias: "tv-banner", APIType: "tvBanner", Path: "images/tvBanner.png", Max: 1, Min: 1, Width: 1280, Height: 720},
 }

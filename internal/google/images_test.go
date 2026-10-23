@@ -234,6 +234,15 @@ func TestImagesAspectRejectedLocally(t *testing.T) {
 	}
 }
 
+// Every bad file of a set is reported, not only the first.
+func TestCheckImageFilesReportsEveryFile(t *testing.T) {
+	bad, _ := shots(t, 320, 1000, 1, 2)
+	err := CheckImageFiles(phoneType(), bad, true)
+	if err == nil || strings.Count(err.Error(), "2x the short side") != 2 {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestImageCountsRejectedLocally(t *testing.T) {
 	nine := make([]uint8, 9)
 	for i := range nine {

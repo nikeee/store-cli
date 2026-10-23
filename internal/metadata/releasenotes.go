@@ -42,7 +42,7 @@ func ReadReleaseNotesDir(dir string, maxChars int) (map[string]string, error) {
 			continue
 		}
 		if n := utf8.RuneCountInString(text); n > maxChars {
-			line, col := position(text, maxChars)
+			line, col := Position(text, maxChars)
 			c.Add(clierr.At(p, clierr.Issue{File: p, Line: line, Col: col, Message: fmt.Sprintf("%d characters, limit %d", n, maxChars)}))
 			continue
 		}

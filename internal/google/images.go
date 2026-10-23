@@ -104,12 +104,11 @@ func CheckImageFiles(t media.ImageType, paths []string, replace bool) error {
 	case replace && len(paths) < t.Min:
 		return clierr.New("%s needs at least %d screenshots, got %d", t.Alias, t.Min, len(paths))
 	}
+	var c clierr.Collector
 	for _, p := range paths {
-		if err := media.ValidateGoogleImage(p, t); err != nil {
-			return err
-		}
+		c.Add(media.ValidateGoogleImage(p, t))
 	}
-	return nil
+	return c.Err()
 }
 
 // listImages returns the images of language and type in the edit.

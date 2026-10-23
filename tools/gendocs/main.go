@@ -206,17 +206,22 @@ func agentTable() table {
 }
 
 func fieldTable(title, intro string, fields []metadata.Field) table {
-	t := table{title: title, intro: intro, head: []string{"File", "Flag", "API field", "Level", "Max chars"}}
+	t := table{title: title, intro: intro, head: []string{"File", "Flag", "API field", "Level", "Limit"}}
 	for _, f := range fields {
 		flagCell := "-"
 		if f.Flag != "" {
 			flagCell = code("--" + f.Flag)
 		}
-		maxChars := "-"
-		if f.MaxChars > 0 {
-			maxChars = fmt.Sprint(f.MaxChars)
+		limit := "-"
+		switch {
+		case f.MinChars > 0:
+			limit = fmt.Sprintf("%d to %d characters", f.MinChars, f.MaxChars)
+		case f.MaxChars > 0:
+			limit = fmt.Sprintf("%d characters", f.MaxChars)
+		case f.MaxBytes > 0:
+			limit = fmt.Sprintf("%d bytes", f.MaxBytes)
 		}
-		t.rows = append(t.rows, []string{code(f.File), flagCell, code(f.API), string(f.Level), maxChars})
+		t.rows = append(t.rows, []string{code(f.File), flagCell, code(f.API), string(f.Level), limit})
 	}
 	return t
 }
@@ -260,6 +265,9 @@ func imageTypeTable() table {
 			size = fmt.Sprintf("square, %d-%d px per side", it.MinSide, it.MaxSide)
 		default:
 			size = fmt.Sprintf("%d-%d px per side, long side at most %gx the short side", it.MinSide, it.MaxSide, it.MaxAspect)
+		}
+		if it.MaxBytes > 0 {
+			size += fmt.Sprintf(", at most %d KB", it.MaxBytes/1024)
 		}
 		alpha := "no"
 		if it.AllowAlpha {

@@ -108,12 +108,11 @@ func CheckScreenshotFiles(d media.Device, paths []string) error {
 	if len(paths) > maxScreenshots {
 		return clierr.New("%d screenshots given, a set holds at most %d", len(paths), maxScreenshots)
 	}
+	var c clierr.Collector
 	for _, p := range paths {
-		if err := media.ValidateAppleScreenshot(p, d); err != nil {
-			return err
-		}
+		c.Add(media.ValidateAppleScreenshot(p, d))
 	}
-	return nil
+	return c.Err()
 }
 
 // ListScreenshots returns the screenshot sets of v, per locale (sorted) and

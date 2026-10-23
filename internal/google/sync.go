@@ -44,6 +44,20 @@ type PushInput struct {
 // ReadPushDir reads <dir>/android/ and checks every text and image that is
 // pushed. It works offline, so every problem shows before any API call.
 func ReadPushDir(o PushOptions) (*PushInput, error) {
+	in, err := readPushDir(o)
+	if err != nil {
+		return nil, err
+	}
+	var c clierr.Collector
+	in.validate(&c)
+	if err := c.Err(); err != nil {
+		return nil, err
+	}
+	return in, nil
+}
+
+// readPushDir reads <dir>/android/ without checking the texts and images.
+func readPushDir(o PushOptions) (*PushInput, error) {
 	for _, p := range o.Only {
 		if !slices.Contains(PushParts, p) {
 			return nil, clierr.Usagef("invalid --only %q (use %s)", p, strings.Join(PushParts, ", "))
@@ -65,9 +79,6 @@ func ReadPushDir(o PushOptions) (*PushInput, error) {
 			return nil, err
 		}
 	}
-	if err := in.validate(); err != nil {
-		return nil, err
-	}
 	return in, nil
 }
 
@@ -75,11 +86,9 @@ func (in *PushInput) pushes(part string) bool {
 	return len(in.opts.Only) == 0 || slices.Contains(in.opts.Only, part)
 }
 
-// validate checks the folder names, the lengths of the texts and the number,
-// format, size and aspect ratio of the images. All problems are reported
-// together.
-func (in *PushInput) validate() error {
-	var c clierr.Collector
+// validate adds to c the problems of the folder names, the lengths of the
+// texts and the number, format, size and aspect ratio of the images.
+func (in *PushInput) validate(c *clierr.Collector) {
 	folders := slices.Concat(slices.Collect(maps.Keys(in.locales)), slices.Collect(maps.Keys(in.images)))
 	slices.Sort(folders)
 	for _, l := range slices.Compact(folders) {
@@ -101,7 +110,6 @@ func (in *PushInput) validate() error {
 			}
 		}
 	}
-	return c.Err()
 }
 
 // pushPlan is a computed push: the plan to show and what applyPush sends.

@@ -50,6 +50,13 @@ func TestReadPushDirReportsAllProblems(t *testing.T) {
 		t.Fatal(err)
 	}
 	pngfake.WriteAlpha(t, alpha, 1290, 2796)
+	alpha2 := filepath.Join(filepath.Dir(alpha), "02.png")
+	pngfake.WriteAlpha(t, alpha2, 1290, 2796)
+	odd := filepath.Join(root, "screenshots", "de-DE", "01.png")
+	if err := os.MkdirAll(filepath.Join(root, "screenshots", "de-DE", "iphone-99"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	pngfake.Write(t, odd, 100, 100, 1)
 
 	_, err := ReadPushDir(PushOptions{Dir: filepath.Join(root, "metadata"), Platform: "ios"})
 	if err == nil || clierr.ExitCode(err) != 1 {
@@ -60,6 +67,9 @@ func TestReadPushDirReportsAllProblems(t *testing.T) {
 		"en-US/name.txt: must not be empty",
 		"review_information/demo_required.txt: must be true or false",
 		alpha + ": has an alpha channel",
+		alpha2 + ": has an alpha channel",
+		odd + ": no ios device accepts 100x100",
+		`unknown device folder "iphone-99"`,
 	} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error lacks %q: %v", want, err)

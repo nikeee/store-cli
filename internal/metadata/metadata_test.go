@@ -29,12 +29,12 @@ func TestValidateTextsCountsRunes(t *testing.T) {
 	if err == nil || err.Error() != "de-DE/subtitle.txt: 31 characters, limit 30" {
 		t.Fatalf("31 runes: %v", err)
 	}
-	if err := ValidateTexts(AppleFields, Texts{"name": "👍"}); err != nil {
+	if err := ValidateTexts(AppleFields, Texts{"subtitle": "👍"}); err != nil {
 		t.Fatalf("emoji: %v", err)
 	}
 	err = ValidateTexts(AppleFields, Texts{"name": strings.Repeat("a", 31), "keywords": strings.Repeat("k", 101)})
 	if err == nil || !strings.Contains(err.Error(), "name.txt: 31 characters, limit 30") ||
-		!strings.Contains(err.Error(), "keywords.txt: 101 characters, limit 100") {
+		!strings.Contains(err.Error(), "keywords.txt: 101 bytes, limit 100") {
 		t.Fatalf("two violations: %v", err)
 	}
 	if err := ValidateTexts(AppleReviewFields, Texts{"demoAccountRequired": "yes"}); err == nil {
@@ -43,6 +43,36 @@ func TestValidateTextsCountsRunes(t *testing.T) {
 	for _, v := range []string{"true", "false", ""} {
 		if err := ValidateTexts(AppleReviewFields, Texts{"demoAccountRequired": v}); err != nil {
 			t.Fatalf("demoAccountRequired %q: %v", v, err)
+		}
+	}
+}
+
+// App Store Connect limits keywords in bytes; the issue points at the rune
+// that crosses the limit.
+func TestValidateKeywordsCountBytes(t *testing.T) {
+	if err := ValidateTexts(AppleFields, Texts{"keywords": strings.Repeat("ä", 50)}); err != nil {
+		t.Fatalf("100 bytes: %v", err)
+	}
+	dir := filepath.Join("meta", "de-DE")
+	err := ValidateLocaleTexts("de-DE", dir, AppleFields, Texts{"keywords": strings.Repeat("ä", 51)})
+	if err == nil || err.Error() != "de-DE/keywords.txt: 102 bytes, limit 100" {
+		t.Fatalf("err = %v", err)
+	}
+	want := []clierr.Issue{{File: filepath.Join(dir, "keywords.txt"), Line: 1, Col: 51, Message: "102 bytes, limit 100"}}
+	if got := issues(t, err); !reflect.DeepEqual(got, want) {
+		t.Errorf("issues = %+v", got)
+	}
+}
+
+// A name needs two characters; an empty one is left to the push check.
+func TestValidateNameMinimum(t *testing.T) {
+	err := ValidateTexts(AppleFields, Texts{"name": "A"})
+	if err == nil || err.Error() != "name.txt: 1 character, at least 2" {
+		t.Fatalf("err = %v", err)
+	}
+	for _, v := range []string{"", "Ab"} {
+		if err := ValidateTexts(AppleFields, Texts{"name": v}); err != nil {
+			t.Errorf("name %q: %v", v, err)
 		}
 	}
 }
@@ -266,8 +296,8 @@ func TestPosition(t *testing.T) {
 		{"a\n\nb", 3, 3, 1},
 	}
 	for _, c := range cases {
-		if line, col := position(c.s, c.i); line != c.line || col != c.col {
-			t.Errorf("position(%q, %d) = %d:%d, want %d:%d", c.s, c.i, line, col, c.line, c.col)
+		if line, col := Position(c.s, c.i); line != c.line || col != c.col {
+			t.Errorf("Position(%q, %d) = %d:%d, want %d:%d", c.s, c.i, line, col, c.line, c.col)
 		}
 	}
 }

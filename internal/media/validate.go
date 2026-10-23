@@ -2,6 +2,7 @@ package media
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/nikeee/store-cli/internal/clierr"
 )
@@ -45,7 +46,8 @@ func sizeList(d Device) string {
 	return s
 }
 
-// ValidateGoogleImage checks format, alpha channel, dimensions and aspect ratio.
+// ValidateGoogleImage checks format, alpha channel, dimensions, aspect ratio
+// and file size.
 func ValidateGoogleImage(path string, t ImageType) error {
 	info, err := Inspect(path)
 	if err != nil {
@@ -76,6 +78,16 @@ func ValidateGoogleImage(path string, t ImageType) error {
 			return clierr.Filef(path, "%dx%d, %s must be square (1:1)", w, h, t.Alias)
 		}
 		return clierr.Filef(path, "%dx%d, the long side of %s may be at most %gx the short side", w, h, t.Alias, t.MaxAspect)
+	}
+	if t.MaxBytes == 0 {
+		return nil
+	}
+	st, err := os.Stat(path)
+	if err != nil {
+		return clierr.New("%v", err)
+	}
+	if st.Size() > t.MaxBytes {
+		return clierr.Filef(path, "%d KB, %s may be at most %d KB", (st.Size()+1023)/1024, t.Alias, t.MaxBytes/1024)
 	}
 	return nil
 }

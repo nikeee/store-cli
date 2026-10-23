@@ -59,6 +59,21 @@ type PushInput struct {
 // ReadPushDir reads the directories of o and checks every text and image that
 // is pushed. It works offline, so every problem shows before any API call.
 func ReadPushDir(o PushOptions) (*PushInput, error) {
+	var c clierr.Collector
+	in, err := readPushDir(o, &c)
+	if err != nil {
+		return nil, err
+	}
+	in.validate(&c)
+	if err := c.Err(); err != nil {
+		return nil, err
+	}
+	return in, nil
+}
+
+// readPushDir reads the directories of o. Screenshots that cannot be used go
+// to c; the error is for what stops reading.
+func readPushDir(o PushOptions, c *clierr.Collector) (*PushInput, error) {
 	for _, p := range o.Only {
 		if !slices.Contains(PushParts, p) {
 			return nil, clierr.Usagef("invalid --only %q (use %s)", p, strings.Join(PushParts, ", "))
@@ -80,12 +95,9 @@ func ReadPushDir(o PushOptions) (*PushInput, error) {
 	}
 	if in.pushes(partScreenshots) {
 		// A missing screenshots directory means no screenshots.
-		if in.shots, err = media.ScanAppleScreenshots(screenshotsRoot(o.Dir, o.ScreenshotsDir), o.Platform); err != nil {
+		if in.shots, err = media.ScanAppleScreenshots(screenshotsRoot(o.Dir, o.ScreenshotsDir), o.Platform, c); err != nil {
 			return nil, err
 		}
-	}
-	if err := in.validate(); err != nil {
-		return nil, err
 	}
 	return in, nil
 }
@@ -94,13 +106,13 @@ func (in *PushInput) pushes(part string) bool {
 	return len(in.opts.Only) == 0 || slices.Contains(in.opts.Only, part)
 }
 
-// validate checks lengths and values of the texts and format, alpha channel,
-// size and count of the screenshots. All problems are reported together.
-func (in *PushInput) validate() error {
-	var c clierr.Collector
+// validate adds to c the problems of the texts (lengths and values) and of
+// the screenshots (format, alpha channel, size and count).
+func (in *PushInput) validate(c *clierr.Collector) {
 	name, ok := metadata.FieldByFile(metadata.AppleFields, nameFile)
 	if !ok {
-		return clierr.New("internal error: no name field")
+		c.Add(clierr.New("internal error: no name field"))
+		return
 	}
 	for _, l := range slices.Sorted(maps.Keys(in.locales)) {
 		t := in.locales[l]
@@ -119,7 +131,6 @@ func (in *PushInput) validate() error {
 			}
 		}
 	}
-	return c.Err()
 }
 
 // PushPlan is a computed push: the plan to show and what ApplyPush sends.

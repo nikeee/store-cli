@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/nikeee/store-cli/internal/apple/asc"
+	"github.com/nikeee/store-cli/internal/clierr"
 )
 
 func writePNG(t *testing.T, path string, img image.Image) {
@@ -218,9 +219,10 @@ func TestScanAppleScreenshots(t *testing.T) {
 	}
 	writeOpaque(t, filepath.Join(loc, "ipad-13", "b.png"), 1, 1)
 	writeOpaque(t, filepath.Join(loc, "ipad-13", "a.png"), 1, 1)
-	got, err := ScanAppleScreenshots(root, "ios")
-	if err != nil {
-		t.Fatal(err)
+	var c clierr.Collector
+	got, err := ScanAppleScreenshots(root, "ios", &c)
+	if err != nil || c.Err() != nil {
+		t.Fatal(err, c.Err())
 	}
 	want := map[string]map[string][]string{"en-US": {
 		"iphone-6.5": {filepath.Join(loc, "1.png"), filepath.Join(loc, "2.png"), filepath.Join(loc, "3.JPG")},
@@ -229,8 +231,57 @@ func TestScanAppleScreenshots(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v\nwant %v", got, want)
 	}
-	if got, err := ScanAppleScreenshots(filepath.Join(root, "missing"), "ios"); err != nil || len(got) != 0 {
+	if got, err := ScanAppleScreenshots(filepath.Join(root, "missing"), "ios", &c); err != nil || len(got) != 0 {
 		t.Errorf("missing dir: %v, %v", got, err)
+	}
+}
+
+// A file of no device size and an unknown device folder are both reported;
+// the readable files still form their sets.
+func TestScanAppleScreenshotsCollectsProblems(t *testing.T) {
+	root := t.TempDir()
+	loc := filepath.Join(root, "en-US")
+	if err := os.MkdirAll(filepath.Join(loc, "iphone-99"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeOpaque(t, filepath.Join(loc, "1.png"), 1284, 2778)
+	odd := filepath.Join(loc, "2.png")
+	writeOpaque(t, odd, 100, 100)
+	writeOpaque(t, filepath.Join(loc, "iphone-99", "a.png"), 1284, 2778)
+	var c clierr.Collector
+	got, err := ScanAppleScreenshots(root, "ios", &c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]map[string][]string{"en-US": {"iphone-6.5": {filepath.Join(loc, "1.png")}}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v", got)
+	}
+	msg := c.Err().Error()
+	if !strings.Contains(msg, odd+": no ios device") || !strings.Contains(msg, `unknown device folder "iphone-99"`) {
+		t.Errorf("problems = %v", msg)
+	}
+}
+
+// Play takes icons up to 1024 KB.
+func TestValidateGoogleIconFileSize(t *testing.T) {
+	icon, _ := ImageTypeByAlias("icon")
+	p := filepath.Join(t.TempDir(), "icon.png")
+	writeSized(t, p, 512, 512)
+	if err := ValidateGoogleImage(p, icon); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.OpenFile(p, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(make([]byte, 1024*1024)); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	err = ValidateGoogleImage(p, icon)
+	if err == nil || !strings.HasPrefix(err.Error(), p+": ") || !strings.HasSuffix(err.Error(), " KB, icon may be at most 1024 KB") {
+		t.Errorf("err = %v", err)
 	}
 }
 

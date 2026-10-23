@@ -46,7 +46,9 @@ func imageFiles(dir string) ([]string, error) {
 // ScanAppleScreenshots returns locale -> device alias -> sorted file paths.
 // Files directly in <dir>/<locale>/ get their device from the pixel size
 // (for platform); files in <dir>/<locale>/<device-alias>/ take that alias.
-func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string, error) {
+// A file that is no image or fits no device and an unknown device folder go
+// to c and are left out; the error is only for unreadable directories.
+func ScanAppleScreenshots(dir, platform string, c *clierr.Collector) (map[string]map[string][]string, error) {
 	out := map[string]map[string][]string{}
 	entries, err := os.ReadDir(dir)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -69,11 +71,13 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 		for _, p := range files {
 			info, err := Inspect(p)
 			if err != nil {
-				return nil, err
+				c.Add(err)
+				continue
 			}
 			d, err := DetectDevice(platform, info.Width, info.Height)
 			if err != nil {
-				return nil, clierr.Filef(p, "%v", err)
+				c.Add(clierr.Filef(p, "%v", err))
+				continue
 			}
 			sets[d.Alias] = append(sets[d.Alias], p)
 		}
@@ -86,7 +90,8 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 				continue
 			}
 			if _, ok := DeviceByAlias(s.Name()); !ok {
-				return nil, clierr.New("%s: unknown device folder %q", filepath.Join(locDir, s.Name()), s.Name())
+				c.Add(clierr.New("%s: unknown device folder %q", filepath.Join(locDir, s.Name()), s.Name()))
+				continue
 			}
 			files, err := imageFiles(filepath.Join(locDir, s.Name()))
 			if err != nil {
