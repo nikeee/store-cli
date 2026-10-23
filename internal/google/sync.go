@@ -215,7 +215,7 @@ func (s *Service) planImages(ctx context.Context, editID string, local map[strin
 func (s *Service) applyPush(ctx context.Context, editID string, p *pushPlan) (int, error) {
 	staged := 0
 	if len(p.texts) > 0 {
-		applied, err := s.ApplyListingChanges(ctx, editID, p.texts)
+		applied, err := s.ApplyListingChanges(ctx, editID, p.texts, nil)
 		staged += len(applied)
 		if err != nil {
 			return staged, err

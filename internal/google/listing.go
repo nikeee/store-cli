@@ -207,7 +207,7 @@ func (s *Service) SetListing(ctx context.Context, language string, texts metadat
 		if c.DryRun {
 			return nil
 		}
-		_, err = s.ApplyListingChanges(ctx, editID, changes)
+		_, err = s.ApplyListingChanges(ctx, editID, changes, map[string]*androidpublisher.Listing{language: cur})
 		return err
 	})
 	if errors.Is(err, errNoChange) {
@@ -219,9 +219,10 @@ func (s *Service) SetListing(ctx context.Context, language string, texts metadat
 // ApplyListingChanges sends the listing changes, one PUT per language with
 // the current listing overlaid by the changed fields (a PUT replaces the
 // whole listing, so untouched fields such as video must be sent again). A
-// language that does not exist yet is created. It returns the changes applied
-// so far, also on error.
-func (s *Service) ApplyListingChanges(ctx context.Context, editID string, changes []metadata.Change) ([]metadata.Change, error) {
+// language that does not exist yet is created. known holds listings already
+// read (nil: the language does not exist); the others are read here. It
+// returns the changes applied so far, also on error.
+func (s *Service) ApplyListingChanges(ctx context.Context, editID string, changes []metadata.Change, known map[string]*androidpublisher.Listing) ([]metadata.Change, error) {
 	applied := []metadata.Change{}
 	var languages []string
 	byLanguage := map[string][]metadata.Change{}
@@ -235,9 +236,12 @@ func (s *Service) ApplyListingChanges(ctx context.Context, editID string, change
 		byLanguage[c.Locale] = append(byLanguage[c.Locale], c)
 	}
 	for _, language := range languages {
-		cur, err := s.getListing(ctx, editID, language)
-		if err != nil {
-			return applied, err
+		cur, ok := known[language]
+		if !ok {
+			var err error
+			if cur, err = s.getListing(ctx, editID, language); err != nil {
+				return applied, err
+			}
 		}
 		merged := overlay(cur, language, byLanguage[language])
 		if _, err := s.api.Edits.Listings.Update(s.packageName, editID, language, merged).Context(ctx).Do(); err != nil {

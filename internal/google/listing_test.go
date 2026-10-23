@@ -73,8 +73,19 @@ func TestSetListingKeepsUntouchedFields(t *testing.T) {
 	if res != (Listing{Locale: "en-US", Title: "New", ShortDescription: "Short", FullDescription: "Full", Video: "https://youtu.be/x"}) {
 		t.Errorf("res = %+v", res)
 	}
-	if c := calls(srv); c[len(c)-1] != "POST /edits/edit-1:commit" {
+	c := calls(srv)
+	if c[len(c)-1] != "POST /edits/edit-1:commit" {
 		t.Errorf("calls = %v", c)
+	}
+	// the listing is read once
+	gets := 0
+	for _, call := range c {
+		if call == "GET /edits/edit-1/listings/en-US" {
+			gets++
+		}
+	}
+	if gets != 1 {
+		t.Errorf("listing read %d times: %v", gets, c)
 	}
 }
 
@@ -178,7 +189,7 @@ func TestApplyListingChangesReturnsAppliedOnError(t *testing.T) {
 	s := newService(t, srv, io.Discard)
 	_ = s.withEdit(t.Context(), CommitOptions{DryRun: true}, func(editID string) error {
 		var err error
-		applied, err = s.ApplyListingChanges(t.Context(), editID, changes)
+		applied, err = s.ApplyListingChanges(t.Context(), editID, changes, nil)
 		if err == nil {
 			t.Error("want error")
 		}
