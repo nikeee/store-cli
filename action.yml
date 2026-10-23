@@ -51,8 +51,21 @@ runs:
           exit 1
         fi
 
+        # A token that cannot read the repository gets 404s, which gh reports as
+        # "release not found"; say what is actually missing.
+        readable=false
+        need_access() {
+          $readable && return
+          if ! gh api "repos/$repo" --silent 2>/dev/null; then
+            echo "::error::the token cannot read $repo. While it is private, pass a token that can read it (input token, e.g. a fine-grained token with Contents: read on $repo)."
+            exit 1
+          fi
+          readable=true
+        }
+
         version="${VERSION#v}"
         if [ "$version" = latest ]; then
+          need_access
           version=$(gh release view -R "$repo" --json tagName -q .tagName)
           version="${version#v}"
         fi
@@ -70,6 +83,7 @@ runs:
           archive="store_${version}_${os}_${arch}.tar.gz"
           tmp=$(mktemp -d "$RUNNER_TEMP/store.XXXXXX")
           echo "Downloading $archive of v$version"
+          need_access
           gh release download "v$version" -R "$repo" -D "$tmp" -p "$archive" -p checksums.txt
           sum=$(awk -v f="$archive" '$2 == f' "$tmp/checksums.txt")
           if [ -z "$sum" ]; then

@@ -113,7 +113,9 @@ on Linux and macOS runners, X64 and ARM64.
 ```
 
 Outputs: `version` (the installed version) and `cache-hit`. The `token` input (default: the
-workflow's token) is used to download the release.
+workflow's token) is used to download the release. While `nikeee/store-cli` is private, the
+workflow's token of another repository cannot read it: pass a token that can, e.g. a fine-grained
+token with Contents: read on `nikeee/store-cli`, else the action stops and says so.
 
 On GitHub Actions (`GITHUB_ACTIONS=true`) errors and warnings also go to stderr as workflow
 commands, so they show as annotations. Problems in the metadata directory, the release notes and
