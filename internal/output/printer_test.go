@@ -159,3 +159,17 @@ func TestReporter(t *testing.T) {
 		t.Fatalf("out=%q err=%q", out.String(), errb.String())
 	}
 }
+
+// stdout and stderr get colors each by their own terminal check.
+func TestPrinterColorsStreamsSeparately(t *testing.T) {
+	var out, errb bytes.Buffer
+	p := output.NewPrinter(output.ModeText, &out, &errb, false)
+	p.ColorStderr(true)
+	p.Warnf("careful")
+	if err := p.Result(map[string]string{"a": "b"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(errb.String(), "\x1b[") || strings.Contains(out.String(), "\x1b[") {
+		t.Errorf("stdout %q, stderr %q", out.String(), errb.String())
+	}
+}

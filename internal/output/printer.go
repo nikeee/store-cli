@@ -22,10 +22,11 @@ type TextRenderer interface {
 
 // Printer writes results to stdout and errors, progress and warnings to stderr.
 type Printer struct {
-	mode   Mode
-	stdout io.Writer
-	stderr io.Writer
-	styles Styles
+	mode      Mode
+	stdout    io.Writer
+	stderr    io.Writer
+	styles    Styles // stdout
+	errStyles Styles // stderr
 
 	github    bool   // also write GitHub Actions annotations, see AnnotateGitHub
 	workspace string // GitHub Actions checkout directory, "" if unknown
@@ -33,9 +34,17 @@ type Printer struct {
 
 var _ Reporter = (*Printer)(nil)
 
-// NewPrinter returns a Printer. color only has an effect in text mode.
+// NewPrinter returns a Printer. color only has an effect in text mode; it
+// applies to stdout and, unless ColorStderr says otherwise, to stderr.
 func NewPrinter(mode Mode, stdout, stderr io.Writer, color bool) *Printer {
-	return &Printer{mode: mode, stdout: stdout, stderr: stderr, styles: NewStyles(color && mode == ModeText)}
+	s := NewStyles(color && mode == ModeText)
+	return &Printer{mode: mode, stdout: stdout, stderr: stderr, styles: s, errStyles: s}
+}
+
+// ColorStderr sets whether stderr gets colors (only in text mode), for when
+// stderr is a terminal and stdout is not, or the other way round.
+func (p *Printer) ColorStderr(color bool) {
+	p.errStyles = NewStyles(color && p.mode == ModeText)
 }
 
 // Mode returns the output mode.
@@ -96,7 +105,7 @@ func (p *Printer) Error(err error) {
 		}
 	}
 	var sb strings.Builder
-	sb.WriteString(p.styles.Error.Render("error: "+body.Error) + "\n")
+	sb.WriteString(p.errStyles.Error.Render("error: "+body.Error) + "\n")
 	if body.Detail != "" {
 		for _, l := range strings.Split(body.Detail, "\n") {
 			sb.WriteString("  " + l + "\n")
@@ -110,13 +119,13 @@ func (p *Printer) Error(err error) {
 
 // Progressf writes one progress line to stderr.
 func (p *Printer) Progressf(format string, args ...any) {
-	_, _ = io.WriteString(p.stderr, p.styles.Dim.Render(fmt.Sprintf(format, args...))+"\n")
+	_, _ = io.WriteString(p.stderr, p.errStyles.Dim.Render(fmt.Sprintf(format, args...))+"\n")
 }
 
 // Warnf writes one "warning: ..." line to stderr.
 func (p *Printer) Warnf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	_, _ = io.WriteString(p.stderr, p.styles.Warn.Render("warning: "+msg)+"\n")
+	_, _ = io.WriteString(p.stderr, p.errStyles.Warn.Render("warning: "+msg)+"\n")
 	if p.github {
 		p.annotate("warning", clierr.Issue{Message: msg})
 	}

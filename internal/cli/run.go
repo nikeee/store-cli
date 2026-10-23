@@ -22,7 +22,8 @@ type Deps struct {
 	ReadFile func(string) ([]byte, error)
 	Stdout   io.Writer
 	Stderr   io.Writer
-	IsTTY    bool
+	IsTTY    bool // stdout is a terminal
+	ErrTTY   bool // stderr is a terminal
 	Now      func() time.Time
 	Sleep    func(ctx context.Context, d time.Duration) error // polling and retries; instant in tests
 }
@@ -35,6 +36,7 @@ func DefaultDeps() Deps {
 		Stdout:   os.Stdout,
 		Stderr:   os.Stderr,
 		IsTTY:    isTerminal(os.Stdout),
+		ErrTTY:   isTerminal(os.Stderr),
 		Now:      time.Now,
 		Sleep: func(ctx context.Context, d time.Duration) error {
 			t := time.NewTimer(d)
