@@ -1,10 +1,9 @@
 package apple
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,51 +33,12 @@ func previewFiles(t *testing.T, n int) []string {
 }
 
 // previewServer serves the preview endpoints; remote are the previews of every
-// set, state is the delivery state of every preview GET.
+// set (poster frame 00:00:01:00), state is the delivery state of every
+// preview GET.
 func previewServer(t *testing.T, sets string, remote []remoteShot, state string) *ascfake.Server {
 	t.Helper()
-	srv := ascfake.New(t)
-	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionLocalizations", ascfake.JSON(http.StatusOK, "version_localizations.json"))
-	srv.Handle("GET", "/v1/appStoreVersionLocalizations/{id}/appPreviewSets", ascfake.JSON(http.StatusOK, sets))
-	srv.Handle("POST", "/v1/appPreviewSets", ascfake.JSON(http.StatusCreated, "appPreviewSet_created.json"))
-	srv.Handle("DELETE", "/v1/appPreviewSets/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
-	srv.Handle("DELETE", "/v1/appPreviews/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
-	srv.Handle("GET", "/v1/appPreviewSets/{id}/appPreviews", func(w http.ResponseWriter, _ *http.Request) {
-		data := []any{}
-		for _, r := range remote {
-			data = append(data, map[string]any{"type": "appPreviews", "id": r.id,
-				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": "COMPLETE"},
-					"previewFrameTimeCode": "00:00:01:00"}})
-		}
-		writeJSON(w, http.StatusOK, map[string]any{"data": data, "links": map[string]any{"self": "x"}})
-	})
-	srv.Handle("POST", "/v1/appPreviews", func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		var req struct {
-			Data struct {
-				Attributes struct {
-					FileName string `json:"fileName"`
-					FileSize int    `json:"fileSize"`
-				} `json:"attributes"`
-			} `json:"data"`
-		}
-		_ = json.Unmarshal(body, &req)
-		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"type": "appPreviews", "id": "pnew",
-			"attributes": map[string]any{"fileName": req.Data.Attributes.FileName, "uploadOperations": []any{
-				map[string]any{"method": "PUT", "url": srv.UploadURL("pnew-" + req.Data.Attributes.FileName), "offset": 0, "length": req.Data.Attributes.FileSize},
-			}}}, "links": map[string]any{"self": "x"}})
-	})
-	srv.Handle("PATCH", "/v1/appPreviews/{id}", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appPreviews", "id": r.PathValue("id")}, "links": map[string]any{"self": "x"}})
-	})
-	srv.Handle("GET", "/v1/appPreviews/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if state == "" {
-			state = "COMPLETE"
-		}
-		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appPreviews", "id": r.PathValue("id"),
-			"attributes": map[string]any{"assetDeliveryState": map[string]any{"state": state}}}, "links": map[string]any{"self": "x"}})
-	})
-	return srv
+	st := cmp.Or(state, "COMPLETE")
+	return newMediaServer(t, previewFake, sets, remote, func(int) (string, []map[string]string) { return st, nil }).Server
 }
 
 var testVersion = Version{ID: "v1", Version: "1.3.0"}

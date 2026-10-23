@@ -56,9 +56,7 @@ func newAppleScreenshotsListCmd() *cobra.Command {
 			return emit(cmd, sets)
 		},
 	}
-	cmd.Flags().String("locale", "", "only this locale")
-	cmd.Flags().String("device", "", "only this device, e.g. iphone-6.9")
-	addListingVersionFlag(cmd)
+	addMediaListFlags(cmd)
 	return cmd
 }
 
@@ -118,12 +116,8 @@ func newAppleScreenshotsUploadCmd() *cobra.Command {
 			return emit(cmd, set)
 		},
 	}
-	cmd.Flags().String("locale", "", "locale of the set, e.g. en-US (required)")
-	cmd.Flags().String("device", "", "device of the set, e.g. iphone-6.9 (default: detected from the first file)")
-	cmd.Flags().Bool("replace", false, "make the set hold exactly these files instead of appending")
-	cmd.Flags().Duration("timeout", 10*time.Minute, "how long one file may take until Apple processed it, e.g. 90s, 10m, 1h")
-	addListingVersionFlag(cmd)
-	addDryRun(cmd)
+	addMediaSetFlags(cmd, "device of the set, e.g. iphone-6.9 (default: detected from the first file)")
+	addMediaUploadFlags(cmd)
 	return cmd
 }
 
@@ -165,11 +159,30 @@ func newAppleScreenshotsDeleteCmd() *cobra.Command {
 			return emit(cmd, res)
 		},
 	}
+	addMediaSetFlags(cmd, "device of the set, e.g. iphone-6.9 (required)")
+	return cmd
+}
+
+// addMediaListFlags adds the filters of screenshots list and previews list.
+func addMediaListFlags(cmd *cobra.Command) {
+	cmd.Flags().String("locale", "", "only this locale")
+	cmd.Flags().String("device", "", "only this device, e.g. iphone-6.9")
+	addListingVersionFlag(cmd)
+}
+
+// addMediaSetFlags adds --locale and --device (described by device) of one
+// screenshot or preview set, --version and --dry-run.
+func addMediaSetFlags(cmd *cobra.Command, device string) {
 	cmd.Flags().String("locale", "", "locale of the set, e.g. en-US (required)")
-	cmd.Flags().String("device", "", "device of the set, e.g. iphone-6.9 (required)")
+	cmd.Flags().String("device", "", device)
 	addListingVersionFlag(cmd)
 	addDryRun(cmd)
-	return cmd
+}
+
+// addMediaUploadFlags adds --replace and --timeout of an upload.
+func addMediaUploadFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool("replace", false, "make the set hold exactly these files instead of appending")
+	cmd.Flags().Duration("timeout", 10*time.Minute, "how long one file may take until Apple processed it, e.g. 90s, 10m, 1h")
 }
 
 // requireFlags makes a missing or empty required flag a usage error (exit 2),

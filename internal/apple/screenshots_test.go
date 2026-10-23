@@ -49,36 +49,53 @@ func sums(t *testing.T, paths []string) []string {
 
 type remoteShot struct{ id, name, sum string }
 
-// shotServer serves the screenshot endpoints. sets is the fixture answering the
-// set list, remote the screenshots of every set, state the delivery state of a
-// screenshot on its n-th (1-based) GET.
+// mediaFake names the endpoints of one media kind for newMediaServer.
+type mediaFake struct {
+	sets, items string // "appScreenshotSets", "appScreenshots"
+	setCreated  string // fixture of a created set
+}
+
+var (
+	screenshotFake = mediaFake{"appScreenshotSets", "appScreenshots", "appScreenshotSet_created.json"}
+	previewFake    = mediaFake{"appPreviewSets", "appPreviews", "appPreviewSet_created.json"}
+)
+
+// shotServer serves the endpoints of a media kind. sets is the fixture
+// answering the set list, remote the items of every set, state the delivery
+// state of an item on its n-th (1-based) GET.
 type shotServer struct {
 	*ascfake.Server
 	mu     sync.Mutex
 	nextID int
 	polls  map[string]int
-	// remoteState is the delivery state of listed screenshots (default COMPLETE).
+	// remoteState is the delivery state of listed items (default COMPLETE).
 	remoteState string
 }
 
 func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n int) (string, []map[string]string)) *shotServer {
 	t.Helper()
+	return newMediaServer(t, screenshotFake, sets, remote, state)
+}
+
+func newMediaServer(t *testing.T, k mediaFake, sets string, remote []remoteShot, state func(n int) (string, []map[string]string)) *shotServer {
+	t.Helper()
 	ss := &shotServer{Server: ascfake.New(t), polls: map[string]int{}}
 	srv := ss.Server
 	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionLocalizations", ascfake.JSON(http.StatusOK, "version_localizations.json"))
-	srv.Handle("GET", "/v1/appStoreVersionLocalizations/{id}/appScreenshotSets", ascfake.JSON(http.StatusOK, sets))
-	srv.Handle("POST", "/v1/appScreenshotSets", ascfake.JSON(http.StatusCreated, "appScreenshotSet_created.json"))
-	srv.Handle("DELETE", "/v1/appScreenshotSets/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
-	srv.Handle("DELETE", "/v1/appScreenshots/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
-	srv.Handle("GET", "/v1/appScreenshotSets/{id}/appScreenshots", func(w http.ResponseWriter, _ *http.Request) {
+	srv.Handle("GET", "/v1/appStoreVersionLocalizations/{id}/"+k.sets, ascfake.JSON(http.StatusOK, sets))
+	srv.Handle("POST", "/v1/"+k.sets, ascfake.JSON(http.StatusCreated, k.setCreated))
+	srv.Handle("DELETE", "/v1/"+k.sets+"/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
+	srv.Handle("DELETE", "/v1/"+k.items+"/{id}", ascfake.JSON(http.StatusNoContent, "empty.json"))
+	srv.Handle("GET", "/v1/"+k.sets+"/{id}/"+k.items, func(w http.ResponseWriter, _ *http.Request) {
 		data := []any{}
 		for _, r := range remote {
-			data = append(data, map[string]any{"type": "appScreenshots", "id": r.id,
-				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": ss.state()}}})
+			data = append(data, map[string]any{"type": k.items, "id": r.id,
+				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": ss.state()},
+					"previewFrameTimeCode": "00:00:01:00"}})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"data": data, "links": map[string]any{"self": "x"}})
 	})
-	srv.Handle("POST", "/v1/appScreenshots", func(w http.ResponseWriter, r *http.Request) {
+	srv.Handle("POST", "/v1/"+k.items, func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		var req struct {
 			Data struct {
@@ -93,17 +110,17 @@ func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n 
 		ss.nextID++
 		id := fmt.Sprintf("new-%d", ss.nextID)
 		ss.mu.Unlock()
-		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"type": "appScreenshots", "id": id,
+		writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"type": k.items, "id": id,
 			"attributes": map[string]any{
 				"fileName": req.Data.Attributes.FileName,
 				"uploadOperations": []any{map[string]any{"method": "PUT", "url": srv.UploadURL(id), "offset": 0, "length": req.Data.Attributes.FileSize,
 					"requestHeaders": []any{map[string]any{"name": "Content-Type", "value": "application/octet-stream"}}}},
 			}}, "links": map[string]any{"self": "x"}})
 	})
-	srv.Handle("PATCH", "/v1/appScreenshots/{id}", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appScreenshots", "id": r.PathValue("id")}, "links": map[string]any{"self": "x"}})
+	srv.Handle("PATCH", "/v1/"+k.items+"/{id}", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": k.items, "id": r.PathValue("id")}, "links": map[string]any{"self": "x"}})
 	})
-	srv.Handle("GET", "/v1/appScreenshots/{id}", func(w http.ResponseWriter, r *http.Request) {
+	srv.Handle("GET", "/v1/"+k.items+"/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		ss.mu.Lock()
 		ss.polls[id]++
@@ -114,7 +131,7 @@ func newShotServer(t *testing.T, sets string, remote []remoteShot, state func(n 
 		if errs != nil {
 			ds["errors"] = errs
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appScreenshots", "id": id,
+		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": k.items, "id": id,
 			"attributes": map[string]any{"assetDeliveryState": ds}}, "links": map[string]any{"self": "x"}})
 	})
 	return ss

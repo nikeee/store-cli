@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
@@ -55,9 +53,7 @@ func newApplePreviewsListCmd() *cobra.Command {
 			return emit(cmd, sets)
 		},
 	}
-	cmd.Flags().String("locale", "", "only this locale")
-	cmd.Flags().String("device", "", "only this device, e.g. iphone-6.9")
-	addListingVersionFlag(cmd)
+	addMediaListFlags(cmd)
 	return cmd
 }
 
@@ -120,13 +116,9 @@ func newApplePreviewsUploadCmd() *cobra.Command {
 			return emit(cmd, set)
 		},
 	}
-	cmd.Flags().String("locale", "", "locale of the set, e.g. en-US (required)")
-	cmd.Flags().String("device", "", "device of the set, e.g. iphone-6.9 (required)")
-	cmd.Flags().Bool("replace", false, "make the set hold exactly these files instead of appending")
+	addMediaSetFlags(cmd, "device of the set, e.g. iphone-6.9 (required)")
+	addMediaUploadFlags(cmd)
 	cmd.Flags().String("poster-frame", "", "timecode of the poster frame, e.g. 00:00:05:00")
-	cmd.Flags().Duration("timeout", 10*time.Minute, "how long one file may take until Apple processed it, e.g. 90s, 10m, 1h")
-	addListingVersionFlag(cmd)
-	addDryRun(cmd)
 	return cmd
 }
 
@@ -168,9 +160,6 @@ func newApplePreviewsDeleteCmd() *cobra.Command {
 			return emit(cmd, res)
 		},
 	}
-	cmd.Flags().String("locale", "", "locale of the set, e.g. en-US (required)")
-	cmd.Flags().String("device", "", "device of the set, e.g. iphone-6.9 (required)")
-	addListingVersionFlag(cmd)
-	addDryRun(cmd)
+	addMediaSetFlags(cmd, "device of the set, e.g. iphone-6.9 (required)")
 	return cmd
 }
