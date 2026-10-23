@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -116,7 +117,7 @@ func (s *Service) Promote(ctx context.Context, o PromoteOptions) (Track, error) 
 
 // SetRollout sets the user fraction of the track's staged release.
 func (s *Service) SetRollout(ctx context.Context, track string, fraction float64, c CommitOptions) (Track, error) {
-	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusInProgress), func(r *androidpublisher.TrackRelease) {
+	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusInProgress), nil, func(r *androidpublisher.TrackRelease) {
 		r.UserFraction = fraction
 	})
 	return t, err
@@ -124,7 +125,7 @@ func (s *Service) SetRollout(ctx context.Context, track string, fraction float64
 
 // Halt halts the track's staged release.
 func (s *Service) Halt(ctx context.Context, track string, c CommitOptions) (Track, error) {
-	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusInProgress), func(r *androidpublisher.TrackRelease) {
+	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusInProgress), nil, func(r *androidpublisher.TrackRelease) {
 		r.Status = StatusHalted
 	})
 	return t, err
@@ -132,7 +133,7 @@ func (s *Service) Halt(ctx context.Context, track string, c CommitOptions) (Trac
 
 // Resume resumes the track's halted release.
 func (s *Service) Resume(ctx context.Context, track string, c CommitOptions) (Track, error) {
-	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusHalted), func(r *androidpublisher.TrackRelease) {
+	t, _, err := s.updateRelease(ctx, track, c, pickStatus(StatusHalted), nil, func(r *androidpublisher.TrackRelease) {
 		r.Status = StatusInProgress
 	})
 	return t, err
@@ -165,11 +166,11 @@ func (s *Service) CompleteRollout(ctx context.Context, track string, c CommitOpt
 // touched. Notes for none of the listing's languages are an error.
 func (s *Service) SetReleaseNotes(ctx context.Context, track, name string, notes map[string]string, c CommitOptions) (Release, error) {
 	var withNotes []*androidpublisher.LocalizedText
-	t, i, err := s.updateReleaseWith(ctx, track, c, pickName(name), func(editID string) error {
+	t, i, err := s.updateRelease(ctx, track, c, pickName(name), func(editID string) error {
 		var err error
 		withNotes, err = s.releaseNotes(ctx, editID, notes)
 		if err == nil && len(withNotes) == 0 {
-			err = clierr.New("the Play listing has none of the release notes languages %s", strings.Join(slices.Sorted(mapKeys(notes)), ", "))
+			err = clierr.New("the Play listing has none of the release notes languages %s", strings.Join(slices.Sorted(maps.Keys(notes)), ", "))
 		}
 		return err
 	}, func(r *androidpublisher.TrackRelease) {
@@ -192,7 +193,7 @@ func mergeNotes(old, upd []*androidpublisher.LocalizedText) []*androidpublisher.
 		byLang[n.Language] = n
 	}
 	var out []*androidpublisher.LocalizedText
-	for _, l := range slices.Sorted(mapKeys(byLang)) {
+	for _, l := range slices.Sorted(maps.Keys(byLang)) {
 		out = append(out, byLang[l])
 	}
 	return out
@@ -232,14 +233,9 @@ func pickName(name string) picker {
 }
 
 // updateRelease changes one release of the track in place, in its own edit.
-func (s *Service) updateRelease(ctx context.Context, track string, c CommitOptions, pick picker, mutate func(*androidpublisher.TrackRelease)) (Track, int, error) {
-	return s.updateReleaseWith(ctx, track, c, pick, nil, mutate)
-}
-
-// updateReleaseWith is updateRelease with a prepare step that runs inside the
-// edit before the track is changed. The releases other than the picked one
-// are sent unchanged.
-func (s *Service) updateReleaseWith(ctx context.Context, track string, c CommitOptions, pick picker, prepare func(editID string) error, mutate func(*androidpublisher.TrackRelease)) (Track, int, error) {
+// prepare, if not nil, runs inside the edit before the track is changed. The
+// releases other than the picked one are sent unchanged.
+func (s *Service) updateRelease(ctx context.Context, track string, c CommitOptions, pick picker, prepare func(editID string) error, mutate func(*androidpublisher.TrackRelease)) (Track, int, error) {
 	var res Track
 	var idx int
 	err := s.withEdit(ctx, c, func(editID string) error {

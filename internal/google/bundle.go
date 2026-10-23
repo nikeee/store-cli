@@ -3,8 +3,6 @@ package google
 import (
 	"context"
 	"fmt"
-	"iter"
-	"maps"
 	"os"
 
 	"google.golang.org/api/androidpublisher/v3"
@@ -16,8 +14,6 @@ import (
 var bundleChunkSize = 8 << 20
 
 const octetStream = "application/octet-stream"
-
-func mapKeys[M ~map[string]V, V any](m M) iter.Seq[string] { return maps.Keys(m) }
 
 // BundleUploadOptions are the inputs of UploadBundle.
 type BundleUploadOptions struct {

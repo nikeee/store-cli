@@ -3,6 +3,7 @@ package google
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"unicode/utf8"
@@ -57,7 +58,7 @@ func ReadReleaseNotesDir(dir string) (map[string]string, error) {
 // before any request.
 func ValidateReleaseNotes(notes map[string]string) error {
 	byLang := map[string]string{}
-	for _, l := range slices.Sorted(mapKeys(notes)) {
+	for _, l := range slices.Sorted(maps.Keys(notes)) {
 		if n := utf8.RuneCountInString(notes[l]); n > maxReleaseNoteRunes {
 			return clierr.New("release notes %s: %d characters, the limit is %d", l, n, maxReleaseNoteRunes)
 		}
@@ -90,7 +91,7 @@ func (s *Service) releaseNotes(ctx context.Context, editID string, notes map[str
 		have[l.Language] = true
 	}
 	byLang := map[string]string{}
-	for _, l := range slices.Sorted(mapKeys(notes)) {
+	for _, l := range slices.Sorted(maps.Keys(notes)) {
 		lang := locale.ToPlay(l)
 		if !have[lang] {
 			s.report.Warnf("release notes %s dropped: the Play listing has no language %s", l, lang)
@@ -99,7 +100,7 @@ func (s *Service) releaseNotes(ctx context.Context, editID string, notes map[str
 		byLang[lang] = notes[l]
 	}
 	var out []*androidpublisher.LocalizedText
-	for _, lang := range slices.Sorted(mapKeys(byLang)) {
+	for _, lang := range slices.Sorted(maps.Keys(byLang)) {
 		out = append(out, &androidpublisher.LocalizedText{Language: lang, Text: byLang[lang]})
 	}
 	return out, nil

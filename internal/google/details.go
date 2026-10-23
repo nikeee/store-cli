@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"google.golang.org/api/androidpublisher/v3"
@@ -57,22 +58,31 @@ func (s *Service) ShowDetails(ctx context.Context) (Details, error) {
 	return out, err
 }
 
+// detailFields are the fields of a details patch: the API field name (as
+// ForceSendFields names it), the API value and the patch value.
+var detailFields = []struct {
+	name string
+	api  func(*androidpublisher.AppDetails) *string
+	in   func(*DetailsPatch) *string
+}{
+	{"ContactEmail", func(a *androidpublisher.AppDetails) *string { return &a.ContactEmail }, func(p *DetailsPatch) *string { return p.Email }},
+	{"ContactWebsite", func(a *androidpublisher.AppDetails) *string { return &a.ContactWebsite }, func(p *DetailsPatch) *string { return p.Website }},
+	{"ContactPhone", func(a *androidpublisher.AppDetails) *string { return &a.ContactPhone }, func(p *DetailsPatch) *string { return p.Phone }},
+	{"DefaultLanguage", func(a *androidpublisher.AppDetails) *string { return &a.DefaultLanguage }, func(p *DetailsPatch) *string { return p.DefaultLocale }},
+}
+
 // SetDetails patches the given fields only. With DryRun nothing is sent and
 // the result is the current details with the patch applied.
 func (s *Service) SetDetails(ctx context.Context, p DetailsPatch, c CommitOptions) (Details, error) {
-	patch := &androidpublisher.AppDetails{}
-	set := func(dst *string, name string, v *string) {
-		if v != nil {
-			*dst = *v
-			patch.ForceSendFields = append(patch.ForceSendFields, name)
-		}
-	}
-	set(&patch.ContactEmail, "ContactEmail", p.Email)
-	set(&patch.ContactWebsite, "ContactWebsite", p.Website)
-	set(&patch.ContactPhone, "ContactPhone", p.Phone)
 	if p.DefaultLocale != nil {
-		v := locale.ToPlay(*p.DefaultLocale)
-		set(&patch.DefaultLanguage, "DefaultLanguage", &v)
+		p.DefaultLocale = new(locale.ToPlay(*p.DefaultLocale))
+	}
+	patch := &androidpublisher.AppDetails{}
+	for _, f := range detailFields {
+		if v := f.in(&p); v != nil {
+			*f.api(patch) = *v
+			patch.ForceSendFields = append(patch.ForceSendFields, f.name)
+		}
 	}
 	var out Details
 	err := s.withEdit(ctx, c, func(editID string) error {
@@ -96,17 +106,11 @@ func (s *Service) SetDetails(ctx context.Context, p DetailsPatch, c CommitOption
 	return out, err
 }
 
+// mergeDetails copies the fields patch sends into dst.
 func mergeDetails(dst, patch *androidpublisher.AppDetails) {
-	for _, f := range patch.ForceSendFields {
-		switch f {
-		case "ContactEmail":
-			dst.ContactEmail = patch.ContactEmail
-		case "ContactWebsite":
-			dst.ContactWebsite = patch.ContactWebsite
-		case "ContactPhone":
-			dst.ContactPhone = patch.ContactPhone
-		case "DefaultLanguage":
-			dst.DefaultLanguage = patch.DefaultLanguage
+	for _, f := range detailFields {
+		if slices.Contains(patch.ForceSendFields, f.name) {
+			*f.api(dst) = *f.api(patch)
 		}
 	}
 }
