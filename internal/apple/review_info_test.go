@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/metadata"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
 )
@@ -249,16 +251,9 @@ func TestReviewInfoApplyReturnsMaskedChanges(t *testing.T) {
 
 func TestReviewInfoSetReturnsDetailReadError(t *testing.T) {
 	srv := reviewServer(t, reviewDetailJSON)
-	calls := 0
-	// The first two reads (diff, apply) succeed; the read after the PATCH fails.
-	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreReviewDetail", func(w http.ResponseWriter, _ *http.Request) {
-		calls++
-		if calls > 2 {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{"errors": []any{map[string]any{"status": "500", "code": "UNEXPECTED_ERROR", "title": "boom"}}})
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(reviewDetailJSON))
+	// the attachments are read after the PATCH; that read fails
+	srv.Handle("GET", "/v1/appStoreReviewDetails/{id}/appStoreReviewAttachments", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"errors": []any{map[string]any{"status": "500", "code": "UNEXPECTED_ERROR", "title": "boom"}}})
 	})
 	_, _, err := newService(t, srv).SetReviewInfo(t.Context(), reviewVersion, metadata.Texts{"notes": "changed"}, nil, false)
 	if err == nil {
@@ -266,5 +261,32 @@ func TestReviewInfoSetReturnsDetailReadError(t *testing.T) {
 	}
 	if len(requestsOf(srv, "PATCH")) != 1 {
 		t.Errorf("requests = %v", srv.Requests())
+	}
+}
+
+// SetReviewInfo reads the review detail once, also when it changes texts and
+// attachments.
+func TestReviewInfoSetReadsDetailOnce(t *testing.T) {
+	srv := attachmentUploadServer(t, reviewDetailJSON, "old.png")
+	_, _, err := newService(t, srv).SetReviewInfo(t.Context(), reviewVersion, metadata.Texts{"notes": "changed"}, []string{attachmentFile(t, "a.txt")}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	for _, r := range requestsOf(srv, "GET") {
+		if strings.HasSuffix(r.Path, "/appStoreReviewDetail") {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Errorf("review detail read %d times", n)
+	}
+}
+
+// An attachment without attributes still counts, under its ID.
+func TestAttachmentNamesKeepsBareAttachments(t *testing.T) {
+	got := attachmentNames([]asc.AppStoreReviewAttachment{{ID: "att-1", Attributes: &asc.AppStoreReviewAttachmentAttributes{FileName: new("a.png")}}, {ID: "att-2"}})
+	if !slices.Equal(got, []string{"a.png", "att-2"}) {
+		t.Errorf("names = %v", got)
 	}
 }

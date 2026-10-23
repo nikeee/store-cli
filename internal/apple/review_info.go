@@ -155,16 +155,28 @@ func reviewTexts(d asc.AppStoreReviewDetail) metadata.Texts {
 // attributes. A demoAccountRequired change to "" means "no change" and is
 // skipped. It returns the changes applied, secrets masked.
 func (s *Service) ApplyReviewChanges(ctx context.Context, v Version, changes []metadata.Change) ([]metadata.Change, error) {
-	applied := []metadata.Change{}
-	var attrs asc.AppStoreReviewDetailUpdateRequestDataAttributes
 	d, exists, err := s.reviewDetail(ctx, v)
 	if err != nil {
-		return applied, err
+		return []metadata.Change{}, err
+	}
+	applied, _, err := s.applyReviewChanges(ctx, v, d, exists, changes)
+	return applied, err
+}
+
+// applyReviewChanges is ApplyReviewChanges with the review detail d of v
+// already read (exists is false when v has none). It also returns the ID of
+// the detail afterwards, "" when there still is none.
+func (s *Service) applyReviewChanges(ctx context.Context, v Version, d asc.AppStoreReviewDetail, exists bool, changes []metadata.Change) ([]metadata.Change, string, error) {
+	applied := []metadata.Change{}
+	var attrs asc.AppStoreReviewDetailUpdateRequestDataAttributes
+	id := ""
+	if exists {
+		id = d.ID
 	}
 	for _, c := range changes {
 		f, ok := reviewFields[c.Field]
 		if c.Scope != scopeReview || !ok {
-			return applied, clierr.New("cannot apply %s change %q to the review information", c.Scope, c.Field)
+			return applied, id, clierr.New("cannot apply %s change %q to the review information", c.Scope, c.Field)
 		}
 		// "" cannot clear demoAccountRequired, and there is nothing to clear on
 		// a detail that does not exist yet.
@@ -175,20 +187,21 @@ func (s *Service) ApplyReviewChanges(ctx context.Context, v Version, changes []m
 		applied = append(applied, c)
 	}
 	if len(applied) == 0 {
-		return applied, nil
+		return applied, id, nil
 	}
 	masked := metadata.MaskSecrets(metadata.AppleReviewFields, applied)
+	var err error
 	if !exists {
-		_, err = s.createReviewDetail(ctx, v, &attrs)
+		id, err = s.createReviewDetail(ctx, v, &attrs)
 	} else {
 		_, err = s.client.AppStoreReviewDetailsUpdateInstance(ctx, asc.AppStoreReviewDetailsUpdateInstanceParams{ID: d.ID}, asc.AppStoreReviewDetailUpdateRequest{
 			Data: asc.AppStoreReviewDetailUpdateRequestData{Type: asc.ResourceTypeAppStoreReviewDetails, ID: d.ID, Attributes: &attrs},
 		})
 	}
 	if err != nil {
-		return []metadata.Change{}, fmt.Errorf("set review information: %w", err)
+		return []metadata.Change{}, id, fmt.Errorf("set review information: %w", err)
 	}
-	return masked, nil
+	return masked, id, nil
 }
 
 // createReviewDetail creates the review detail of v with attrs (nil: empty).
@@ -232,8 +245,18 @@ func (s *Service) ReplaceReviewAttachments(ctx context.Context, v Version, paths
 	if err != nil {
 		return err
 	}
-	id := d.ID
-	if !exists {
+	id := ""
+	if exists {
+		id = d.ID
+	}
+	return s.replaceReviewAttachments(ctx, v, id, paths)
+}
+
+// replaceReviewAttachments is ReplaceReviewAttachments with the ID of the
+// review detail of v already known, "" when v has none.
+func (s *Service) replaceReviewAttachments(ctx context.Context, v Version, id string, paths []string) error {
+	var err error
+	if id == "" {
 		if id, err = s.createReviewDetail(ctx, v, nil); err != nil {
 			return fmt.Errorf("create review information: %w", err)
 		}
@@ -279,9 +302,14 @@ func (s *Service) ShowReviewInfo(ctx context.Context, v Version, reveal bool) (R
 func attachmentNames(atts []asc.AppStoreReviewAttachment) []string {
 	names := []string{}
 	for _, a := range atts {
+		name := ""
 		if a.Attributes != nil {
-			names = append(names, deref(a.Attributes.FileName))
+			name = deref(a.Attributes.FileName)
 		}
+		if name == "" {
+			name = a.ID // still an attachment, even without a known name
+		}
+		names = append(names, name)
 	}
 	return names
 }
@@ -317,9 +345,13 @@ func (s *Service) SetReviewInfo(ctx context.Context, v Version, texts metadata.T
 	if texts[apiDemoRequired] == "" {
 		delete(texts, apiDemoRequired) // cannot be cleared
 	}
-	remote, err := s.ReviewTexts(ctx, v)
+	d, exists, err := s.reviewDetail(ctx, v)
 	if err != nil {
 		return ReviewInfo{}, nil, err
+	}
+	var remote metadata.Texts
+	if exists {
+		remote = reviewTexts(d)
 	}
 	changes := metadata.DiffTexts(metadata.LevelReview, "", metadata.AppleReviewFields, texts, remote)
 	after := metadata.Texts{}
@@ -338,11 +370,12 @@ func (s *Service) SetReviewInfo(ctx context.Context, v Version, texts metadata.T
 	}
 	if !dryRun {
 		textChanges := slices.DeleteFunc(slices.Clone(changes), func(c metadata.Change) bool { return c.Field == fieldAttachments })
-		if _, err := s.ApplyReviewChanges(ctx, v, textChanges); err != nil {
+		_, id, err := s.applyReviewChanges(ctx, v, d, exists, textChanges)
+		if err != nil {
 			return ReviewInfo{}, nil, err
 		}
 		if len(attachments) > 0 {
-			if err := s.ReplaceReviewAttachments(ctx, v, attachments); err != nil {
+			if err := s.replaceReviewAttachments(ctx, v, id, attachments); err != nil {
 				return ReviewInfo{}, nil, err
 			}
 		}
@@ -353,18 +386,12 @@ func (s *Service) SetReviewInfo(ctx context.Context, v Version, texts metadata.T
 		for _, p := range attachments {
 			info.Attachments = append(info.Attachments, filepath.Base(p))
 		}
-	} else {
-		d, ok, err := s.reviewDetail(ctx, v)
+	} else if exists {
+		atts, err := s.reviewAttachments(ctx, d.ID)
 		if err != nil {
 			return ReviewInfo{}, nil, err
 		}
-		if ok {
-			atts, err := s.reviewAttachments(ctx, d.ID)
-			if err != nil {
-				return ReviewInfo{}, nil, err
-			}
-			info.Attachments = attachmentNames(atts)
-		}
+		info.Attachments = attachmentNames(atts)
 	}
 	return info, metadata.MaskSecrets(metadata.AppleReviewFields, changes), nil
 }
