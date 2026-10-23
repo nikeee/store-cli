@@ -129,7 +129,7 @@ func CheckSubmitInputs(o SubmitOptions) error {
 		return clierr.New("internal error: no release notes field")
 	}
 	for _, l := range slices.Sorted(maps.Keys(o.Notes)) {
-		if err := metadata.ValidateLocaleTexts(l, metadata.AppleFields, metadata.Texts{field.API: o.Notes[l]}); err != nil {
+		if err := metadata.ValidateLocaleTexts(l, "", metadata.AppleFields, metadata.Texts{field.API: o.Notes[l]}); err != nil {
 			return err
 		}
 	}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/google"
-	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 func newGoogleTrackCmd(Deps) *cobra.Command {
@@ -116,7 +115,7 @@ func newGoogleTrackPromoteCmd() *cobra.Command {
 				return err
 			}
 			if dir, _ := f.GetString("release-notes"); dir != "" {
-				if o.Notes, err = metadata.ReadReleaseNotesDir(dir); err != nil {
+				if o.Notes, err = google.ReadReleaseNotesDir(dir); err != nil {
 					return err
 				}
 				if err := google.ValidateReleaseNotes(o.Notes); err != nil {

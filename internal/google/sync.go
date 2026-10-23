@@ -79,33 +79,29 @@ func (in *PushInput) pushes(part string) bool {
 // format, size and aspect ratio of the images. All problems are reported
 // together.
 func (in *PushInput) validate() error {
-	var msgs []string
+	var c clierr.Collector
 	folders := slices.Concat(slices.Collect(maps.Keys(in.locales)), slices.Collect(maps.Keys(in.images)))
 	slices.Sort(folders)
 	for _, l := range slices.Compact(folders) {
 		if p := locale.ToPlay(l); p != l {
-			msgs = append(msgs, fmt.Sprintf("%s: Google Play calls this language %s, rename the folder", l, p))
+			c.Add(clierr.New("%s: Google Play calls this language %s, rename the folder", l, p))
 		}
 	}
 	for _, l := range slices.Sorted(maps.Keys(in.locales)) {
-		if err := metadata.ValidateLocaleTexts(l, metadata.GoogleFields, in.locales[l]); err != nil {
-			msgs = append(msgs, err.Error())
-		}
+		dir := filepath.Join(in.opts.Dir, metadata.AndroidDir, l)
+		c.Add(metadata.ValidateLocaleTexts(l, dir, metadata.GoogleFields, in.locales[l]))
 	}
 	for _, l := range slices.Sorted(maps.Keys(in.images)) {
 		for _, t := range media.ImageTypes {
 			// push makes each set exactly these files
 			if paths, ok := in.images[l][t.Alias]; ok {
 				if err := CheckImageFiles(t, paths, true); err != nil {
-					msgs = append(msgs, l+": "+err.Error())
+					c.Add(fmt.Errorf("%s: %w", l, err))
 				}
 			}
 		}
 	}
-	if len(msgs) > 0 {
-		return clierr.New("%s", strings.Join(msgs, "; "))
-	}
-	return nil
+	return c.Err()
 }
 
 // pushPlan is a computed push: the plan to show and what applyPush sends.

@@ -29,7 +29,7 @@ func Inspect(path string) (ImageInfo, error) {
 	defer func() { _ = f.Close() }()
 	cfg, format, err := image.DecodeConfig(f)
 	if err != nil {
-		return ImageInfo{}, clierr.New("%s: not a PNG or JPEG image: %v", path, err)
+		return ImageInfo{}, clierr.Filef(path, "not a PNG or JPEG image: %v", err)
 	}
 	info := ImageInfo{Width: cfg.Width, Height: cfg.Height, Format: format}
 	if format != "png" {
@@ -39,7 +39,7 @@ func Inspect(path string) (ImageInfo, error) {
 		return ImageInfo{}, clierr.New("%v", err)
 	}
 	if info.HasAlpha, err = pngHasAlpha(bufio.NewReader(f)); err != nil {
-		return ImageInfo{}, clierr.New("%s: %v", path, err)
+		return ImageInfo{}, clierr.Filef(path, "%v", err)
 	}
 	return info, nil
 }

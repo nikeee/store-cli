@@ -11,6 +11,7 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/locale"
+	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 // maxReleaseNoteRunes is Play's limit for the release notes of one language.
@@ -43,6 +44,12 @@ type Release struct {
 type ReleaseNote struct {
 	Locale string `json:"locale"`
 	Text   string `json:"text"`
+}
+
+// ReadReleaseNotesDir reads the release notes per locale from dir, see
+// metadata.ReadReleaseNotesDir, with the Play limit.
+func ReadReleaseNotesDir(dir string) (map[string]string, error) {
+	return metadata.ReadReleaseNotesDir(dir, maxReleaseNoteRunes)
 }
 
 // ValidateReleaseNotes checks the limit of 500 characters (runes) per

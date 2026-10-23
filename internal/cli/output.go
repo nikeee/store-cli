@@ -16,10 +16,15 @@ type printerKey struct{}
 type printerSlot struct{ p *output.Printer }
 
 // newPrinter builds the printer for mode: color only in text mode on a
-// terminal with NO_COLOR unset.
+// terminal with NO_COLOR unset, annotations on GitHub Actions.
 func newPrinter(d Deps, mode output.Mode) *output.Printer {
 	_, noColor := d.Env(config.EnvNoColor)
-	return output.NewPrinter(mode, d.Stdout, d.Stderr, d.IsTTY && !noColor)
+	p := output.NewPrinter(mode, d.Stdout, d.Stderr, d.IsTTY && !noColor)
+	if v, _ := d.Env(config.EnvGitHubActions); v == "true" {
+		ws, _ := d.Env(config.EnvGitHubWorkspace)
+		p.AnnotateGitHub(ws)
+	}
+	return p
 }
 
 // resolvePrinter is the root PersistentPreRunE: it resolves the output mode

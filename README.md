@@ -89,6 +89,11 @@ on Linux and macOS runners, X64 and ARM64.
 Outputs: `version` (the installed version) and `cache-hit`. The `token` input (default: the
 workflow's token) is used to download the release.
 
+On GitHub Actions (`GITHUB_ACTIONS=true`) errors and warnings also go to stderr as workflow
+commands, so they show as annotations. Problems in the metadata directory, the release notes and
+image files point at the file, and for texts over a limit at the line and column of the first
+character too much.
+
 A release job that uploads both builds and submits them. The builds themselves are up to you.
 
 ```yaml

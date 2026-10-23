@@ -1,11 +1,14 @@
 package metadata
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/nikeee/store-cli/internal/clierr"
 )
 
 func write(t *testing.T, path, content string) {
@@ -22,7 +25,7 @@ func TestValidateTextsCountsRunes(t *testing.T) {
 	if err := ValidateTexts(AppleFields, Texts{"name": strings.Repeat("ä", 30)}); err != nil {
 		t.Fatalf("30 runes: %v", err)
 	}
-	err := ValidateLocaleTexts("de-DE", AppleFields, Texts{"subtitle": strings.Repeat("ä", 31)})
+	err := ValidateLocaleTexts("de-DE", "", AppleFields, Texts{"subtitle": strings.Repeat("ä", 31)})
 	if err == nil || err.Error() != "de-DE/subtitle.txt: 31 characters, limit 30" {
 		t.Fatalf("31 runes: %v", err)
 	}
@@ -163,7 +166,7 @@ func TestReadReleaseNotesDir(t *testing.T) {
 	write(t, filepath.Join(dir, "en-US.txt"), "Fixes\n")
 	write(t, filepath.Join(dir, "de-DE.txt"), "Fehler")
 	write(t, filepath.Join(dir, "README.md"), "ignored")
-	got, err := ReadReleaseNotesDir(dir)
+	got, err := ReadReleaseNotesDir(dir, 500)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,12 +176,12 @@ func TestReadReleaseNotesDir(t *testing.T) {
 
 	bad := t.TempDir()
 	write(t, filepath.Join(bad, "notes.txt"), "x")
-	if _, err := ReadReleaseNotesDir(bad); err == nil || !strings.Contains(err.Error(), "notes.txt") {
+	if _, err := ReadReleaseNotesDir(bad, 500); err == nil || !strings.Contains(err.Error(), "notes.txt") {
 		t.Errorf("invalid locale: %v", err)
 	}
 	empty := t.TempDir()
 	write(t, filepath.Join(empty, "de-DE.txt"), "\n")
-	if _, err := ReadReleaseNotesDir(empty); err == nil || !strings.Contains(err.Error(), "de-DE.txt") {
+	if _, err := ReadReleaseNotesDir(empty, 500); err == nil || !strings.Contains(err.Error(), "de-DE.txt") {
 		t.Errorf("empty: %v", err)
 	}
 }
@@ -186,7 +189,7 @@ func TestReadReleaseNotesDir(t *testing.T) {
 // The true/false rule follows the Bool mark of the field, not a file name.
 func TestValidateBoolField(t *testing.T) {
 	fields := []Field{{File: "flag.txt", API: "flag", Bool: true}, {File: "text.txt", API: "text"}}
-	err := ValidateLocaleTexts("en-US", fields, Texts{"flag": "yes", "text": "yes"})
+	err := ValidateLocaleTexts("en-US", "", fields, Texts{"flag": "yes", "text": "yes"})
 	if err == nil || err.Error() != "en-US/flag.txt: must be true or false" {
 		t.Fatalf("err = %v", err)
 	}
@@ -216,7 +219,7 @@ func TestReadReleaseNotesDirNoFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, d := range []string{t.TempDir(), dir} {
-		if _, err := ReadReleaseNotesDir(d); err == nil || !strings.Contains(err.Error(), "no release notes (<locale>.txt files) in "+d) {
+		if _, err := ReadReleaseNotesDir(d, 500); err == nil || !strings.Contains(err.Error(), "no release notes (<locale>.txt files) in "+d) {
 			t.Errorf("%s: err = %v", d, err)
 		}
 	}
@@ -226,7 +229,7 @@ func TestReadReleaseNotesDirNoFiles(t *testing.T) {
 // message must not repeat it.
 func TestFileErrorsNameThePathOnce(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing")
-	_, err := ReadReleaseNotesDir(missing)
+	_, err := ReadReleaseNotesDir(missing, 500)
 	if err == nil || strings.Count(err.Error(), missing) != 1 {
 		t.Errorf("release notes: err = %v", err)
 	}
@@ -237,5 +240,82 @@ func TestFileErrorsNameThePathOnce(t *testing.T) {
 	_, err = WriteTexts(filepath.Join(file, "sub"), AppleFields, Texts{"name": "x"})
 	if err == nil || strings.Count(err.Error(), file) != 1 {
 		t.Errorf("write: err = %v", err)
+	}
+}
+
+func issues(t *testing.T, err error) []clierr.Issue {
+	t.Helper()
+	var e *clierr.Error
+	if !errors.As(err, &e) {
+		t.Fatalf("not a *clierr.Error: %v", err)
+	}
+	return e.Issues
+}
+
+func TestPosition(t *testing.T) {
+	cases := []struct {
+		s         string
+		i         int
+		line, col int
+	}{
+		{"abc", 0, 1, 1},
+		{"abc", 2, 1, 3},
+		{"ab\ncd", 2, 1, 3}, // the newline itself
+		{"ab\ncd", 3, 2, 1},
+		{"äö\r\nüß", 5, 2, 2},
+		{"a\n\nb", 3, 3, 1},
+	}
+	for _, c := range cases {
+		if line, col := position(c.s, c.i); line != c.line || col != c.col {
+			t.Errorf("position(%q, %d) = %d:%d, want %d:%d", c.s, c.i, line, col, c.line, c.col)
+		}
+	}
+}
+
+// Violations of texts read from a folder point at the first rune over the
+// limit in the file; the message keeps the short name.
+func TestValidateLocaleTextsIssues(t *testing.T) {
+	dir := filepath.Join("meta", "de-DE")
+	texts := Texts{"subtitle": "Zeile eins\n" + strings.Repeat("ü", 25), "name": "App"}
+	err := ValidateLocaleTexts("de-DE", dir, AppleFields, texts)
+	if err == nil || err.Error() != "de-DE/subtitle.txt: 36 characters, limit 30" {
+		t.Fatalf("err = %v", err)
+	}
+	want := []clierr.Issue{{File: filepath.Join(dir, "subtitle.txt"), Line: 2, Col: 20, Message: "36 characters, limit 30"}}
+	if got := issues(t, err); !reflect.DeepEqual(got, want) {
+		t.Errorf("issues = %+v", got)
+	}
+	err = ValidateLocaleTexts("review_information", "review_information", AppleReviewFields, Texts{"demoAccountRequired": "yes"})
+	want = []clierr.Issue{{File: filepath.Join("review_information", "demo_required.txt"), Line: 1, Message: "must be true or false"}}
+	if got := issues(t, err); !reflect.DeepEqual(got, want) {
+		t.Errorf("bool issues = %+v", got)
+	}
+	// texts not from files have no file to point at
+	err = ValidateLocaleTexts("de-DE", "", AppleFields, texts)
+	want = []clierr.Issue{{Message: "de-DE/subtitle.txt: 36 characters, limit 30"}}
+	if got := issues(t, err); !reflect.DeepEqual(got, want) {
+		t.Errorf("issues without dir = %+v", got)
+	}
+}
+
+func TestReadReleaseNotesDirReportsAllFiles(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "de-DE.txt"), "Neu:\n"+strings.Repeat("x", 10)+"\n")
+	write(t, filepath.Join(dir, "en-US.txt"), " \n")
+	write(t, filepath.Join(dir, "fr-FR.txt"), "ok")
+	write(t, filepath.Join(dir, "notes.txt"), "x")
+	_, err := ReadReleaseNotesDir(dir, 8)
+	de, en, notes := filepath.Join(dir, "de-DE.txt"), filepath.Join(dir, "en-US.txt"), filepath.Join(dir, "notes.txt")
+	want := de + ": 15 characters, limit 8; " + en + ": release notes are empty; " + notes + `: "notes" is not a locale name`
+	if err == nil || err.Error() != want || clierr.ExitCode(err) != 1 {
+		t.Fatalf("err = %v", err)
+	}
+	wantIssues := []clierr.Issue{
+		{File: de, Line: 2, Col: 4, Message: "15 characters, limit 8"},
+		{File: en, Message: "release notes are empty"},
+		{File: notes, Message: `"notes" is not a locale name`},
+	}
+	if got := issues(t, err); !reflect.DeepEqual(got, wantIssues) {
+		t.Errorf("issues = %+v", got)
 	}
 }

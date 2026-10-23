@@ -74,6 +74,16 @@ and `toon` mode as an object:
  "status": 409, "code": "STATE_ERROR", "detail": "<API detail>", "hint": "store apple version cancel 1.2.0"}
 ```
 
+On GitHub Actions (`GITHUB_ACTIONS=true`) errors and warnings are also written to stderr as
+[workflow commands](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands),
+before the error itself. Each problem of a metadata directory, a release notes directory or an
+image file is an annotation of that file (relative to `GITHUB_WORKSPACE`); a text over its limit
+is marked at the first character too much:
+
+```
+::error file=fastlane/metadata/de-DE/subtitle.txt,line=2,col=20::36 characters, limit 30
+```
+
 The last line of the description of each command starts with `Result:` and names the object the command prints
 (`[Name]` is a list of it). The fields of every object are in [results.md](reference/results.md),
 generated from the result types.

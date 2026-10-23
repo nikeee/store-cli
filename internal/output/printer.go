@@ -26,6 +26,9 @@ type Printer struct {
 	stdout io.Writer
 	stderr io.Writer
 	styles Styles
+
+	github    bool   // also write GitHub Actions annotations, see AnnotateGitHub
+	workspace string // GitHub Actions checkout directory, "" if unknown
 }
 
 var _ Reporter = (*Printer)(nil)
@@ -71,11 +74,15 @@ type errorBody struct {
 }
 
 // Error writes err to stderr: as text, or in json and toon mode as an object.
+// With AnnotateGitHub the annotations come first.
 func (p *Printer) Error(err error) {
 	body := errorBody{Error: err.Error()}
 	var ce *clierr.Error
 	if errors.As(err, &ce) {
 		body.Status, body.Code, body.Detail, body.Hint = ce.Status, ce.Code, ce.Detail, ce.Hint
+	}
+	if p.github {
+		p.annotateError(err, body)
 	}
 	switch p.mode {
 	case ModeJSON, ModeTOON:
@@ -108,5 +115,9 @@ func (p *Printer) Progressf(format string, args ...any) {
 
 // Warnf writes one "warning: ..." line to stderr.
 func (p *Printer) Warnf(format string, args ...any) {
-	_, _ = io.WriteString(p.stderr, p.styles.Warn.Render("warning: "+fmt.Sprintf(format, args...))+"\n")
+	msg := fmt.Sprintf(format, args...)
+	_, _ = io.WriteString(p.stderr, p.styles.Warn.Render("warning: "+msg)+"\n")
+	if p.github {
+		p.annotate("warning", clierr.Issue{Message: msg})
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nikeee/store-cli/internal/apple"
-	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 func newAppleSubmitCmd() *cobra.Command {
@@ -35,7 +34,7 @@ func newAppleSubmitCmd() *cobra.Command {
 				return err
 			}
 			if dir, _ := cmd.Flags().GetString("release-notes"); dir != "" {
-				notes, err := metadata.ReadReleaseNotesDir(dir)
+				notes, err := apple.ReadReleaseNotesDir(dir)
 				if err != nil {
 					return err
 				}

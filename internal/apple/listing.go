@@ -335,7 +335,7 @@ func (s *Service) ShowListing(ctx context.Context, app App, v Version, locale st
 // created at the levels touched. With dryRun nothing is sent. It returns the
 // listing after the change and the changes.
 func (s *Service) SetListing(ctx context.Context, app App, v Version, locale string, texts metadata.Texts, dryRun bool) (Localization, []metadata.Change, error) {
-	if err := metadata.ValidateLocaleTexts(locale, metadata.AppleFields, texts); err != nil {
+	if err := metadata.ValidateLocaleTexts(locale, "", metadata.AppleFields, texts); err != nil {
 		return Localization{}, nil, err
 	}
 	all, err := s.ListingTexts(ctx, app, v)

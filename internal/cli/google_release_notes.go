@@ -41,7 +41,7 @@ func newGoogleReleaseNotesSetCmd() *cobra.Command {
 				return clierr.Usagef("--dir cannot be combined with --locale or --text")
 			case dir != "":
 				var err error
-				if notes, err = metadata.ReadReleaseNotesDir(dir); err != nil {
+				if notes, err = google.ReadReleaseNotesDir(dir); err != nil {
 					return err
 				}
 			case loc != "" && text.Changed:

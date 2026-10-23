@@ -13,6 +13,8 @@ const (
 	EnvGooglePackageName    = "GOOGLE_PLAY_PACKAGE_NAME"
 	EnvOutput               = "STORE_OUTPUT"
 	EnvNoColor              = "NO_COLOR"
+	EnvGitHubActions        = "GITHUB_ACTIONS"   // "true" on GitHub Actions runners
+	EnvGitHubWorkspace      = "GITHUB_WORKSPACE" // checkout directory on GitHub Actions runners
 
 	// Test-only API base URL overrides. Never documented for users.
 	EnvInternalAppleAPIURL  = "STORE_INTERNAL_APPLE_API_URL"

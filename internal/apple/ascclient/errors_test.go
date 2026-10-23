@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"testing"
 	"time"
 
@@ -57,7 +58,7 @@ func TestAPIErrorMapping(t *testing.T) {
 			if !errors.As(err, &re) {
 				t.Fatalf("err = %v", err)
 			}
-			if got := ascclient.FromAPIError(re); *got != tt.want {
+			if got := ascclient.FromAPIError(re); !reflect.DeepEqual(*got, tt.want) {
 				t.Errorf("got  %+v\nwant %+v", *got, tt.want)
 			}
 		})

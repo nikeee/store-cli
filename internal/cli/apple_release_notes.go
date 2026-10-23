@@ -3,8 +3,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/nikeee/store-cli/internal/apple"
 	"github.com/nikeee/store-cli/internal/clierr"
-	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 func newAppleReleaseNotesCmd(Deps) *cobra.Command {
@@ -38,7 +38,7 @@ func newAppleReleaseNotesSetCmd() *cobra.Command {
 				return clierr.Usagef("--dir cannot be combined with --locale or --text")
 			case dir != "":
 				var err error
-				if notes, err = metadata.ReadReleaseNotesDir(dir); err != nil {
+				if notes, err = apple.ReadReleaseNotesDir(dir); err != nil {
 					return err
 				}
 			case locale != "" && text.Changed:

@@ -184,7 +184,7 @@ func overlay(cur *androidpublisher.Listing, language string, changes []metadata.
 // keeping the fields not given. The texts are validated before any request.
 // With DryRun nothing is sent and the result is the listing as it would be.
 func (s *Service) SetListing(ctx context.Context, language string, texts metadata.Texts, c CommitOptions) (Listing, error) {
-	if err := metadata.ValidateLocaleTexts(language, metadata.GoogleFields, texts); err != nil {
+	if err := metadata.ValidateLocaleTexts(language, "", metadata.GoogleFields, texts); err != nil {
 		return Listing{}, err
 	}
 	var res Listing

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 
 	"google.golang.org/api/googleapi"
@@ -59,7 +60,7 @@ func TestGoogleErrorHints(t *testing.T) {
 			if !errors.As(FromAPIError(err), &ce) {
 				t.Fatalf("not a clierr.Error: %v", err)
 			}
-			if *ce != tt.want {
+			if !reflect.DeepEqual(*ce, tt.want) {
 				t.Errorf("got  %+v\nwant %+v", *ce, tt.want)
 			}
 		})

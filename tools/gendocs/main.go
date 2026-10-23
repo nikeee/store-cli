@@ -187,6 +187,8 @@ func envTable() table {
 			{code(config.EnvGooglePackageName), "`store google`", "Default for `--app`"},
 			{code(config.EnvOutput), "all", "Default for `--output`"},
 			{code(config.EnvNoColor), "all", "Disables colors in text output"},
+			{code(config.EnvGitHubActions), "all", "`true` (set by GitHub Actions): errors and warnings also become annotations"},
+			{code(config.EnvGitHubWorkspace), "all", "Set by GitHub Actions: annotations name files relative to it"},
 		},
 	}
 }

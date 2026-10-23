@@ -17,6 +17,16 @@ const CodeNotYetReleased = "NOT_YET_RELEASED"
 // releaseNotesFile is the metadata file of the What's New text.
 const releaseNotesFile = "release_notes.txt"
 
+// ReadReleaseNotesDir reads What's New per locale from dir, see
+// metadata.ReadReleaseNotesDir, with the App Store limit.
+func ReadReleaseNotesDir(dir string) (map[string]string, error) {
+	field, ok := metadata.FieldByFile(metadata.AppleFields, releaseNotesFile)
+	if !ok {
+		return nil, clierr.New("internal error: no release notes field")
+	}
+	return metadata.ReadReleaseNotesDir(dir, field.MaxChars)
+}
+
 func notYetReleased() *clierr.Error {
 	e := clierr.New("App Store Connect accepts What's New only after the first release")
 	e.Code = CodeNotYetReleased
@@ -48,7 +58,7 @@ func (s *Service) setReleaseNotes(ctx context.Context, app App, v Version, notes
 	}
 	locales := make([]string, 0, len(notes))
 	for l, text := range notes {
-		if err := metadata.ValidateLocaleTexts(l, metadata.AppleFields, metadata.Texts{field.API: text}); err != nil {
+		if err := metadata.ValidateLocaleTexts(l, "", metadata.AppleFields, metadata.Texts{field.API: text}); err != nil {
 			return nil, err
 		}
 		locales = append(locales, l)

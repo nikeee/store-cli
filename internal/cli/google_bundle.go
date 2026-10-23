@@ -7,7 +7,6 @@ import (
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/google"
-	"github.com/nikeee/store-cli/internal/metadata"
 )
 
 func newGoogleBundleCmd(Deps) *cobra.Command {
@@ -95,7 +94,7 @@ func bundleOptions(cmd *cobra.Command, aab string) (google.BundleUploadOptions, 
 		}
 	}
 	if dir, _ := f.GetString("release-notes"); dir != "" {
-		notes, err := metadata.ReadReleaseNotesDir(dir)
+		notes, err := google.ReadReleaseNotesDir(dir)
 		if err != nil {
 			return o, err
 		}

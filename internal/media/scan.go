@@ -73,7 +73,7 @@ func ScanAppleScreenshots(dir, platform string) (map[string]map[string][]string,
 			}
 			d, err := DetectDevice(platform, info.Width, info.Height)
 			if err != nil {
-				return nil, clierr.New("%s: %v", p, err)
+				return nil, clierr.Filef(p, "%v", err)
 			}
 			sets[d.Alias] = append(sets[d.Alias], p)
 		}

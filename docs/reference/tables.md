@@ -14,6 +14,8 @@ Generated from the code tables by `go generate ./...`; do not edit.
 | `GOOGLE_PLAY_PACKAGE_NAME` | `store google` | Default for `--app` |
 | `STORE_OUTPUT` | all | Default for `--output` |
 | `NO_COLOR` | all | Disables colors in text output |
+| `GITHUB_ACTIONS` | all | `true` (set by GitHub Actions): errors and warnings also become annotations |
+| `GITHUB_WORKSPACE` | all | Set by GitHub Actions: annotations name files relative to it |
 
 ## Agent markers
 

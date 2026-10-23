@@ -97,36 +97,29 @@ func (in *PushInput) pushes(part string) bool {
 // validate checks lengths and values of the texts and format, alpha channel,
 // size and count of the screenshots. All problems are reported together.
 func (in *PushInput) validate() error {
-	var msgs []string
-	add := func(err error) {
-		if err != nil {
-			msgs = append(msgs, err.Error())
-		}
-	}
+	var c clierr.Collector
 	name, ok := metadata.FieldByFile(metadata.AppleFields, nameFile)
 	if !ok {
 		return clierr.New("internal error: no name field")
 	}
 	for _, l := range slices.Sorted(maps.Keys(in.locales)) {
 		t := in.locales[l]
-		add(metadata.ValidateLocaleTexts(l, metadata.AppleFields, t))
+		dir := filepath.Join(in.opts.Dir, l)
+		c.Add(metadata.ValidateLocaleTexts(l, dir, metadata.AppleFields, t))
 		// App Store Connect requires a name, so it cannot be cleared.
 		if v, ok := t[name.API]; ok && v == "" {
-			msgs = append(msgs, fmt.Sprintf("%s/%s: must not be empty, App Store Connect requires a name", l, name.File))
+			c.Add(clierr.At(l+"/"+name.File, clierr.Issue{File: filepath.Join(dir, name.File), Message: "must not be empty, App Store Connect requires a name"}))
 		}
 	}
-	add(metadata.ValidateLocaleTexts(metadata.ReviewDir, metadata.AppleReviewFields, in.review))
+	c.Add(metadata.ValidateLocaleTexts(metadata.ReviewDir, filepath.Join(in.opts.Dir, metadata.ReviewDir), metadata.AppleReviewFields, in.review))
 	for _, l := range slices.Sorted(maps.Keys(in.shots)) {
 		for _, d := range media.Devices {
 			if paths, ok := in.shots[l][d.Alias]; ok {
-				add(CheckScreenshotFiles(d, paths))
+				c.Add(CheckScreenshotFiles(d, paths))
 			}
 		}
 	}
-	if len(msgs) > 0 {
-		return clierr.New("%s", strings.Join(msgs, "; "))
-	}
-	return nil
+	return c.Err()
 }
 
 // PushPlan is a computed push: the plan to show and what ApplyPush sends.
