@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -198,6 +199,11 @@ func releaseCLIServer(t *testing.T) *ascfake.Server {
 	srv := versionCLIServer(t, "versions_pending_release.json")
 	srv.Handle("GET", "/v1/appStoreVersions/{id}/appStoreVersionPhasedRelease", ascfake.JSON(http.StatusOK, "phased_release_active.json"))
 	srv.Handle("POST", "/v1/appStoreVersionReleaseRequests", ascfake.JSON(http.StatusCreated, "release_request_created.json"))
+	srv.Handle("GET", "/v1/appStoreVersions/{id}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"data":{"type":"appStoreVersions","id":"v","attributes":{"platform":"IOS","versionString":"1.3.0",`+
+			`"appVersionState":"PROCESSING_FOR_DISTRIBUTION"}},"links":{"self":"x"}}`)
+	})
 	srv.Handle("POST", "/v1/appStoreVersionPhasedReleases", ascfake.JSON(http.StatusCreated, "phased_release_created_inactive.json"))
 	srv.Handle("PATCH", "/v1/appStoreVersionPhasedReleases/{id}", ascfake.JSON(http.StatusOK, "phased_release_paused.json"))
 	return srv
@@ -206,11 +212,13 @@ func releaseCLIServer(t *testing.T) *ascfake.Server {
 func TestAppleVersionRelease(t *testing.T) {
 	srv := releaseCLIServer(t)
 	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "version", "release", "1.3.0", "-o", "json")
-	if code != 0 || !strings.Contains(stdout, `"version": "1.3.0"`) {
+	if code != 0 || !strings.Contains(stdout, `"version": "1.3.0"`) || !strings.Contains(stdout, `"state": "PROCESSING_FOR_DISTRIBUTION"`) || stderr != "" {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if reqs := srv.Requests(); reqs[len(reqs)-1].Path != "/v1/appStoreVersionReleaseRequests" {
-		t.Errorf("last request = %s", reqs[len(reqs)-1].Path)
+	// the release request, then the version is read again for its new state
+	reqs := srv.Requests()
+	if r := reqs[len(reqs)-2]; r.Method != http.MethodPost || r.Path != "/v1/appStoreVersionReleaseRequests" {
+		t.Errorf("release request = %s %s", r.Method, r.Path)
 	}
 }
 

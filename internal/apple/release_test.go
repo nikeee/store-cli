@@ -36,12 +36,17 @@ func TestReleaseRequiresPendingDeveloperRelease(t *testing.T) {
 func TestRelease(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("POST", "/v1/appStoreVersionReleaseRequests", ascfake.JSON(http.StatusCreated, "release_request_created.json"))
+	srv.Handle("GET", "/v1/appStoreVersions/{id}", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"type": "appStoreVersions", "id": releasableID,
+			"attributes": map[string]any{"platform": "IOS", "versionString": "1.3.0", "appVersionState": "PROCESSING_FOR_DISTRIBUTION"}}, "links": map[string]any{"self": "x"}})
+	})
 	v, err := newService(t, srv).ReleaseVersion(t.Context(), pendingV, false)
-	if err != nil || v.Version != "1.3.0" {
+	// the result is the version after the release, not as it was found
+	if err != nil || v.Version != "1.3.0" || v.State != "PROCESSING_FOR_DISTRIBUTION" {
 		t.Fatalf("v=%+v err=%v", v, err)
 	}
 	reqs := srv.Requests()
-	if len(reqs) != 1 {
+	if len(reqs) != 2 {
 		t.Fatalf("requests = %v", requestLines(srv))
 	}
 	b := string(reqs[0].Body)

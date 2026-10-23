@@ -26,8 +26,9 @@ func stateError(format string, args ...any) *clierr.Error {
 	return e
 }
 
-// ReleaseVersion releases v, which must wait in PENDING_DEVELOPER_RELEASE.
-// The returned version is v as it was found. With dryRun nothing is sent.
+// ReleaseVersion releases v, which must wait in PENDING_DEVELOPER_RELEASE,
+// and returns it with its new state. With dryRun nothing is sent and v is
+// returned as it was found.
 func (s *Service) ReleaseVersion(ctx context.Context, v Version, dryRun bool) (Version, error) {
 	if v.State != stateForRelease {
 		return Version{}, stateError("version %s is in state %s, only %s can be released", v.Version, v.State, stateForRelease)
@@ -44,7 +45,16 @@ func (s *Service) ReleaseVersion(ctx context.Context, v Version, dryRun bool) (V
 	if err != nil {
 		return Version{}, fmt.Errorf("release version %s: %w", v.Version, err)
 	}
-	return v, nil
+	resp, err := s.client.AppStoreVersionsGetInstance(ctx, asc.AppStoreVersionsGetInstanceParams{ID: v.ID, Include: []string{"build"}, FieldsBuilds: []string{"version"}})
+	if err != nil {
+		s.report.Warnf("version %s was released; reading its new state failed: %v", v.Version, err)
+		return v, nil
+	}
+	vs, err := versionsFromAPI([]asc.AppStoreVersion{resp.Data}, resp.Included)
+	if err != nil {
+		return v, err
+	}
+	return vs[0], nil
 }
 
 // phasedOf maps a phased release resource of version v.
