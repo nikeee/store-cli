@@ -12,6 +12,12 @@
         "new": "1.4.0"
       },
       {
+        "action": "create",
+        "scope": "version",
+        "field": "release type",
+        "new": "MANUAL"
+      },
+      {
         "action": "update",
         "scope": "version",
         "field": "attach build",

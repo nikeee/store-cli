@@ -3,6 +3,7 @@ package apple
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"path/filepath"
 	"slices"
@@ -318,5 +319,74 @@ func TestSubmitFailureNamesDoneStepsAndSkipsRest(t *testing.T) {
 		if c.New == "secret" {
 			t.Errorf("secret in plan: %+v", c)
 		}
+	}
+}
+
+// A new version's plan shows the release type it is created with.
+func TestSubmitNewVersionPlansReleaseType(t *testing.T) {
+	srv := submitServer(t, "versions_live_only.json", "builds_valid.json")
+	o := SubmitOptions{Version: "1.4.0", Platform: "ios", Build: "latest", ReleaseType: "MANUAL", DryRun: true}
+	res, err := newService(t, srv).Submit(t.Context(), listingApp, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []metadata.Change{
+		{Action: metadata.ActionCreate, Scope: scopeVersion, Field: stepCreateVersion, New: "1.4.0"},
+		{Action: metadata.ActionCreate, Scope: scopeVersion, Field: stepReleaseType, New: "MANUAL"},
+	}
+	if got := res.Plan.Changes[:2]; !slices.Equal(got, want) {
+		t.Errorf("plan = %+v", got)
+	}
+}
+
+// A build that is attached already is a skip, and nothing is sent for it.
+func TestSubmitBuildAlreadyAttached(t *testing.T) {
+	srv := submitServer(t, "app_appStoreVersions.json", "builds_valid.json")
+	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, `{"data":[{"type":"builds","id":"4f3c2a10-6c1e-4d4b-9a51-2f0a7d9e8b45",`+
+			`"attributes":{"version":"45","uploadedDate":"2026-10-20T09:30:00-07:00","expired":false,"processingState":"VALID"},`+
+			`"relationships":{"preReleaseVersion":{"data":{"type":"preReleaseVersions","id":"pre-13"}}}}],`+
+			`"included":[{"type":"preReleaseVersions","id":"pre-13","attributes":{"version":"1.3.0","platform":"IOS"}}],"links":{"self":"x"}}`)
+	})
+	res, err := newService(t, srv).Submit(t.Context(), listingApp, SubmitOptions{Version: "1.3.0", Platform: "ios", Build: "latest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lines := changeLines(res.Plan.Changes); lines[0] != "skip version  attach build" {
+		t.Errorf("plan = %v", lines)
+	}
+	for _, m := range submitMutations(srv) {
+		if strings.HasSuffix(m, "/relationships/build") {
+			t.Errorf("sent %s", m)
+		}
+	}
+}
+
+// A push that fails before it planned anything is still not done.
+func TestSubmitPushFailureWithoutChangesIsNotDone(t *testing.T) {
+	srv := submitServer(t, "app_appStoreVersions.json", "builds_valid.json")
+	srv.Handle("GET", "/v1/apps/{id}/appInfos", ascfake.JSON(http.StatusConflict, "error_409.json"))
+	o := submitInputs(t)
+	o.Notes = nil
+	_, err := newService(t, srv).Submit(t.Context(), listingApp, o)
+	if err == nil || !strings.Contains(err.Error(), "done: attach build 45; not done: push metadata, submit;") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+// A failure during --dry-run still returns the plan.
+func TestSubmitDryRunFailureKeepsPlan(t *testing.T) {
+	srv := submitServer(t, "versions_live_only.json", "builds_valid.json")
+	calls := 0
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", func(w http.ResponseWriter, r *http.Request) {
+		if calls++; calls > 1 {
+			ascfake.JSON(http.StatusConflict, "error_409.json")(w, r)
+			return
+		}
+		ascfake.JSON(http.StatusOK, "versions_live_only.json")(w, r)
+	})
+	res, err := newService(t, srv).Submit(t.Context(), listingApp, SubmitOptions{Version: "1.4.0", Platform: "ios", Build: "latest", DryRun: true})
+	if err == nil || len(res.Plan.Changes) == 0 || res.Plan.Changes[0].Action != metadata.ActionSkip {
+		t.Fatalf("err = %v, plan = %+v", err, res.Plan.Changes)
 	}
 }

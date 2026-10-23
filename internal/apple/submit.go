@@ -95,13 +95,11 @@ func (p *progress) plan(failed bool) []metadata.Change {
 func (p *progress) describe() string {
 	var done, todo []string
 	for _, st := range p.steps {
-		if len(st.changes) == 0 {
-			continue // skipped, e.g. What's New before the first release
-		}
-		if st.done {
-			done = append(done, st.name)
-		} else {
+		switch {
+		case !st.done:
 			todo = append(todo, st.name)
+		case len(st.changes) > 0: // none: skipped, e.g. What's New before the first release
+			done = append(done, st.name)
 		}
 	}
 	if len(done) == 0 {
@@ -170,16 +168,23 @@ func (s *Service) Submit(ctx context.Context, app App, o SubmitOptions) (SubmitR
 	var p progress
 	var createStep, releaseStep *submitStep
 	if !found {
-		createStep = p.add("create version "+o.Version, step(metadata.ActionCreate, scopeVersion, "", stepCreateVersion, "", o.Version))
+		changes := []metadata.Change{step(metadata.ActionCreate, scopeVersion, "", stepCreateVersion, "", o.Version)}
+		if o.ReleaseType != "" {
+			changes = append(changes, step(metadata.ActionCreate, scopeVersion, "", stepReleaseType, "", releaseValue(o.ReleaseType, o.ReleaseDate)))
+		}
+		createStep = p.add("create version "+o.Version, changes...)
 	} else if needsRelease(o, v) {
 		releaseStep = p.add("set release type", step(metadata.ActionUpdate, scopeVersion, "", stepReleaseType,
 			releaseValue(v.ReleaseType, v.EarliestReleaseDate), releaseValue(o.ReleaseType, o.ReleaseDate)))
 	}
-	old := ""
+	old, attach := "", metadata.ActionUpdate
 	if found && v.Build != nil {
 		old = v.Build.Build
+		if v.Build.ID == b.ID {
+			attach = metadata.ActionSkip
+		}
 	}
-	attachStep := p.add("attach build "+b.Build, step(metadata.ActionUpdate, scopeVersion, "", stepAttachBuild, old, b.Build))
+	attachStep := p.add("attach build "+b.Build, step(attach, scopeVersion, "", stepAttachBuild, old, b.Build))
 	var pushStep *submitStep
 	if o.MetadataDir != "" {
 		pushStep = p.add("push metadata", step(metadata.ActionCreate, scopeVersion, "", "push metadata", "", filepath.Base(o.MetadataDir)))
@@ -201,7 +206,7 @@ func (s *Service) Submit(ctx context.Context, app App, o SubmitOptions) (SubmitR
 	if o.DryRun {
 		if !found {
 			if v, err = s.CreateVersion(ctx, app, s.createOptions(o)); err != nil {
-				return SubmitResult{}, err
+				return fail(err)
 			}
 		}
 	} else {
@@ -213,8 +218,10 @@ func (s *Service) Submit(ctx context.Context, app App, o SubmitOptions) (SubmitR
 				st.done = true
 			}
 		}
-		if v, err = s.SetVersionBuild(ctx, v, b); err != nil {
-			return fail(err)
+		if attach != metadata.ActionSkip {
+			if v, err = s.SetVersionBuild(ctx, v, b); err != nil {
+				return fail(err)
+			}
 		}
 		attachStep.done = true
 	}
