@@ -132,6 +132,13 @@ When an AI coding agent is detected from its environment (for example `CLAUDECOD
 `AI_AGENT`), the default is `toon`. Errors are objects with `error`, `status`, `code` and `hint` in
 `json` and `toon` mode. Exit codes: 0 success, 1 failure, 2 usage error.
 
+## Agent skill
+
+`skills/store-cli/` is an [Agent Skill](https://agentskills.io) that teaches coding agents to use
+`store` safely: dry run first, confirm before anything reaches users or reviewers, never touch the
+credentials. Install it with `npx skills add nikeee/store-cli`, or copy the folder into
+`.claude/skills/` (Claude Code) or `.agents/skills/`.
+
 ## Documentation
 
 - [Command reference](docs/reference/README.md), generated from the command help, with
