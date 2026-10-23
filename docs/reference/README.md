@@ -20,6 +20,7 @@ Conventions, output formats and exit codes are in [../commands.md](../commands.m
       - [store apple build upload](store_apple_build_upload.md) - Upload an IPA to App Store Connect
       - [store apple build wait](store_apple_build_wait.md) - Wait until a build exists and is processed
     - [store apple init](store_apple_init.md) - Scaffold the metadata directory for a new app
+    - [store apple lint](store_apple_lint.md) - Check a metadata directory offline
     - [store apple listing](store_apple_listing.md) - Show and change the store listing texts
       - [store apple listing locale](store_apple_listing_locale.md) - Add or remove a locale
         - [store apple listing locale add](store_apple_listing_locale_add.md) - Add a locale to the version and the app info
@@ -85,6 +86,7 @@ Conventions, output formats and exit codes are in [../commands.md](../commands.m
       - [store google images list](store_google_images_list.md) - List the images of a locale
       - [store google images upload](store_google_images_upload.md) - Upload images of one locale and type
     - [store google init](store_google_init.md) - Scaffold the Play listing directory for a new app
+    - [store google lint](store_google_lint.md) - Check a metadata directory offline
     - [store google listing](store_google_listing.md) - Show and change the store listing texts
       - [store google listing set](store_google_listing_set.md) - Change listing texts of one locale
       - [store google listing show](store_google_listing_show.md) - Show the listing texts per locale

@@ -37,6 +37,7 @@ store google [flags]
 * [store google details](store_google_details.md)	 - Show or change the app contact details
 * [store google images](store_google_images.md)	 - List, upload and delete listing images
 * [store google init](store_google_init.md)	 - Scaffold the Play listing directory for a new app
+* [store google lint](store_google_lint.md)	 - Check a metadata directory offline
 * [store google listing](store_google_listing.md)	 - Show and change the store listing texts
 * [store google pull](store_google_pull.md)	 - Write the Play listing into a metadata directory
 * [store google push](store_google_push.md)	 - Make the Play listing match a metadata directory

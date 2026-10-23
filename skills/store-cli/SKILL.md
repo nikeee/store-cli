@@ -50,12 +50,12 @@ or in GitHub Actions `uses: nikeee/store-cli@<tag>`.
 ## Commands
 
 Shape: `store <apple|google> <noun> <verb> [args] [flags]`. Verbs mean the same everywhere:
-`list`, `show`, `create`, `set`, `add`, `remove`, `upload`, `delete`, `wait`, `push`, `pull`.
+`list`, `show`, `create`, `set`, `add`, `remove`, `upload`, `delete`, `wait`, `lint`, `push`, `pull`.
 
 Every command with its arguments: [references/commands.md](references/commands.md) (generated
 from the command help). Entry points: `store apple submit` (the whole App Store submission),
 `store apple build upload`, `store google bundle upload`, `store google track promote`, and
-`store <apple|google> pull|push` for the metadata directory.
+`store <apple|google> pull|lint|push` for the metadata directory.
 
 Common workflows (builds, TestFlight, submission, release, Play tracks, CI):
 [references/workflows.md](references/workflows.md). Metadata directory, locales, limits and

@@ -33,6 +33,7 @@ store apple [flags]
 * [store apple auth](store_apple_auth.md)	 - Check the App Store Connect credentials
 * [store apple build](store_apple_build.md)	 - List, inspect and update builds
 * [store apple init](store_apple_init.md)	 - Scaffold the metadata directory for a new app
+* [store apple lint](store_apple_lint.md)	 - Check a metadata directory offline
 * [store apple listing](store_apple_listing.md)	 - Show and change the store listing texts
 * [store apple previews](store_apple_previews.md)	 - List, upload and delete app previews
 * [store apple pull](store_apple_pull.md)	 - Write the store listing into a metadata directory

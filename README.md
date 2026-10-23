@@ -67,6 +67,7 @@ store google bundle upload app.aab --track internal --release-notes release-note
 
 # keep the store listings in a fastlane-style directory
 store apple pull fastlane/metadata
+store apple lint fastlane/metadata
 store apple push fastlane/metadata --dry-run
 store google push fastlane/metadata --dry-run
 ```
@@ -149,6 +150,8 @@ jobs:
       - run: store google bundle upload app.aab --track internal --release-name "$GITHUB_REF_NAME" --release-notes release-notes
 
       # release
+      - run: store apple lint fastlane/metadata --release-notes release-notes
+      - run: store google lint fastlane/metadata --release-notes release-notes
       - run: store apple submit "${GITHUB_REF_NAME#v}" --metadata fastlane/metadata --release-notes release-notes --release after-approval
       - run: store google push fastlane/metadata
       - run: store google track promote "$GITHUB_REF_NAME" --from internal --to production --rollout 0.2 --release-notes release-notes

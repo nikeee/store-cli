@@ -38,7 +38,7 @@ func Lint(o PushOptions, notesDir string) (*lint.Result, error) {
 		return nil, err
 	}
 	in.validate(&c)
-	r := &lint.Result{}
+	r := &lint.Result{Findings: []lint.Finding{}}
 	r.AddError(c.Err())
 	if notesDir != "" {
 		_, err := ReadReleaseNotesDir(notesDir)
@@ -114,6 +114,7 @@ func keywordIssues(file, kw, name, subtitle string) []clierr.Issue {
 		if termWords["app"] {
 			at(i, "keyword %q contains \"app\", which does not help search", term)
 		}
+		delete(termWords, "app") // warned about above
 		for _, w := range slices.Sorted(maps.Keys(termWords)) {
 			if nameWords[w] {
 				at(i, "keyword %q repeats %q from the name, which is searchable already", term, w)

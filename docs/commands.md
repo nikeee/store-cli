@@ -20,7 +20,7 @@ store <apple|google> <noun> <verb> [args] [flags]
 ```
 
 Verbs mean the same on both sides: `list`, `show`, `create`, `set`, `add`, `remove`, `upload`,
-`delete`, `wait`, `push`, `pull`.
+`delete`, `wait`, `lint`, `push`, `pull`.
 
 ### Global flags
 
@@ -119,6 +119,9 @@ Release notes for both stores can live in a separate directory with one `<locale
 
 Start a new directory with `store apple init` / `store google init`, or from an existing listing
 with `store apple pull` / `store google pull`.
+Check it offline, without credentials, with `store apple lint` / `store google lint`: errors are
+what the store rejects or needs to submit or publish (exit 1), warnings what Apple and Google
+recommend (exit 1 only with `--strict`).
 
 ## Typical CI flow
 
@@ -131,6 +134,8 @@ store apple testflight group add-build "Beta" latest
 store google bundle upload app.aab --track internal --release-name "$TAG" --release-notes release-notes
 
 # release
+store apple lint fastlane/metadata --release-notes release-notes
+store google lint fastlane/metadata --release-notes release-notes
 store apple submit "$VERSION" --metadata fastlane/metadata --release-notes release-notes --release after-approval
 store google push fastlane/metadata
 store google track promote "$TAG" --from internal --to production --rollout 0.2 --release-notes release-notes

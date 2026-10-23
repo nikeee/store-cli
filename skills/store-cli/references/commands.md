@@ -15,6 +15,7 @@ Generated from the command help by `go generate ./...`; do not edit.
 - `store apple build upload <ipa>` - Upload an IPA to App Store Connect
 - `store apple build wait <build>` - Wait until a build exists and is processed
 - `store apple init <dir> --locale <l> [--locale <l>]... [--screenshots <dir>]` - Scaffold the metadata directory for a new app
+- `store apple lint <dir> [--screenshots <dir>] [--only texts,screenshots,review] [--release-notes <dir>] [--strict]` - Check a metadata directory offline
 - `store apple listing locale add <locale>` - Add a locale to the version and the app info
 - `store apple listing locale remove <locale>` - Remove a locale from the version and the app info
 - `store apple listing set --locale <l> [--version <v>] [field flags]` - Change listing texts of one locale
@@ -61,6 +62,7 @@ Generated from the command help by `go generate ./...`; do not edit.
 - `store google images list --locale <l> [--type <t>]` - List the images of a locale
 - `store google images upload --locale <l> --type <t> [--replace] <image>...` - Upload images of one locale and type
 - `store google init <dir> --locale <l> [--locale <l>]...` - Scaffold the Play listing directory for a new app
+- `store google lint <dir> [--only texts,images] [--release-notes <dir>] [--strict]` - Check a metadata directory offline
 - `store google listing set --locale <l> [field flags]` - Change listing texts of one locale
 - `store google listing show` - Show the listing texts per locale
 - `store google pull <dir>` - Write the Play listing into a metadata directory

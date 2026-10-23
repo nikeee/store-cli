@@ -297,6 +297,28 @@ Used by `push` and by `--dry-run`.
 | `created` | list of string |
 | `existing` | list of string |
 
+## LintResult
+
+`errors` and `warnings` count the findings.
+
+| Field | Type |
+|---|---|
+| `findings` | list of [Finding](#finding) |
+| `errors` | int |
+| `warnings` | int |
+
+## Finding
+
+`severity` is `error` or `warning`; `file`, `line` and `col` are left out when unknown.
+
+| Field | Type |
+|---|---|
+| `severity` | string |
+| `file` | string, omitted when empty |
+| `line` | int, omitted when empty |
+| `col` | int, omitted when empty |
+| `message` | string |
+
 ## VersionInfo
 
 `dev` for local builds.

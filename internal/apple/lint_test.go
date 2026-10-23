@@ -162,6 +162,11 @@ func TestKeywordIssues(t *testing.T) {
 			t.Errorf("%q:\n%+v\nwant:\n%+v", tt.kw, got, tt.want)
 		}
 	}
+	// "app" in the name too is one warning, not two
+	want := []clierr.Issue{{Line: 1, Col: 1, Message: `keyword "app" contains "app", which does not help search`}}
+	if got := keywordIssues("", "app", "Holz App", ""); !reflect.DeepEqual(got, want) {
+		t.Errorf("app in name: %+v", got)
+	}
 	if got := keywordIssues("k.txt", "ab", "", ""); len(got) != 1 || got[0].File != "k.txt" {
 		t.Errorf("file: %+v", got)
 	}

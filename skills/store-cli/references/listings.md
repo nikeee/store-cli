@@ -18,11 +18,12 @@ writes the store into it. Field files, devices, image types and the locale mappi
 ```sh
 store apple pull fastlane/metadata                 # start from the live listing (or: init --locale ...)
 # edit the .txt files
+store apple lint fastlane/metadata                 # offline: every problem and store recommendation
 store apple push fastlane/metadata --dry-run       # plan: create / update / delete / skip per field
 store apple push fastlane/metadata                 # after the user agreed to the plan
 ```
 
-Same with `store google pull|push`. `--only texts,screenshots,review` (Apple) or
+Same with `store google pull|lint|push`. `--only texts,screenshots,review` (Apple) or
 `--only texts,images` (Google) limits a push. `store apple submit --metadata <dir>` runs the push
 as part of a submission.
 
@@ -37,7 +38,8 @@ as part of a submission.
 ## Checks before any request
 
 Lengths, locale names, image sizes, alpha channels and counts are checked locally, all problems
-in one error, exit 1. Fix the files; nothing was sent.
+in one error, exit 1. Fix the files; nothing was sent. `lint` runs the same checks without credentials and adds
+what blocks a submission (empty required files) and warnings for store recommendations.
 
 - Apple screenshots: PNG without alpha or JPEG. The device comes from the pixel size; for a size
   that fits several devices put the files in `<locale>/<device-alias>/`. Order is the file name

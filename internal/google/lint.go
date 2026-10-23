@@ -45,7 +45,7 @@ func Lint(o PushOptions, notesDir string) (*lint.Result, error) {
 	}
 	var c clierr.Collector
 	in.validate(&c)
-	r := &lint.Result{}
+	r := &lint.Result{Findings: []lint.Finding{}}
 	r.AddError(c.Err())
 	if notesDir != "" {
 		notes, err := ReadReleaseNotesDir(notesDir)

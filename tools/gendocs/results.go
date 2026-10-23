@@ -10,6 +10,7 @@ import (
 	"github.com/nikeee/store-cli/internal/apple"
 	"github.com/nikeee/store-cli/internal/cli"
 	"github.com/nikeee/store-cli/internal/google"
+	"github.com/nikeee/store-cli/internal/lint"
 	"github.com/nikeee/store-cli/internal/metadata"
 )
 
@@ -57,6 +58,8 @@ var resultTypes = []resultType{
 	rt[metadata.Plan]("Plan", "Used by `push` and by `--dry-run`."),
 	rt[metadata.Change]("Change", "`action` is `create`, `update`, `replace` or `skip`."),
 	rt[metadata.InitResult]("InitResult", ""),
+	rt[lint.Result]("LintResult", "`errors` and `warnings` count the findings."),
+	rt[lint.Finding]("Finding", "`severity` is `error` or `warning`; `file`, `line` and `col` are left out when unknown."),
 	rt[cli.VersionInfo]("VersionInfo", "`dev` for local builds."),
 	rt[cli.GoogleAuthCheck]("GoogleAuthCheck", ""),
 	rt[google.BundleUploadResult]("BundleUploadResult", ""),

@@ -206,8 +206,8 @@ Retrieved 2026-10-23. Cite them in code comments next to the rule constants, lik
 
 - The split between push and lint above.
 - GitHub shows only a limited number of annotations per step and per job and drops the rest. That
-  is accepted: errors are annotated before warnings, and the full list is always in the step log
-  (stdout). No job summary.
+  is accepted: the full list is always in the step log (stdout). No job summary. Warnings are
+  annotated by the command, errors by the failure that sets exit code 1.
 - `--strict` turns warnings into exit code 1.
 - `--release-notes <dir>` (rule 16) is included because the typical CI flow passes such a directory
   to `submit`, `bundle upload` and `track promote`, and its limit is not checked by `push`.
