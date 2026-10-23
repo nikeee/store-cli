@@ -107,9 +107,9 @@ The setup action of this repository downloads a release, checks its checksum, pu
 on Linux and macOS runners, X64 and ARM64.
 
 ```yaml
-- uses: nikeee/store-cli@v0.1.1
+- uses: nikeee/store-cli@v0.2.0
   with:
-    version: 0.1.1 # or latest (the default); pin it for reproducible builds
+    version: 0.2.0 # or latest (the default); pin it for reproducible builds
 ```
 
 Outputs: `version` (the installed version) and `cache-hit`. The `token` input (default: the
@@ -142,9 +142,9 @@ jobs:
       GOOGLE_PLAY_PACKAGE_NAME: com.example.app
     steps:
       - uses: actions/checkout@v4
-      - uses: nikeee/store-cli@v0.1.1
+      - uses: nikeee/store-cli@v0.2.0
         with:
-          version: 0.1.1
+          version: 0.2.0
 
       # after the iOS and Android builds
       - run: store apple build upload app.ipa --notes @notes.txt --uses-non-exempt-encryption false
@@ -165,7 +165,7 @@ jobs:
 to the archives):
 
 ```
-curl -sSfL https://github.com/nikeee/store-cli/releases/download/v0.1.1/store_0.1.1_linux_amd64.tar.gz \
+curl -sSfL https://github.com/nikeee/store-cli/releases/download/v0.2.0/store_0.2.0_linux_amd64.tar.gz \
   | tar -xz -C /usr/local/bin store
 ```
 
@@ -198,9 +198,9 @@ jobs:
           java-version: 17
       - run: npm ci
       - run: npx expo prebuild
-      - uses: nikeee/store-cli@v0.1.1
+      - uses: nikeee/store-cli@v0.2.0
         with:
-          version: 0.1.1
+          version: 0.2.0
 
       - name: Android
         run: |
