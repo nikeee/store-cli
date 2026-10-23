@@ -193,10 +193,8 @@ func (s *Service) EditableAppInfo(ctx context.Context, app App) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	for _, i := range infos {
-		if slices.Contains(editableAppInfoStates, appInfoState(i)) {
-			return i.ID, nil
-		}
+	if id, ok := editableInfo(infos); ok {
+		return id, nil
 	}
 	e := clierr.New("app metadata is locked (in review); name, subtitle and privacy URLs cannot change now")
 	e.Code = "STATE_ERROR"
@@ -209,10 +207,8 @@ func (s *Service) readableAppInfo(ctx context.Context, app App) (string, bool, e
 	if err != nil {
 		return "", false, err
 	}
-	for _, i := range infos {
-		if slices.Contains(editableAppInfoStates, appInfoState(i)) {
-			return i.ID, true, nil
-		}
+	if id, ok := editableInfo(infos); ok {
+		return id, true, nil
 	}
 	for _, i := range infos {
 		if appInfoState(i) == asc.AppInfoAttributesStateReadyForDistribution {
@@ -220,6 +216,15 @@ func (s *Service) readableAppInfo(ctx context.Context, app App) (string, bool, e
 		}
 	}
 	return "", false, nil
+}
+
+// editableInfo returns the ID of the editable app info among infos.
+func editableInfo(infos []asc.AppInfo) (string, bool) {
+	i := slices.IndexFunc(infos, func(i asc.AppInfo) bool { return slices.Contains(editableAppInfoStates, appInfoState(i)) })
+	if i < 0 {
+		return "", false
+	}
+	return infos[i].ID, true
 }
 
 func (s *Service) infoLocalizations(ctx context.Context, infoID string) ([]asc.AppInfoLocalization, error) {

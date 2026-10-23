@@ -6,6 +6,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -106,17 +107,6 @@ var reviewFields = map[string]reviewField{
 	},
 }
 
-// reviewInfoFields selects the ReviewInfo field of an API name (not the bool).
-var reviewInfoFields = map[string]func(*ReviewInfo) *string{
-	"contactFirstName": func(r *ReviewInfo) *string { return &r.FirstName },
-	"contactLastName":  func(r *ReviewInfo) *string { return &r.LastName },
-	"contactPhone":     func(r *ReviewInfo) *string { return &r.Phone },
-	"contactEmail":     func(r *ReviewInfo) *string { return &r.Email },
-	"demoAccountName":  func(r *ReviewInfo) *string { return &r.DemoUser },
-	apiDemoPassword:    func(r *ReviewInfo) *string { return &r.DemoPassword },
-	"notes":            func(r *ReviewInfo) *string { return &r.Notes },
-}
-
 // reviewDetail returns the App Review detail of v; ok is false when v has none.
 func (s *Service) reviewDetail(ctx context.Context, v Version) (asc.AppStoreReviewDetail, bool, error) {
 	resp, err := s.client.AppStoreVersionsAppStoreReviewDetailGetToOneRelated(ctx, asc.AppStoreVersionsAppStoreReviewDetailGetToOneRelatedParams{ID: v.ID})
@@ -178,9 +168,7 @@ func (s *Service) applyReviewChanges(ctx context.Context, v Version, d asc.AppSt
 		if c.Scope != scopeReview || !ok {
 			return applied, id, clierr.New("cannot apply %s change %q to the review information", c.Scope, c.Field)
 		}
-		// "" cannot clear demoAccountRequired, and there is nothing to clear on
-		// a detail that does not exist yet.
-		if c.New == "" && (c.Field == apiDemoRequired || !exists) {
+		if reviewNoOp(c.Field, c.New, exists) {
 			continue
 		}
 		f.write(&attrs, c.New)
@@ -314,16 +302,56 @@ func attachmentNames(atts []asc.AppStoreReviewAttachment) []string {
 	return names
 }
 
+// fillReviewInfo sets info from the review texts t: each review field goes
+// to the ReviewInfo field whose json name is its flag in camel case
+// (first-name -> firstName), so metadata.AppleReviewFields stays the one
+// table. The demo password is masked unless reveal.
 func fillReviewInfo(info *ReviewInfo, t metadata.Texts, reveal bool) {
-	for api, sel := range reviewInfoFields {
-		if val, ok := t[api]; ok {
-			*sel(info) = val
+	v := reflect.ValueOf(info).Elem()
+	for _, f := range metadata.AppleReviewFields {
+		val, ok := t[f.API]
+		if !ok {
+			continue
+		}
+		switch fv := jsonFieldOf(v, camel(f.Flag)); fv.Kind() {
+		case reflect.String:
+			fv.SetString(val)
+		case reflect.Bool:
+			fv.SetBool(val == "true")
 		}
 	}
-	info.DemoRequired = t[apiDemoRequired] == "true"
 	if !reveal && info.DemoPassword != "" {
 		info.DemoPassword = metadata.Mask
 	}
+}
+
+// jsonFieldOf returns the field of struct v with the json name, else the
+// zero Value.
+func jsonFieldOf(v reflect.Value, name string) reflect.Value {
+	for i := range v.NumField() {
+		if n, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("json"), ","); n == name {
+			return v.Field(i)
+		}
+	}
+	return reflect.Value{}
+}
+
+// camel turns a flag name into camel case: "first-name" -> "firstName".
+func camel(flag string) string {
+	parts := strings.Split(flag, "-")
+	for i := 1; i < len(parts); i++ {
+		if parts[i] != "" {
+			parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// reviewNoOp reports whether setting the review field api to val changes
+// nothing: an empty demo_required.txt cannot clear the flag, and a version
+// without review information (exists false) has nothing to clear.
+func reviewNoOp(api, val string, exists bool) bool {
+	return val == "" && (api == apiDemoRequired || !exists)
 }
 
 // SetReviewInfo changes the given review texts of v and, when attachments is
@@ -341,14 +369,12 @@ func (s *Service) SetReviewInfo(ctx context.Context, v Version, texts metadata.T
 			return ReviewInfo{}, nil, clierr.New("attachment %s is not a readable file", p)
 		}
 	}
-	texts = maps.Clone(texts)
-	if texts[apiDemoRequired] == "" {
-		delete(texts, apiDemoRequired) // cannot be cleared
-	}
 	d, exists, err := s.reviewDetail(ctx, v)
 	if err != nil {
 		return ReviewInfo{}, nil, err
 	}
+	texts = maps.Clone(texts)
+	maps.DeleteFunc(texts, func(api, val string) bool { return reviewNoOp(api, val, exists) })
 	var remote metadata.Texts
 	if exists {
 		remote = reviewTexts(d)

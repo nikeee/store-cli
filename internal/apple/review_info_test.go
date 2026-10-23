@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -135,12 +136,13 @@ func TestReviewInfoShowMasksPassword(t *testing.T) {
 }
 
 func TestReviewInfoMappingCoversReviewFields(t *testing.T) {
+	v := reflect.ValueOf(&ReviewInfo{}).Elem()
 	for _, f := range metadata.AppleReviewFields {
 		if _, ok := reviewFields[f.API]; !ok {
 			t.Errorf("%s missing in reviewFields", f.API)
 		}
-		if _, ok := reviewInfoFields[f.API]; !ok && f.API != apiDemoRequired {
-			t.Errorf("%s missing in reviewInfoFields", f.API)
+		if !jsonFieldOf(v, camel(f.Flag)).IsValid() {
+			t.Errorf("ReviewInfo has no field %s for %s", camel(f.Flag), f.File)
 		}
 	}
 }

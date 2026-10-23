@@ -280,7 +280,7 @@ func (s *Service) planReview(ctx context.Context, v Version, local metadata.Text
 	}
 	remote = trimmed(remote)
 	local = maps.Clone(local)
-	maps.DeleteFunc(local, func(api, val string) bool { return val == "" && (api == apiDemoRequired || remote == nil) })
+	maps.DeleteFunc(local, func(api, val string) bool { return reviewNoOp(api, val, remote != nil) })
 	return metadata.DiffTexts(metadata.LevelReview, "", metadata.AppleReviewFields, local, remote), nil
 }
 
