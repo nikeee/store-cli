@@ -364,6 +364,7 @@ func TestUploadBuildNoAuthOnUploadURL(t *testing.T) {
 func TestPreviewUploadSendsNoChange(t *testing.T) {
 	srv := ascfake.New(t)
 	srv.Handle("GET", "/v1/apps", ascfake.JSON(http.StatusOK, "apps_one.json"))
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_empty.json"))
 	svc, _ := uploadService(t, srv)
 	res, err := svc.PreviewUpload(t.Context(), opts(testIPA(t)))
 	if err != nil {
@@ -371,6 +372,22 @@ func TestPreviewUploadSendsNoChange(t *testing.T) {
 	}
 	if res.State != "dry-run" || res.App != "com.example.app" || res.AppID != "1234567890" || res.Version != "1.3.0" || res.Build != "45" {
 		t.Errorf("result = %+v", res)
+	}
+	if q := srv.Requests()[1].Query; q.Get("filter[version]") != "45" || q.Get("filter[preReleaseVersion.version]") != "1.3.0" {
+		t.Errorf("build lookup = %s", q.Encode())
+	}
+}
+
+// A dry run finds a build number the version has already: Apple rejects a
+// second upload of it.
+func TestPreviewUploadFindsExistingBuild(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/apps", ascfake.JSON(http.StatusOK, "apps_one.json"))
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_valid.json"))
+	svc, _ := uploadService(t, srv)
+	_, err := svc.PreviewUpload(t.Context(), opts(testIPA(t)))
+	if err == nil || clierr.ExitCode(err) != 1 || err.Error() != "build 45 of version 1.3.0 exists already, App Store Connect rejects a second upload of it" {
+		t.Fatalf("err = %v", err)
 	}
 }
 

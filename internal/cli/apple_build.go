@@ -46,6 +46,8 @@ func newAppleBuildUploadCmd() *cobra.Command {
 			"made the command wait for the build.\n" +
 			"When a step after the accepted upload fails, the error says that the build was uploaded and the\n" +
 			"hint names the commands for the remaining steps; json and toon also print the result.\n" +
+			"--dry-run reads the IPA, resolves the app and checks that the version has no build with this\n" +
+			"number yet (Apple rejects a second upload of it); it uploads nothing.\n" +
 			"Result: BuildUpload",
 		Example: "  store apple build upload app.ipa --notes @whats-new.txt --uses-non-exempt-encryption false",
 		Args:    cobra.ExactArgs(1),

@@ -223,6 +223,7 @@ func TestAppleBuildUploadInvalidFlags(t *testing.T) {
 
 func TestAppleBuildUploadDryRun(t *testing.T) {
 	srv := uploadCLIServer(t)
+	srv.Handle("GET", "/v1/builds", ascfake.JSON(http.StatusOK, "builds_empty.json"))
 	code, stdout, stderr := runEnv(t, appleEnv(srv, nil), false, "apple", "build", "upload", uploadIPA(t), "--dry-run", "--wait", "-o", "json")
 	if code != 0 || !strings.Contains(stdout, `"state": "dry-run"`) || !strings.Contains(stdout, `"build": "45"`) {
 		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)

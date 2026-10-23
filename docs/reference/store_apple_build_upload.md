@@ -16,6 +16,8 @@ buildId of the result is empty when neither --wait, --notes nor --uses-non-exemp
 made the command wait for the build.
 When a step after the accepted upload fails, the error says that the build was uploaded and the
 hint names the commands for the remaining steps; json and toon also print the result.
+--dry-run reads the IPA, resolves the app and checks that the version has no build with this
+number yet (Apple rejects a second upload of it); it uploads nothing.
 
 Result: BuildUpload
 

@@ -78,10 +78,19 @@ func (p uploadPlan) result(state string) UploadResult {
 }
 
 // PreviewUpload validates and resolves like UploadBuild but uploads nothing.
+// A build number the version has already is an error, as Apple would reject
+// the upload.
 func (s *Service) PreviewUpload(ctx context.Context, o UploadOptions) (UploadResult, error) {
 	p, err := s.planUpload(ctx, o)
 	if err != nil {
 		return UploadResult{}, err
+	}
+	_, found, err := s.findBuild(ctx, p.app, p.info.Build, p.info.Version, o.Platform)
+	if err != nil {
+		return UploadResult{}, err
+	}
+	if found {
+		return UploadResult{}, clierr.New("build %s of version %s exists already, App Store Connect rejects a second upload of it", p.info.Build, p.info.Version)
 	}
 	return p.result("dry-run"), nil
 }
