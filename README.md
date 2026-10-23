@@ -166,10 +166,11 @@ curl -sSfL https://github.com/nikeee/store-cli/releases/download/v0.1.1/store_0.
 
 ## Expo
 
-EAS builds the app, `store` does the rest: upload, TestFlight, review submission, listings and
-rollout on both stores. The job below builds on EAS servers, downloads the IPA and AAB and hands
-them to the testers. Put the store credentials into `env` as in the example above and add an
-`EXPO_TOKEN` secret.
+No EAS needed. `expo prebuild` writes the native projects, Gradle and Xcode build them on the
+runner and `store` uploads the results. iOS needs macOS, so the job runs both builds there. Map
+the store credentials into `env` as in the example above, plus `UPLOAD_KEYSTORE` (the Play upload
+keystore, base64), `UPLOAD_KEYSTORE_PASSWORD` and `UPLOAD_KEY_ALIAS`. `MyApp` is the `name` from
+`app.json`.
 
 ```yaml
 name: release
@@ -179,36 +180,51 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - uses: expo/expo-github-action@v8
+      - uses: actions/setup-java@v4
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npx expo prebuild
       - uses: nikeee/store-cli@main
         with:
           version: 0.1.1
 
-      - name: Build on EAS
+      - name: Android
         run: |
-          eas build --platform all --profile production --non-interactive --wait --json > builds.json
-          curl -sSfL -o app.ipa "$(jq -r '.[] | select(.platform == "IOS") | .artifacts.buildUrl' builds.json)"
-          curl -sSfL -o app.aab "$(jq -r '.[] | select(.platform == "ANDROID") | .artifacts.buildUrl' builds.json)"
+          echo "$UPLOAD_KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          (cd android && ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
+            -Pandroid.injected.signing.store.password="$UPLOAD_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$UPLOAD_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$UPLOAD_KEYSTORE_PASSWORD")
+          store google bundle upload android/app/build/outputs/bundle/release/app-release.aab \
+            --track internal --release-name "$GITHUB_REF_NAME" --release-notes release-notes
 
-      - run: store apple build upload app.ipa --wait
-      - run: store apple testflight group add-build Beta latest
-      - run: store google bundle upload app.aab --track internal --release-name "$GITHUB_REF_NAME" --release-notes release-notes
+      - name: iOS
+        run: |
+          echo "$APPLE_APPSTORE_API_PRIVATE_KEY" > "$RUNNER_TEMP/key.p8"
+          sign="-allowProvisioningUpdates -authenticationKeyPath $RUNNER_TEMP/key.p8 -authenticationKeyID $APPLE_APPSTORE_API_KEY_ID -authenticationKeyIssuerID $APPLE_APPSTORE_ISSUER_ID"
+          xcodebuild archive -workspace ios/MyApp.xcworkspace -scheme MyApp -configuration Release \
+            -destination generic/platform=iOS -archivePath build/MyApp.xcarchive $sign
+          /usr/libexec/PlistBuddy -c "Add :method string app-store-connect" build/export.plist
+          xcodebuild -exportArchive -archivePath build/MyApp.xcarchive -exportPath build \
+            -exportOptionsPlist build/export.plist $sign
+          store apple build upload build/MyApp.ipa --wait
+          store apple testflight group add-build Beta latest
 ```
 
-Set `ios.config.usesNonExemptEncryption` in `app.json` and Apple stops asking about export
-compliance, so the upload needs no `--uses-non-exempt-encryption`. To build on the runner instead,
-use `eas build --local --platform android --output app.aab`; local iOS builds need a macOS runner.
+Set `ios.appleTeamId` and `ios.config.usesNonExemptEncryption` in `app.json`. The first lets Xcode
+sign automatically, the second answers export compliance, so the upload needs no
+`--uses-non-exempt-encryption`. Xcode signs with the same App Store Connect API key, which needs
+the Admin role for that.
 
 ## Output and LLM agents
 
