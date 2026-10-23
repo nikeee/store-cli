@@ -116,14 +116,52 @@ func jsonField(f reflect.StructField) string {
 	return name
 }
 
+// field is a struct field as json writes it: its name and its index path
+// (several steps for a field of an embedded struct).
+type field struct {
+	name  string
+	index []int
+}
+
+// jsonFields returns the fields of struct type t that json writes, with the
+// fields of embedded untagged structs inlined as json does.
+func jsonFields(t reflect.Type) []field {
+	var out []field
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		ft := f.Type
+		if ft.Kind() == reflect.Pointer {
+			ft = ft.Elem()
+		}
+		if f.Anonymous && f.Tag.Get("json") == "" && ft.Kind() == reflect.Struct {
+			for _, sub := range jsonFields(ft) {
+				out = append(out, field{sub.name, append([]int{i}, sub.index...)})
+			}
+			continue
+		}
+		if name := jsonField(f); name != "" {
+			out = append(out, field{name, []int{i}})
+		}
+	}
+	return out
+}
+
+// fieldOf returns the field at index of v; the zero Value when a nil
+// embedded pointer is in the way.
+func fieldOf(v reflect.Value, index []int) reflect.Value {
+	f, err := v.FieldByIndexErr(index)
+	if err != nil {
+		return reflect.Value{}
+	}
+	return f
+}
+
 func entries(v reflect.Value) []entry {
 	var out []entry
 	switch v.Kind() {
 	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			if name := jsonField(v.Type().Field(i)); name != "" {
-				out = append(out, entry{name, v.Field(i)})
-			}
+		for _, f := range jsonFields(v.Type()) {
+			out = append(out, entry{f.name, fieldOf(v, f.index)})
 		}
 	case reflect.Map:
 		for _, k := range v.MapKeys() {
@@ -193,23 +231,23 @@ func writeList(sb *strings.Builder, s Styles, v reflect.Value, indent string) {
 
 func writeTable(sb *strings.Builder, s Styles, v reflect.Value, indent string) {
 	elem := deref(v.Index(0)).Type()
-	var cols, nested []int
-	var names, nestedNames []string
-	for i := 0; i < elem.NumField(); i++ {
-		name := jsonField(elem.Field(i))
-		switch {
-		case name == "":
-		case isCell(elem.Field(i).Type):
-			cols, names = append(cols, i), append(names, name)
-		default:
-			nested, nestedNames = append(nested, i), append(nestedNames, name)
+	var cols, nested []field
+	for _, f := range jsonFields(elem) {
+		if isCell(elem.FieldByIndex(f.index).Type) {
+			cols = append(cols, f)
+		} else {
+			nested = append(nested, f)
 		}
+	}
+	names := make([]string, len(cols))
+	for i, c := range cols {
+		names[i] = c.name
 	}
 	rows := make([][]string, v.Len())
 	for r := range rows {
 		item := deref(v.Index(r))
 		for _, c := range cols {
-			rows[r] = append(rows[r], cell(item.Field(c)))
+			rows[r] = append(rows[r], cell(fieldOf(item, c.index)))
 		}
 	}
 	head := make([]string, len(names))
@@ -233,13 +271,13 @@ func writeTable(sb *strings.Builder, s Styles, v reflect.Value, indent string) {
 	}
 	for r := 0; r < v.Len(); r++ {
 		item := deref(v.Index(r))
-		for i, f := range nested {
-			fv := item.Field(f)
-			if isEmpty(fv) {
+		for _, f := range nested {
+			fv := fieldOf(item, f.index)
+			if !fv.IsValid() || isEmpty(fv) {
 				continue
 			}
-			label := nestedNames[i]
-			if len(rows[r]) > 0 {
+			label := f.name
+			if len(rows[r]) > 0 && rows[r][0] != "" {
 				label = rows[r][0] + " " + label
 			}
 			sb.WriteString("\n" + indent + s.Key.Render(label+":") + "\n")
