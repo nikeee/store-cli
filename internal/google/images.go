@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -149,9 +150,9 @@ func (s *Service) ListImages(ctx context.Context, language string, t *media.Imag
 
 // SyncImages makes the images of language and type t exactly paths, in order:
 // nothing if Play's ordered SHA-256 list already equals the files', else all
-// images are deleted and the files uploaded. The files are validated before
-// the first request. With dryRun it only reads. An error after the set was
-// changed says it is incomplete; withEdit then discards the edit.
+// images are deleted and the files uploaded. The caller has validated the
+// files (CheckImageFiles). With dryRun it only reads. An error after the set
+// was changed says it is incomplete; withEdit then discards the edit.
 func (s *Service) SyncImages(ctx context.Context, editID, language string, t media.ImageType, paths []string, dryRun bool) (metadata.Change, error) {
 	return s.syncImages(ctx, editID, language, t, paths, true, dryRun)
 }
@@ -160,9 +161,6 @@ func (s *Service) SyncImages(ctx context.Context, editID, language string, t med
 // single-image type always replaces its one image.
 func (s *Service) syncImages(ctx context.Context, editID, language string, t media.ImageType, paths []string, replace, dryRun bool) (metadata.Change, error) {
 	replace = replace || !t.Multiple
-	if err := CheckImageFiles(t, paths, replace); err != nil {
-		return metadata.Change{}, err
-	}
 	local, err := media.SHA256List(paths)
 	if err != nil {
 		return metadata.Change{}, err
@@ -229,19 +227,24 @@ func (s *Service) syncImages(ctx context.Context, editID, language string, t med
 	return change, nil
 }
 
-// uploadImage streams the file to Play.
+// uploadImage streams the file to Play, with the content type its first
+// bytes show.
 func (s *Service) uploadImage(ctx context.Context, editID, language string, t media.ImageType, path string) error {
-	info, err := media.Inspect(path)
-	if err != nil {
-		return err
-	}
 	f, err := os.Open(path)
 	if err != nil {
 		return clierr.New("%v", err)
 	}
 	defer func() { _ = f.Close() }()
+	head := make([]byte, 512)
+	n, err := io.ReadFull(f, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return clierr.New("%s: %v", path, err)
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return clierr.New("%s: %v", path, err)
+	}
 	_, err = s.api.Edits.Images.Upload(s.packageName, editID, language, t.APIType).Context(ctx).
-		Media(f, googleapi.ContentType("image/"+info.Format)).Do()
+		Media(f, googleapi.ContentType(http.DetectContentType(head[:n]))).Do()
 	if err != nil {
 		return fmt.Errorf("upload %s: %w", path, err)
 	}

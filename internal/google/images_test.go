@@ -4,10 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"image"
+	"image/jpeg"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -387,5 +390,36 @@ func TestListImages(t *testing.T) {
 	}
 	if len(sets) != len(media.ImageTypes) { // the fake serves the same images for every type
 		t.Errorf("got %d sets", len(sets))
+	}
+}
+
+// The upload's content type comes from the file's bytes, PNG or JPEG.
+func TestUploadImageContentTypeFromFile(t *testing.T) {
+	png, _ := shots(t, 640, 1280, 1)
+	jpg := filepath.Join(t.TempDir(), "b.png") // the name does not decide
+	f, err := os.Create(jpg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := jpeg.Encode(f, image.NewGray(image.Rect(0, 0, 640, 1280)), nil); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	srv := newImageServer(t)
+	if _, _, err := newService(t, srv.Server, io.Discard).UploadImages(t.Context(), "en-US", phoneType(), []string{png[0], jpg}, true, CommitOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	var types []string
+	for _, r := range srv.Requests() {
+		if strings.HasPrefix(r.Path, "/upload/") {
+			for _, ct := range []string{"image/png", "image/jpeg"} {
+				if strings.Contains(string(r.Body), "Content-Type: "+ct) {
+					types = append(types, ct)
+				}
+			}
+		}
+	}
+	if !slices.Equal(types, []string{"image/png", "image/jpeg"}) {
+		t.Errorf("content types = %v", types)
 	}
 }
