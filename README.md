@@ -74,6 +74,30 @@ store google push fastlane/metadata --dry-run
 Every mutating command accepts `--dry-run`, which prints what would change and changes nothing.
 Start a metadata directory from scratch with `store apple init` and `store google init`.
 
+## Examples
+
+Get a build to your TestFlight testers:
+
+```
+store apple build upload app.ipa --wait --notes @notes.txt --uses-non-exempt-encryption false
+store apple testflight group add-build Beta latest
+```
+
+Submit 1.4.0 for review with listing and What's New, release when Apple approves it:
+
+```
+store apple submit 1.4.0 --metadata fastlane/metadata --release-notes release-notes --release after-approval
+```
+
+Staged rollout on Play, and the brake if something goes wrong:
+
+```
+store google track promote v1.4.0 --from internal --to production --rollout 0.1
+store google track rollout production 0.5
+store google track halt production
+store google track complete production
+```
+
 ## GitHub Actions
 
 The setup action of this repository downloads a release, checks its checksum, puts `store` on the
@@ -83,7 +107,7 @@ on Linux and macOS runners, X64 and ARM64.
 ```yaml
 - uses: nikeee/store-cli@main
   with:
-    version: 0.1.0 # or latest (the default); pin it for reproducible builds
+    version: 0.1.1 # or latest (the default); pin it for reproducible builds
 ```
 
 Outputs: `version` (the installed version) and `cache-hit`. The `token` input (default: the
@@ -94,9 +118,15 @@ commands, so they show as annotations. Problems in the metadata directory, the r
 image files point at the file, and for texts over a limit at the line and column of the first
 character too much.
 
-A release job that uploads both builds and submits them. The builds themselves are up to you.
+A release workflow that runs on every `v*` tag, uploads both builds and submits them. The builds
+themselves are up to you.
 
 ```yaml
+name: release
+on:
+  push:
+    tags: ['v*']
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -111,18 +141,74 @@ jobs:
       - uses: actions/checkout@v4
       - uses: nikeee/store-cli@main
         with:
-          version: 0.1.0
+          version: 0.1.1
 
       # after the iOS and Android builds
       - run: store apple build upload app.ipa --notes @notes.txt --uses-non-exempt-encryption false
       - run: store apple testflight group add-build "Beta" latest
-      - run: store google bundle upload app.aab --track internal --release-name "$TAG" --release-notes release-notes
+      - run: store google bundle upload app.aab --track internal --release-name "$GITHUB_REF_NAME" --release-notes release-notes
 
       # release
-      - run: store apple submit "$VERSION" --metadata fastlane/metadata --release-notes release-notes --release after-approval
+      - run: store apple submit "${GITHUB_REF_NAME#v}" --metadata fastlane/metadata --release-notes release-notes --release after-approval
       - run: store google push fastlane/metadata
-      - run: store google track promote "$TAG" --from internal --to production --rollout 0.2 --release-notes release-notes
+      - run: store google track promote "$GITHUB_REF_NAME" --from internal --to production --rollout 0.2 --release-notes release-notes
 ```
+
+## Other CI
+
+`store` is a single static binary. Any runner with `curl` can fetch it (`checksums.txt` sits next
+to the archives):
+
+```
+curl -sSfL https://github.com/nikeee/store-cli/releases/download/v0.1.1/store_0.1.1_linux_amd64.tar.gz \
+  | tar -xz -C /usr/local/bin store
+```
+
+## Expo
+
+EAS builds the app, `store` does the rest: upload, TestFlight, review submission, listings and
+rollout on both stores. The job below builds on EAS servers, downloads the IPA and AAB and hands
+them to the testers. Put the store credentials into `env` as in the example above and add an
+`EXPO_TOKEN` secret.
+
+```yaml
+name: release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - uses: nikeee/store-cli@main
+        with:
+          version: 0.1.1
+
+      - name: Build on EAS
+        run: |
+          eas build --platform all --profile production --non-interactive --wait --json > builds.json
+          curl -sSfL -o app.ipa "$(jq -r '.[] | select(.platform == "IOS") | .artifacts.buildUrl' builds.json)"
+          curl -sSfL -o app.aab "$(jq -r '.[] | select(.platform == "ANDROID") | .artifacts.buildUrl' builds.json)"
+
+      - run: store apple build upload app.ipa --wait
+      - run: store apple testflight group add-build Beta latest
+      - run: store google bundle upload app.aab --track internal --release-name "$GITHUB_REF_NAME" --release-notes release-notes
+```
+
+Set `ios.config.usesNonExemptEncryption` in `app.json` and Apple stops asking about export
+compliance, so the upload needs no `--uses-non-exempt-encryption`. To build on the runner instead,
+use `eas build --local --platform android --output app.aab`; local iOS builds need a macOS runner.
 
 ## Output and LLM agents
 
