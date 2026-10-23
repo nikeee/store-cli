@@ -88,6 +88,8 @@ func TestMapErrorKeepsContext(t *testing.T) {
 		{"wrapped", fmt.Errorf("attach build 42: %w", re), "attach build 42: An attribute value is invalid."},
 		{"wrapped twice", fmt.Errorf("submit 1.2.0: %w", fmt.Errorf("attach build 42: %w", re)),
 			"submit 1.2.0: attach build 42: An attribute value is invalid."},
+		// like google.FromAPIError: context after the API error stays too
+		{"context after", fmt.Errorf("upload a.png: %w (set incomplete)", re), "upload a.png: An attribute value is invalid. (set incomplete)"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

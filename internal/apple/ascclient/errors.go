@@ -37,16 +37,17 @@ func FromAPIError(e *asc.ResponseError) *clierr.Error {
 }
 
 // MapError turns an App Store Connect error response anywhere in err's chain
-// into a clierr.Error, keeping the context added by wrappers
-// ("attach build 42: ..."); other errors pass unchanged.
+// into a clierr.Error, keeping the context added by wrappers before and
+// after it ("attach build 42: ...", like google.FromAPIError); other errors
+// pass unchanged.
 func MapError(err error) error {
 	var re *asc.ResponseError
 	if !errors.As(err, &re) {
 		return err
 	}
 	ce := FromAPIError(re)
-	if prefix, ok := strings.CutSuffix(err.Error(), re.Error()); ok {
-		ce.Message = prefix + ce.Message
+	if before, after, ok := strings.Cut(err.Error(), re.Error()); ok {
+		ce.Message = before + ce.Message + after
 	}
 	return ce
 }
