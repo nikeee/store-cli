@@ -227,7 +227,7 @@ func TestPlanSubmitPrefersDraft(t *testing.T) {
 	}
 	tests := []struct {
 		name, drafts, want string
-		add             bool
+		add                bool
 	}{
 		{"holds v second", draft("d1", "other") + "," + draft("d2", editableV.ID), "d2", false},
 		{"empty first", draft("d1", "") + "," + draft("d2", "other"), "d1", true},
