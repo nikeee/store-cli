@@ -55,7 +55,7 @@ func run(specPath, opsPath, outPath string) error {
 }
 
 // readOperations returns the operation IDs in the file. Blank lines and lines
-// starting with # are ignored.
+// starting with # are ignored; an ID listed twice is an error.
 func readOperations(path string) (map[string]bool, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -64,9 +64,13 @@ func readOperations(path string) (map[string]bool, error) {
 	ops := map[string]bool{}
 	for line := range strings.Lines(string(b)) {
 		line = strings.TrimSpace(line)
-		if line != "" && !strings.HasPrefix(line, "#") {
-			ops[line] = true
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
 		}
+		if ops[line] {
+			return nil, fmt.Errorf("%s: operation %s is listed twice", path, line)
+		}
+		ops[line] = true
 	}
 	return ops, nil
 }
@@ -203,13 +207,14 @@ func referencedSchemas(root json.RawMessage, schemas []member) (map[string]bool,
 	return keep, nil
 }
 
-// schemaRefs returns the schema names of all "$ref" values in raw.
+// schemaRefs returns the schema names of all "$ref" values in raw. Only
+// schemas are kept, so a reference to anything else is an error.
 func schemaRefs(raw json.RawMessage) ([]string, error) {
 	var v any
 	if err := json.Unmarshal(raw, &v); err != nil {
 		return nil, err
 	}
-	var names []string
+	var names, others []string
 	var walk func(any)
 	walk = func(v any) {
 		switch t := v.(type) {
@@ -217,6 +222,8 @@ func schemaRefs(raw json.RawMessage) ([]string, error) {
 			if ref, ok := t["$ref"].(string); ok {
 				if name, ok := strings.CutPrefix(ref, schemaRefPrefix); ok {
 					names = append(names, name)
+				} else {
+					others = append(others, ref)
 				}
 			}
 			for _, c := range t {
@@ -229,6 +236,10 @@ func schemaRefs(raw json.RawMessage) ([]string, error) {
 		}
 	}
 	walk(v)
+	if len(others) > 0 {
+		slices.Sort(others)
+		return nil, fmt.Errorf("unsupported references (only %s is kept): %s", schemaRefPrefix, strings.Join(slices.Compact(others), ", "))
+	}
 	return names, nil
 }
 

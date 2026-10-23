@@ -35,10 +35,27 @@ func NewClient(baseURL string, doer Doer) *Client {
 	return &Client{baseURL: strings.TrimSuffix(baseURL, "/"), doer: doer}
 }
 
+// maxErrorBody is the most of an error body that is read; maxBodyText the
+// most runes kept of one that is no JSON:API error document.
+const (
+	maxErrorBody = 1 << 20
+	maxBodyText  = 500
+)
+
+// shortBody returns b as trimmed text of at most maxBodyText runes.
+func shortBody(b []byte) string {
+	s := []rune(strings.TrimSpace(strings.ToValidUTF8(string(b), "")))
+	if len(s) > maxBodyText {
+		return string(s[:maxBodyText]) + "..."
+	}
+	return string(s)
+}
+
 // ResponseError is returned for every response with a non-2xx status.
 type ResponseError struct {
 	StatusCode int
 	Response   ErrorResponse // empty if the body was not a JSON:API error document
+	Body       string        // otherwise the start of the body, trimmed
 }
 
 func (e *ResponseError) Error() string {
@@ -173,7 +190,10 @@ func (c *Client) do(ctx context.Context, method, rawURL string, body, out any) e
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		e := &ResponseError{StatusCode: resp.StatusCode}
-		_ = json.NewDecoder(resp.Body).Decode(&e.Response) // keep the status if the body is not JSON
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
+		if json.Unmarshal(b, &e.Response) != nil || len(e.Response.Errors) == 0 {
+			e.Body = shortBody(b)
+		}
 		return e
 	}
 	if out == nil {

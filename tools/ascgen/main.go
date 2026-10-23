@@ -453,9 +453,12 @@ type param struct {
 }
 
 type rawParam struct {
+	Ref      string  `json:"$ref"`
 	Name     string  `json:"name"`
 	In       string  `json:"in"`
 	Required bool    `json:"required"`
+	Style    string  `json:"style"`
+	Explode  *bool   `json:"explode"`
 	Schema   *schema `json:"schema"`
 }
 
@@ -466,6 +469,7 @@ type rawOperation struct {
 		Content content `json:"content"`
 	} `json:"requestBody"`
 	Responses map[string]struct {
+		Ref     string  `json:"$ref"`
 		Content content `json:"content"`
 	} `json:"responses"`
 }
@@ -508,6 +512,12 @@ func (g *gen) operation(path, method string, raw rawOperation, params []rawParam
 	op := operation{ID: raw.OperationID, Name: pascal(raw.OperationID), Method: method, Path: path}
 	pathArgs := map[string]string{}
 	for _, rp := range params {
+		if rp.Ref != "" {
+			return op, fmt.Errorf("parameter $ref %s is not supported", rp.Ref)
+		}
+		if rp.Schema == nil {
+			return op, fmt.Errorf("parameter %s has no inline schema", rp.Name)
+		}
 		p := param{Name: rp.Name, GoName: pascal(rp.Name), In: rp.In, Required: rp.Required}
 		for _, prev := range op.Params {
 			if prev.GoName == p.GoName {
@@ -519,6 +529,10 @@ func (g *gen) operation(path, method string, raw rawOperation, params []rawParam
 			p.Type = "string"
 			pathArgs[rp.Name] = "url.PathEscape(params." + p.GoName + ")"
 		case rp.In == "query" && rp.Schema.Type == "array":
+			// setList joins the values with commas
+			if rp.Style != "" && rp.Style != "form" || rp.Explode == nil || *rp.Explode {
+				return op, fmt.Errorf("query parameter %s: only style form with explode false (comma separated) is supported", rp.Name)
+			}
 			p.Type, p.Setter = "[]string", "List"
 		case rp.In == "query" && rp.Schema.Type == "integer":
 			p.Type, p.Setter = "int", "Int"
@@ -568,6 +582,9 @@ func (g *gen) operation(path, method string, raw rawOperation, params []rawParam
 		if !strings.HasPrefix(code, "2") {
 			continue
 		}
+		if ref := raw.Responses[code].Ref; ref != "" {
+			return op, fmt.Errorf("response %s: $ref %s is not supported", code, ref)
+		}
 		if len(raw.Responses[code].Content) > 0 {
 			t, err := g.jsonRef(raw.Responses[code].Content, "response "+code)
 			if err != nil {
@@ -583,7 +600,7 @@ func (g *gen) operation(path, method string, raw rawOperation, params []rawParam
 // jsonRef returns the type of an application/json body, which must be a $ref.
 func (g *gen) jsonRef(c content, what string) (string, error) {
 	media, ok := c["application/json"]
-	if !ok || len(c) != 1 || media.Schema.Ref == "" {
+	if !ok || len(c) != 1 || media.Schema == nil || media.Schema.Ref == "" {
 		return "", fmt.Errorf("%s: only a single application/json $ref is supported", what)
 	}
 	return g.goType(media.Schema, "", what)

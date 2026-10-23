@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,7 +47,15 @@ func TestAPIErrorMapping(t *testing.T) {
 				w.WriteHeader(http.StatusBadGateway)
 				_, _ = io.WriteString(w, "<html><body>502 Bad Gateway</body></html>")
 			},
-			want: clierr.Error{Message: "app store connect: 502 Bad Gateway", Status: 502},
+			want: clierr.Error{Message: "app store connect: 502 Bad Gateway", Status: 502, Detail: "<html><body>502 Bad Gateway</body></html>"},
+		},
+		{
+			name: "long text",
+			h: func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = io.WriteString(w, "\n  "+strings.Repeat("x", 600))
+			},
+			want: clierr.Error{Message: "app store connect: 503 Service Unavailable", Status: 503, Detail: strings.Repeat("x", 500) + "..."},
 		},
 	}
 	for _, tt := range tests {
