@@ -54,5 +54,6 @@ For multi-step tasks, state a brief plan:
 ## Final Notices
 - Never use en or em dashes. Avoid using those dashes in general. If you need one, use a normal minus (-)
 - If you are doing comments: Keep them short. Use english regardless if you have been prompted in another language.
-- For domain-specific types: try to use branded types to imprive compiler-checked values. Think of the blog post "parse, don't validate". See `brand.ts`. Also consider use user-defined type-guards and type-assertion functions. ALso put parse functions there.
+- For domain-specific types: try to use branded types to imprive compiler-checked values. Think of the blog post "parse, don't validate".
+- Regardless of the language used to prompt you, always write code + issues in english
 - Prefer early-returns when checking errors. Try to avoid nesting
