@@ -1,0 +1,19 @@
+name: goreleaser
+description: GoReleaser in the one version CI and releases use.
+inputs:
+  args:
+    description: GoReleaser arguments
+    required: true
+  token:
+    description: GitHub token for publishing a release; not needed for check and snapshots
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: goreleaser/goreleaser-action@v7
+      with:
+        distribution: goreleaser
+        version: v2.19.0
+        args: ${{ inputs.args }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
