@@ -47,7 +47,8 @@ func previewServer(t *testing.T, sets string, remote []remoteShot, state string)
 		data := []any{}
 		for _, r := range remote {
 			data = append(data, map[string]any{"type": "appPreviews", "id": r.id,
-				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": "COMPLETE"}}})
+				"attributes": map[string]any{"fileName": r.name, "sourceFileChecksum": r.sum, "assetDeliveryState": map[string]any{"state": "COMPLETE"},
+					"previewFrameTimeCode": "00:00:01:00"}})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"data": data, "links": map[string]any{"self": "x"}})
 	})
@@ -278,5 +279,32 @@ func TestPreviewWatchRejected(t *testing.T) {
 func TestPreviewDeviceNameOfEmptyType(t *testing.T) {
 	if got := previewMedia.deviceName(""); got != "" {
 		t.Errorf("deviceName(\"\") = %q", got)
+	}
+}
+
+// Equal files with another poster frame are uploaded again.
+func TestPreviewReplaceComparesPosterFrame(t *testing.T) {
+	paths := previewFiles(t, 1)
+	remote := []remoteShot{{"a", "01.mp4", sums(t, paths)[0]}}
+	for frame, want := range map[string]metadata.Action{"": metadata.ActionSkip, "00:00:01:00": metadata.ActionSkip, "00:00:05:00": metadata.ActionReplace} {
+		srv := previewServer(t, "appPreviewSets_two.json", remote, "")
+		svc, _ := uploadService(t, srv)
+		_, ch, err := svc.UploadPreviews(t.Context(), testVersion, PreviewUpload{Locale: "en-US", Device: iphone69, Paths: paths, Replace: true, PosterFrame: frame, DryRun: true})
+		if err != nil || ch.Action != want {
+			t.Errorf("poster frame %q: change=%+v err=%v", frame, ch, err)
+		}
+	}
+}
+
+func TestCheckPosterFrame(t *testing.T) {
+	for _, ok := range []string{"", "00:00:05:00", "01:59:59:29"} {
+		if err := CheckPosterFrame(ok); err != nil {
+			t.Errorf("%q: %v", ok, err)
+		}
+	}
+	for _, bad := range []string{"5s", "00:00:05", "00:60:00:00", "00:00:05:00:00"} {
+		if err := CheckPosterFrame(bad); err == nil || clierr.ExitCode(err) != 2 {
+			t.Errorf("%q: %v", bad, err)
+		}
 	}
 }

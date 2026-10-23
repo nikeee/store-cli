@@ -207,6 +207,7 @@ Also the entry type of app previews.
 | `position` | int |
 | `checksum` | string |
 | `state` | string |
+| `posterFrame` | string, omitted when empty |
 
 ## ScreenshotSet
 

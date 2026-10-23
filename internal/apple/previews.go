@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -77,6 +78,17 @@ func previewMimeType(path string) (string, error) {
 	return "", clierr.New("%s: unsupported video file (use .mp4, .mov or .m4v)", path)
 }
 
+// posterFrameRe is a timecode hours:minutes:seconds:frames, like 00:00:05:00.
+var posterFrameRe = regexp.MustCompile(`^\d{2}:[0-5]\d:[0-5]\d:\d{2}$`)
+
+// CheckPosterFrame checks the --poster-frame timecode; empty is fine.
+func CheckPosterFrame(tc string) error {
+	if tc != "" && !posterFrameRe.MatchString(tc) {
+		return clierr.Usagef("invalid --poster-frame %q (use hours:minutes:seconds:frames, e.g. 00:00:05:00)", tc)
+	}
+	return nil
+}
+
 // CheckPreviewFiles validates the files (extension, at most 3). It reads no
 // file content.
 func CheckPreviewFiles(paths []string) error {
@@ -128,11 +140,14 @@ type PreviewUpload struct {
 // change. The files are validated before the first API call.
 func (s *Service) UploadPreviews(ctx context.Context, v Version, o PreviewUpload) (PreviewSet, metadata.Change, error) {
 	set := PreviewSet{Locale: o.Locale, Device: o.Device.Alias, PreviewType: o.Device.PreviewType, Previews: []Preview{}}
+	if err := CheckPosterFrame(o.PosterFrame); err != nil {
+		return set, metadata.Change{}, err
+	}
 	if err := CheckPreviewFiles(o.Paths); err != nil {
 		return set, metadata.Change{}, err
 	}
 	items, change, err := s.uploadMedia(ctx, previewMedia, v, mediaUpload{
-		locale: o.Locale, device: o.Device, paths: o.Paths, replace: o.Replace,
+		locale: o.Locale, device: o.Device, paths: o.Paths, replace: o.Replace, posterFrame: o.PosterFrame,
 		timeout: o.Timeout, dryRun: o.DryRun, asset: previewKind(o.PosterFrame),
 	})
 	set.Previews = items
@@ -192,6 +207,7 @@ var previewMedia = mediaKind{
 				if a := d.Attributes; a != nil {
 					pv.FileName = deref(a.FileName)
 					pv.Checksum = deref(a.SourceFileChecksum)
+					pv.PosterFrame = deref(a.PreviewFrameTimeCode)
 					if a.AssetDeliveryState != nil {
 						pv.State = string(deref(a.AssetDeliveryState.State))
 					}

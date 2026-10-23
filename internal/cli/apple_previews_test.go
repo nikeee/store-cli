@@ -158,3 +158,13 @@ func TestApplePreviewsMutationsDryRun(t *testing.T) {
 		}
 	}
 }
+
+// A bad --poster-frame is a usage error before any request.
+func TestApplePreviewsUploadBadPosterFrame(t *testing.T) {
+	srv := previewCLIServer(t)
+	code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "previews", "upload", "--locale", "en-US", "--device", "iphone-6.9",
+		"--poster-frame", "5s", videoArg(t, "a.mp4"))
+	if code != 2 || !strings.Contains(stderr, "--poster-frame") || len(srv.Requests()) != 0 {
+		t.Fatalf("code=%d stderr=%q requests=%d", code, stderr, len(srv.Requests()))
+	}
+}

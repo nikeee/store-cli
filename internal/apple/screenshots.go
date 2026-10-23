@@ -29,6 +29,8 @@ type Screenshot struct {
 	Position int    `json:"position"`
 	Checksum string `json:"checksum"`
 	State    string `json:"state"`
+	// PosterFrame is the poster frame timecode of a preview.
+	PosterFrame string `json:"posterFrame,omitempty"`
 }
 
 // ScreenshotSet is the screenshots of one locale and device. Device is the

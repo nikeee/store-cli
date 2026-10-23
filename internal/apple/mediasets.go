@@ -156,13 +156,14 @@ func renderMediaSets(w io.Writer, s output.Styles, k mediaKind, sets []mediaSetD
 // mediaUpload is the input of uploadMedia. asset is the upload flow of the
 // files; the files are already validated.
 type mediaUpload struct {
-	locale  string
-	device  media.Device
-	paths   []string
-	replace bool
-	timeout time.Duration
-	dryRun  bool
-	asset   assetKind
+	locale      string
+	device      media.Device
+	paths       []string
+	replace     bool
+	posterFrame string // previews: the poster frame every item should have; "" for any
+	timeout     time.Duration
+	dryRun      bool
+	asset       assetKind
 }
 
 // uploadMedia uploads the files to the set of u.device in u.locale of v and
@@ -231,7 +232,8 @@ func (s *Service) syncMedia(ctx context.Context, k mediaKind, o mediaSync) (meta
 	var leftovers []Screenshot // reserved by an earlier run but never uploaded
 	for i, r := range remote {
 		remoteSums[i] = r.Checksum
-		allComplete = allComplete && r.State == string(asc.AppMediaAssetStateStateComplete)
+		allComplete = allComplete && r.State == string(asc.AppMediaAssetStateStateComplete) &&
+			(o.posterFrame == "" || r.PosterFrame == o.posterFrame)
 		if r.State == string(asc.AppMediaAssetStateStateAwaitingUpload) {
 			leftovers = append(leftovers, r)
 		}

@@ -9,7 +9,8 @@
         "fileName": "01.mp4",
         "position": 1,
         "checksum": "s1",
-        "state": "COMPLETE"
+        "state": "COMPLETE",
+        "posterFrame": "00:00:01:00"
       }
     ]
   }

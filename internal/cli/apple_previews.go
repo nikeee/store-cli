@@ -90,6 +90,10 @@ func newApplePreviewsUploadCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			poster, _ := cmd.Flags().GetString("poster-frame")
+			if err := apple.CheckPosterFrame(poster); err != nil {
+				return err
+			}
 			if err := apple.CheckPreviewFiles(args); err != nil {
 				return err
 			}
@@ -103,7 +107,6 @@ func newApplePreviewsUploadCmd() *cobra.Command {
 			}
 			locale, _ := cmd.Flags().GetString("locale")
 			replace, _ := cmd.Flags().GetBool("replace")
-			poster, _ := cmd.Flags().GetString("poster-frame")
 			dry := dryRun(cmd)
 			set, change, err := svc.UploadPreviews(cmd.Context(), v, apple.PreviewUpload{
 				Locale: locale, Device: d, Paths: args, Replace: replace, PosterFrame: poster, Timeout: timeout, DryRun: dry,
