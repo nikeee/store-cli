@@ -1,0 +1,94 @@
+name: Setup store
+description: Install the store CLI for App Store Connect and Google Play and put it on the PATH.
+author: Niklas Mollenhauer
+branding:
+  icon: upload-cloud
+  color: blue
+
+inputs:
+  version:
+    description: "Release to install: 0.1.0 (or v0.1.0), or latest. Pin it for reproducible builds."
+    required: false
+    default: latest
+  token:
+    description: "Token for downloading the release. The default (the workflow's token) reads public releases; while nikeee/store-cli is private, pass a token that can read it."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: The installed version, without the leading v.
+    value: ${{ steps.install.outputs.version }}
+  cache-hit:
+    description: "true when store came from the runner's tool cache."
+    value: ${{ steps.install.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        repo=nikeee/store-cli
+
+        case "$RUNNER_OS" in
+          Linux) os=linux ;;
+          macOS) os=darwin ;;
+          *) echo "::error::store has no build for $RUNNER_OS runners (Linux and macOS only)"; exit 1 ;;
+        esac
+        case "$RUNNER_ARCH" in
+          X64) arch=amd64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "::error::store has no build for $RUNNER_ARCH runners (X64 and ARM64 only)"; exit 1 ;;
+        esac
+
+        if ! command -v gh >/dev/null; then
+          echo "::error::the GitHub CLI (gh) is needed; GitHub-hosted runners have it"
+          exit 1
+        fi
+
+        version="${VERSION#v}"
+        if [ "$version" = latest ]; then
+          version=$(gh release view -R "$repo" --json tagName -q .tagName)
+          version="${version#v}"
+        fi
+        if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+          echo "::error::invalid store version \"$VERSION\" (use e.g. 0.1.0 or latest)"
+          exit 1
+        fi
+
+        # Same layout as @actions/tool-cache, so self-hosted runners keep it between jobs.
+        dir="$RUNNER_TOOL_CACHE/store/$version/$(tr '[:upper:]' '[:lower:]' <<<"$RUNNER_ARCH")"
+        if [ -f "$dir.complete" ]; then
+          echo "store $version from the tool cache"
+          hit=true
+        else
+          archive="store_${version}_${os}_${arch}.tar.gz"
+          tmp=$(mktemp -d "$RUNNER_TEMP/store.XXXXXX")
+          echo "Downloading $archive of v$version"
+          gh release download "v$version" -R "$repo" -D "$tmp" -p "$archive" -p checksums.txt
+          sum=$(awk -v f="$archive" '$2 == f' "$tmp/checksums.txt")
+          if [ -z "$sum" ]; then
+            echo "::error::$archive is not listed in checksums.txt of v$version"
+            exit 1
+          fi
+          if command -v sha256sum >/dev/null; then
+            (cd "$tmp" && sha256sum -c - <<<"$sum")
+          else
+            (cd "$tmp" && shasum -a 256 -c - <<<"$sum")
+          fi
+          rm -rf "$dir"
+          mkdir -p "$dir"
+          tar -xzf "$tmp/$archive" -C "$dir" store
+          touch "$dir.complete"
+          rm -rf "$tmp"
+          hit=false
+        fi
+
+        echo "$dir" >> "$GITHUB_PATH"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "cache-hit=$hit" >> "$GITHUB_OUTPUT"

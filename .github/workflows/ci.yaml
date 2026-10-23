@@ -51,3 +51,28 @@ jobs:
             dist/*.tar.gz
             dist/checksums.txt
           if-no-files-found: error
+
+  setup-action:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: first
+        uses: ./
+        with:
+          version: 0.1.0
+      - id: second
+        uses: ./
+        with:
+          version: v0.1.0
+      - name: store is on the PATH, the second run came from the tool cache
+        run: |
+          store version -o json | grep -q '"version": "0.1.0"'
+          test "${{ steps.first.outputs.version }}" = 0.1.0
+          test "${{ steps.first.outputs.cache-hit }}" = false
+          test "${{ steps.second.outputs.cache-hit }}" = true
+      - id: latest
+        uses: ./
+      - run: test -n "${{ steps.latest.outputs.version }}"

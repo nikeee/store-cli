@@ -76,6 +76,19 @@ Start a metadata directory from scratch with `store apple init` and `store googl
 
 ## GitHub Actions
 
+The setup action of this repository downloads a release, checks its checksum, puts `store` on the
+`PATH` and keeps it in the runner's tool cache (self-hosted runners reuse it between jobs). It runs
+on Linux and macOS runners, X64 and ARM64.
+
+```yaml
+- uses: nikeee/store-cli@main
+  with:
+    version: 0.1.0 # or latest (the default); pin it for reproducible builds
+```
+
+Outputs: `version` (the installed version) and `cache-hit`. The `token` input (default: the
+workflow's token) is used to download the release.
+
 A release job that uploads both builds and submits them. The builds themselves are up to you.
 
 ```yaml
@@ -91,10 +104,9 @@ jobs:
       GOOGLE_PLAY_PACKAGE_NAME: com.example.app
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: nikeee/store-cli@main
         with:
-          go-version: stable
-      - run: go install github.com/nikeee/store-cli/cmd/store@latest
+          version: 0.1.0
 
       # after the iOS and Android builds
       - run: store apple build upload app.ipa --notes @notes.txt --uses-non-exempt-encryption false
