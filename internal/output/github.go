@@ -79,3 +79,11 @@ func (p *Printer) workspacePath(path string) string {
 	}
 	return filepath.ToSlash(rel)
 }
+
+// AnnotateWarning writes is as a warning annotation with AnnotateGitHub;
+// otherwise nothing.
+func (p *Printer) AnnotateWarning(is clierr.Issue) {
+	if p.github {
+		p.annotate("warning", is)
+	}
+}

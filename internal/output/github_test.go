@@ -82,3 +82,19 @@ func TestNoAnnotationsByDefault(t *testing.T) {
 		t.Errorf("stderr = %q", errb.String())
 	}
 }
+
+// AnnotateWarning writes nothing off GitHub Actions.
+func TestAnnotateWarning(t *testing.T) {
+	var out, errb bytes.Buffer
+	p := output.NewPrinter(output.ModeText, &out, &errb, false)
+	is := clierr.Issue{File: filepath.Join("meta", "keywords.txt"), Line: 1, Col: 4, Message: "short keyword"}
+	p.AnnotateWarning(is)
+	if errb.Len() != 0 {
+		t.Fatalf("off GitHub: %q", errb.String())
+	}
+	p.AnnotateGitHub("")
+	p.AnnotateWarning(is)
+	if want := "::warning file=meta/keywords.txt,line=1,col=4::short keyword\n"; errb.String() != want || out.Len() != 0 {
+		t.Errorf("stderr = %q", errb.String())
+	}
+}
