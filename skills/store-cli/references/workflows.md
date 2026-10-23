@@ -56,6 +56,9 @@ store google track complete production                      # (ask) everyone get
 One directory serves both stores: `<locale>.txt` per locale, App Store codes (`de-DE`, `es-MX`,
 `it`). Play codes are mapped (`es-MX` -> `es-419`); languages the Play listing lacks are dropped
 with a warning. Limits: 4000 characters on Apple, 500 on Play, checked before any request.
+TestFlight notes (`--notes`, `testflight notes set`) have the same 4000 character limit. Longer
+texts are rejected (exit 1), never cut: shorten them yourself, for example by dropping the oldest
+entries of a generated changelog.
 
 ## Waiting
 
