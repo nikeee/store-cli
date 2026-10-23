@@ -6,8 +6,9 @@ Check a metadata directory offline
 
 Checks <dir>/android/ without credentials or network and reports every problem at once.
 Errors:
-- everything push rejects: text limits, folders not named by Play codes, image format, alpha
-  channel, size, aspect ratio and count, an icon over 1024 KB
+- everything push rejects: text limits, folders not named by Play codes, image files or folders
+  that are no image type, image format, alpha channel, size, aspect ratio and count, an icon
+  over 1024 KB
 - with --release-notes: the release notes in that directory
 Warnings:
 - no feature graphic, or no locale with 2 screenshots (required to publish)

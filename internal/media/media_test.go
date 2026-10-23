@@ -294,9 +294,13 @@ func TestScanGoogleImages(t *testing.T) {
 	writeOpaque(t, filepath.Join(imgs, "phoneScreenshots", "b.png"), 1, 1)
 	writeOpaque(t, filepath.Join(imgs, "phoneScreenshots", "a.png"), 1, 1)
 	writeOpaque(t, filepath.Join(imgs, "featureGraphic.png"), 1, 1)
-	got, err := ScanGoogleImages(root)
-	if err != nil {
+	if err := os.WriteFile(filepath.Join(imgs, "notes.txt"), nil, 0o644); err != nil {
 		t.Fatal(err)
+	}
+	var c clierr.Collector
+	got, err := ScanGoogleImages(root, &c)
+	if err != nil || c.Err() != nil {
+		t.Fatal(err, c.Err())
 	}
 	want := map[string]map[string][]string{"en-US": {
 		"phone":           {filepath.Join(imgs, "phoneScreenshots", "a.png"), filepath.Join(imgs, "phoneScreenshots", "b.png")},
@@ -304,6 +308,25 @@ func TestScanGoogleImages(t *testing.T) {
 	}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v\nwant %v", got, want)
+	}
+}
+
+// An image or folder that is no image type would be left out silently, so
+// it is a problem; other files are ignored.
+func TestScanGoogleImagesReportsUnknown(t *testing.T) {
+	root := t.TempDir()
+	imgs := filepath.Join(root, "android", "en-US", "images")
+	if err := os.MkdirAll(filepath.Join(imgs, "phoneScreenshot"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeOpaque(t, filepath.Join(imgs, "feature.png"), 1, 1)
+	var c clierr.Collector
+	if _, err := ScanGoogleImages(root, &c); err != nil {
+		t.Fatal(err)
+	}
+	msg := c.Err().Error()
+	if !strings.Contains(msg, `unknown image folder "phoneScreenshot"`) || !strings.Contains(msg, filepath.Join(imgs, "feature.png")+": unknown image file") {
+		t.Errorf("problems = %v", msg)
 	}
 }
 

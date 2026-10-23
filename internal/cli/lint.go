@@ -59,8 +59,9 @@ func newGoogleLintCmd() *cobra.Command {
 		Short: "Check a metadata directory offline",
 		Long: "Checks <dir>/android/ without credentials or network and reports every problem at once.\n" +
 			"Errors:\n" +
-			"- everything push rejects: text limits, folders not named by Play codes, image format, alpha\n" +
-			"  channel, size, aspect ratio and count, an icon over 1024 KB\n" +
+			"- everything push rejects: text limits, folders not named by Play codes, image files or folders\n" +
+			"  that are no image type, image format, alpha channel, size, aspect ratio and count, an icon\n" +
+			"  over 1024 KB\n" +
 			"- with --release-notes: the release notes in that directory\n" +
 			"Warnings:\n" +
 			"- no feature graphic, or no locale with 2 screenshots (required to publish)\n" +

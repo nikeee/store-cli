@@ -44,11 +44,11 @@ type PushInput struct {
 // ReadPushDir reads <dir>/android/ and checks every text and image that is
 // pushed. It works offline, so every problem shows before any API call.
 func ReadPushDir(o PushOptions) (*PushInput, error) {
-	in, err := readPushDir(o)
+	var c clierr.Collector
+	in, err := readPushDir(o, &c)
 	if err != nil {
 		return nil, err
 	}
-	var c clierr.Collector
 	in.validate(&c)
 	if err := c.Err(); err != nil {
 		return nil, err
@@ -57,7 +57,9 @@ func ReadPushDir(o PushOptions) (*PushInput, error) {
 }
 
 // readPushDir reads <dir>/android/ without checking the texts and images.
-func readPushDir(o PushOptions) (*PushInput, error) {
+// Image files and folders that are no image type go to c; the error is for
+// what stops reading.
+func readPushDir(o PushOptions, c *clierr.Collector) (*PushInput, error) {
 	for _, p := range o.Only {
 		if !slices.Contains(PushParts, p) {
 			return nil, clierr.Usagef("invalid --only %q (use %s)", p, strings.Join(PushParts, ", "))
@@ -75,7 +77,7 @@ func readPushDir(o PushOptions) (*PushInput, error) {
 		}
 	}
 	if in.pushes(partImages) {
-		if in.images, err = media.ScanGoogleImages(o.Dir); err != nil {
+		if in.images, err = media.ScanGoogleImages(o.Dir, c); err != nil {
 			return nil, err
 		}
 	}

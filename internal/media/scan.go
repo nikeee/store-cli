@@ -4,7 +4,9 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -110,8 +112,10 @@ func ScanAppleScreenshots(dir, platform string, c *clierr.Collector) (map[string
 }
 
 // ScanGoogleImages returns Play locale -> image type alias -> sorted file
-// paths from <dir>/android/<locale>/images/.
-func ScanGoogleImages(dir string) (map[string]map[string][]string, error) {
+// paths from <dir>/android/<locale>/images/. An image file or folder there
+// that is no image type would be left out, so it goes to c; other files are
+// ignored. The error is only for unreadable directories.
+func ScanGoogleImages(dir string, c *clierr.Collector) (map[string]map[string][]string, error) {
 	out := map[string]map[string][]string{}
 	root := filepath.Join(dir, metadata.AndroidDir)
 	entries, err := os.ReadDir(root)
@@ -140,9 +144,42 @@ func ScanGoogleImages(dir string) (map[string]map[string][]string, error) {
 				sets[t.Alias] = []string{p}
 			}
 		}
+		if err := unknownImages(filepath.Join(root, e.Name(), "images"), c); err != nil {
+			return nil, err
+		}
 		if len(sets) > 0 {
 			out[e.Name()] = sets
 		}
 	}
 	return out, nil
+}
+
+// unknownImages adds to c every folder and image file in dir that is no
+// image type.
+func unknownImages(dir string, c *clierr.Collector) error {
+	entries, err := os.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return clierr.New("%v", err)
+	}
+	var names []string
+	for _, t := range ImageTypes {
+		names = append(names, path.Base(t.Path))
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if strings.HasPrefix(name, ".") || slices.Contains(names, name) {
+			continue
+		}
+		p := filepath.Join(dir, name)
+		switch {
+		case e.IsDir():
+			c.Add(clierr.New("%s: unknown image folder %q (use %s)", p, name, strings.Join(names, ", ")))
+		case isImageFile(name):
+			c.Add(clierr.Filef(p, "unknown image file (use %s)", strings.Join(names, ", ")))
+		}
+	}
+	return nil
 }

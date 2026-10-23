@@ -36,6 +36,11 @@ type ImageType struct {
 //   - TV banner: 1280x720, JPEG or 24-bit PNG without alpha;
 //   - promo graphic: not on that page; 180x120 is the legacy Play Console
 //     requirement (JPEG or 24-bit PNG without alpha).
+//
+// Checked again 2026-10-23: 7- and 10-inch tablet screenshots have no limits
+// of their own, so the general screenshot rule applies; "between 1,080 and
+// 7,680px" in 16:9 or 9:16 is guidance for large screens, not a requirement.
+// The promo graphic is still not on the page.
 var ImageTypes = []ImageType{
 	{Alias: "phone", APIType: "phoneScreenshots", Path: "images/phoneScreenshots", Multiple: true, Max: 8, Min: 2, MinSide: 320, MaxSide: 3840, MaxAspect: 2},
 	{Alias: "tablet-7", APIType: "sevenInchScreenshots", Path: "images/sevenInchScreenshots", Multiple: true, Max: 8, MinSide: 320, MaxSide: 3840, MaxAspect: 2},

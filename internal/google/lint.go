@@ -39,11 +39,11 @@ var (
 // error, plus the lint rules of the titles and images. With notesDir it
 // checks the release notes in it too. The error is for what stops reading.
 func Lint(o PushOptions, notesDir string) (*lint.Result, error) {
-	in, err := readPushDir(o)
+	var c clierr.Collector
+	in, err := readPushDir(o, &c)
 	if err != nil {
 		return nil, err
 	}
-	var c clierr.Collector
 	in.validate(&c)
 	r := &lint.Result{Findings: []lint.Finding{}}
 	r.AddError(c.Err())

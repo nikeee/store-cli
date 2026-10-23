@@ -114,6 +114,9 @@ fastlane-compatible, so existing fastlane projects work unchanged:
 ```
 
 The file names of every field and the image paths are in [tables](reference/tables.md).
+Images are ordered by file name in byte order (`10.png` before `2.png`, `B.png` before `a.png`), so
+number them `01.png`, `02.png`. An image file or folder in `images/` that is no image type is an
+error, as is an unknown device folder.
 Release notes for both stores can live in a separate directory with one `<locale>.txt` per locale
 (`--release-notes <dir>`).
 
