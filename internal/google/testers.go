@@ -56,16 +56,19 @@ func (s *Service) ShowTesters(ctx context.Context, track string) (Testers, error
 }
 
 // SetTesters replaces the tester groups of a track. With DryRun nothing is
-// sent and the result is what would be stored.
+// sent: the track is read, so an unknown track is an error, and the result
+// is what would be stored.
 func (s *Service) SetTesters(ctx context.Context, track string, groups []string, c CommitOptions) (Testers, error) {
 	var out Testers
 	err := s.withEdit(ctx, c, func(editID string) error {
 		t := &androidpublisher.Testers{GoogleGroups: groups}
-		if !c.DryRun {
-			var err error
-			if t, err = s.api.Edits.Testers.Update(s.packageName, editID, track, t).Context(ctx).Do(); err != nil {
-				return fmt.Errorf("update testers of track %s: %w", track, err)
+		var err error
+		if c.DryRun {
+			if _, err = s.api.Edits.Testers.Get(s.packageName, editID, track).Context(ctx).Do(); err != nil {
+				return fmt.Errorf("read testers of track %s: %w", track, err)
 			}
+		} else if t, err = s.api.Edits.Testers.Update(s.packageName, editID, track, t).Context(ctx).Do(); err != nil {
+			return fmt.Errorf("update testers of track %s: %w", track, err)
 		}
 		out = testersFromAPI(track, t)
 		return nil

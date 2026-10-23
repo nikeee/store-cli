@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/nikeee/store-cli/internal/testutil/playfake"
@@ -62,6 +63,18 @@ func TestTestersSetDryRun(t *testing.T) {
 	noMutations(t, srv)
 	if len(res.GoogleGroups) != 1 {
 		t.Errorf("res = %+v", res)
+	}
+	// the dry run reads the track, so a bad track name shows
+	if c := calls(srv); !slices.Contains(c, "GET /edits/edit-1/testers/internal") {
+		t.Errorf("calls = %v", c)
+	}
+	srv.Handle("GET", testersPath, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, `{"error":{"code":404,"message":"Track not found.","status":"NOT_FOUND"}}`)
+	})
+	if _, err := newService(t, srv, io.Discard).SetTesters(t.Context(), "nope", []string{"a@b.co"}, CommitOptions{DryRun: true}); err == nil {
+		t.Error("unknown track accepted")
 	}
 }
 
