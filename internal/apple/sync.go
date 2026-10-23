@@ -205,13 +205,17 @@ func (s *Service) planTexts(ctx context.Context, app App, v Version, local map[s
 	if len(local) == 0 {
 		return nil, nil
 	}
-	remote, err := s.ListingTexts(ctx, app, v)
+	info, version, err := s.listingLevels(ctx, app, v)
 	if err != nil {
 		return nil, err
 	}
 	locales := slices.Sorted(maps.Keys(local))
 	var changes []metadata.Change
 	for _, level := range []metadata.Level{metadata.LevelAppInfo, metadata.LevelVersion} {
+		remote := info
+		if level == metadata.LevelVersion {
+			remote = version
+		}
 		for _, l := range locales {
 			changes = append(changes, metadata.DiffTexts(level, l, metadata.AppleFields, local[l], trimmed(remote[l]))...)
 		}

@@ -3,6 +3,7 @@ package apple
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -250,50 +251,63 @@ func (s *Service) versionLocalizations(ctx context.Context, versionID string) ([
 // ListingTexts returns, per locale, the texts of the app info and the version
 // level, keyed by Field.API. Fields the API has no value for are absent.
 func (s *Service) ListingTexts(ctx context.Context, app App, v Version) (map[string]metadata.Texts, error) {
-	out := map[string]metadata.Texts{}
-	texts := func(locale string) metadata.Texts {
-		if out[locale] == nil {
-			out[locale] = metadata.Texts{}
-		}
-		return out[locale]
-	}
-	infoID, ok, err := s.readableAppInfo(ctx, app)
+	info, version, err := s.listingLevels(ctx, app, v)
 	if err != nil {
 		return nil, err
+	}
+	out := info
+	for l, t := range version {
+		if out[l] == nil {
+			out[l] = metadata.Texts{}
+		}
+		maps.Copy(out[l], t)
+	}
+	return out, nil
+}
+
+// listingLevels returns, per locale, the texts of the app info and those of
+// the version. A locale without a localization at a level is absent there.
+func (s *Service) listingLevels(ctx context.Context, app App, v Version) (info, version map[string]metadata.Texts, err error) {
+	info, version = map[string]metadata.Texts{}, map[string]metadata.Texts{}
+	infoID, ok, err := s.readableAppInfo(ctx, app)
+	if err != nil {
+		return nil, nil, err
 	}
 	if ok {
 		locs, err := s.infoLocalizations(ctx, infoID)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for _, l := range locs {
 			if l.Attributes == nil || l.Attributes.Locale == nil {
 				continue
 			}
-			t := texts(*l.Attributes.Locale)
+			t := metadata.Texts{}
 			for api, f := range infoFields {
 				if p := f.read(l.Attributes); p != nil {
 					t[api] = *p
 				}
 			}
+			info[*l.Attributes.Locale] = t
 		}
 	}
 	locs, err := s.versionLocalizations(ctx, v.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, l := range locs {
 		if l.Attributes == nil || l.Attributes.Locale == nil {
 			continue
 		}
-		t := texts(*l.Attributes.Locale)
+		t := metadata.Texts{}
 		for api, f := range versionFields {
 			if p := f.read(l.Attributes); p != nil {
 				t[api] = *p
 			}
 		}
+		version[*l.Attributes.Locale] = t
 	}
-	return out, nil
+	return info, version, nil
 }
 
 func localizationFromTexts(locale string, t metadata.Texts) Localization {
@@ -338,17 +352,15 @@ func (s *Service) SetListing(ctx context.Context, app App, v Version, locale str
 	if err := metadata.ValidateLocaleTexts(locale, "", metadata.AppleFields, texts); err != nil {
 		return Localization{}, nil, err
 	}
-	all, err := s.ListingTexts(ctx, app, v)
+	info, version, err := s.listingLevels(ctx, app, v)
 	if err != nil {
 		return Localization{}, nil, err
 	}
-	remote := all[locale]
-	changes := metadata.DiffTexts(metadata.LevelAppInfo, locale, metadata.AppleFields, texts, remote)
-	changes = append(changes, metadata.DiffTexts(metadata.LevelVersion, locale, metadata.AppleFields, texts, remote)...)
+	changes := metadata.DiffTexts(metadata.LevelAppInfo, locale, metadata.AppleFields, texts, info[locale])
+	changes = append(changes, metadata.DiffTexts(metadata.LevelVersion, locale, metadata.AppleFields, texts, version[locale])...)
 	after := metadata.Texts{}
-	for k, val := range remote {
-		after[k] = val
-	}
+	maps.Copy(after, info[locale])
+	maps.Copy(after, version[locale])
 	for _, c := range changes {
 		after[c.Field] = c.New
 	}

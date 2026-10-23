@@ -288,3 +288,14 @@ func TestPushIgnoresTrailingWhitespace(t *testing.T) {
 		t.Fatalf("plan=%v err=%v", plan, err)
 	}
 }
+
+// A locale that exists only in the app info gets its version texts created,
+// not updated.
+func TestPlanTextsLocaleAtOneLevel(t *testing.T) {
+	srv := listingServer(t, "app_appInfos.json", "appInfo_localizations_full.json", "version_localizations_en_only.json")
+	changes, err := newService(t, srv).planTexts(t.Context(), listingApp, editableV, map[string]metadata.Texts{"de-DE": {"description": "Neu."}})
+	want := []metadata.Change{{Action: metadata.ActionCreate, Scope: "version", Locale: "de-DE", Field: "description", New: "Neu."}}
+	if err != nil || !slices.Equal(changes, want) {
+		t.Errorf("changes = %+v, err = %v", changes, err)
+	}
+}
