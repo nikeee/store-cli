@@ -103,6 +103,11 @@ func TestInspectAlpha(t *testing.T) {
 	r := image.Rect(0, 0, 4, 3)
 	pal := image.NewPaletted(r, color.Palette{color.RGBA{A: 0}, color.RGBA{R: 255, A: 255}})
 	opaquePal := image.NewPaletted(r, color.Palette{color.RGBA{A: 255}, color.RGBA{R: 255, A: 255}})
+	// Opaque RGBA is written as truecolor without alpha, the usual screenshot.
+	opaqueRGB := image.NewRGBA(r)
+	for i := 3; i < len(opaqueRGB.Pix); i += 4 {
+		opaqueRGB.Pix[i] = 255
+	}
 	tests := []struct {
 		name string
 		img  image.Image
@@ -110,6 +115,7 @@ func TestInspectAlpha(t *testing.T) {
 	}{
 		{"nrgba", image.NewNRGBA(r), true},
 		{"rgba", image.NewRGBA(r), true},
+		{"rgb-opaque", opaqueRGB, false},
 		{"gray", image.NewGray(r), false},
 		{"pal-transparent", pal, true},
 		{"pal-opaque", opaquePal, false},
