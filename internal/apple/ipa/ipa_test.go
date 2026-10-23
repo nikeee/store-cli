@@ -171,3 +171,26 @@ func TestMissingFileNamesThePathOnce(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestUndecodablePlist(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "app.ipa")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	w, err := zw.Create("Payload/App.app/Info.plist")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("bplist00 garbage")); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	if _, err := Read(path); err == nil || !strings.Contains(err.Error(), "decode Payload/App.app/Info.plist") {
+		t.Errorf("err = %v", err)
+	}
+}

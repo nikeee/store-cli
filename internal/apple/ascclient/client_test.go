@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nikeee/store-cli/internal/apple/asc"
 	"github.com/nikeee/store-cli/internal/apple/ascclient"
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/testutil/ascfake"
@@ -59,5 +60,19 @@ func TestResolveAppNotFound(t *testing.T) {
 	}
 	if ce.Message != `no app with bundle ID "com.example.missing" in App Store Connect` || ce.Hint != "store apple app list" || clierr.ExitCode(err) != 1 {
 		t.Errorf("err = %+v", ce)
+	}
+}
+
+// Sparse fieldsets go into the query as fields[<type>], comma separated.
+func TestFieldsQuery(t *testing.T) {
+	srv := ascfake.New(t)
+	srv.Handle("GET", "/v1/apps/{id}/appStoreVersions", ascfake.JSON(http.StatusOK, "app_appStoreVersions.json"))
+	_, err := newClient(t, srv, time.Now).AppsAppStoreVersionsGetToManyRelated(t.Context(),
+		asc.AppsAppStoreVersionsGetToManyRelatedParams{ID: "1", Include: []string{"build"}, FieldsBuilds: []string{"version", "uploadedDate"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if q := srv.Requests()[0].Query; q.Get("fields[builds]") != "version,uploadedDate" || q.Get("include") != "build" {
+		t.Errorf("query = %s", q.Encode())
 	}
 }

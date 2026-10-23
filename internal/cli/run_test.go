@@ -152,3 +152,12 @@ func TestRunColor(t *testing.T) {
 		}
 	}
 }
+
+func TestCompletionPrintsScript(t *testing.T) {
+	for shell, want := range map[string]string{"bash": "bash completion", "zsh": "#compdef store", "fish": "complete -c store"} {
+		code, stdout, stderr := runEnv(t, nil, false, "completion", shell)
+		if code != 0 || !strings.Contains(stdout, want) || stderr != "" {
+			t.Errorf("%s: code=%d stdout=%.80q stderr=%q", shell, code, stdout, stderr)
+		}
+	}
+}

@@ -95,3 +95,31 @@ func TestUploadPartsRetries(t *testing.T) {
 		t.Errorf("bodies = %q", bodies)
 	}
 }
+
+// At most four parts are in flight at once.
+func TestUploadPartsAtMostFourAtOnce(t *testing.T) {
+	var inFlight, most atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		n := inFlight.Add(1)
+		for {
+			m := most.Load()
+			if n <= m || most.CompareAndSwap(m, n) {
+				break
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+		inFlight.Add(-1)
+	}))
+	t.Cleanup(srv.Close)
+	c := newClient(t, ascfake.New(t), time.Now)
+	var ops []ascclient.UploadOperation
+	for i := range 10 {
+		ops = append(ops, ascclient.UploadOperation{Method: "PUT", URL: srv.URL + "/part", Offset: int64(i), Length: 1})
+	}
+	if err := c.UploadParts(t.Context(), ops, strings.NewReader("0123456789")); err != nil {
+		t.Fatal(err)
+	}
+	if m := most.Load(); m > 4 || m < 2 {
+		t.Errorf("at most %d parts in flight, want 2 to 4", m)
+	}
+}

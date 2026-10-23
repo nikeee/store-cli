@@ -98,8 +98,9 @@ func TestPrinterColor(t *testing.T) {
 	}
 }
 
-func TestPrinterNoColorEnv(t *testing.T) {
-	// NO_COLOR is applied by cli (color=false); see cli tests. Here: plain text modes never color.
+// json mode never colors, even on a terminal. NO_COLOR is applied by cli,
+// see TestRunColor there.
+func TestPrinterJSONNeverColors(t *testing.T) {
 	var out, errb bytes.Buffer
 	p := output.NewPrinter(output.ModeJSON, &out, &errb, true)
 	p.Warnf("w")

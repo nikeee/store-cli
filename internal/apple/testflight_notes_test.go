@@ -68,6 +68,9 @@ func TestSetBuildNotesTooLong(t *testing.T) {
 	srv := ascfake.New(t)
 	svc := newService(t, srv)
 	// 4000 runes of a multi-byte character are fine; 4001 are not.
+	if err := CheckBuildNotes(strings.Repeat("é", 4000)); err != nil {
+		t.Fatalf("4000 characters: %v", err)
+	}
 	if _, err := svc.PreviewBuildNotes(t.Context(), testBuild, "en-US", strings.Repeat("é", 4001)); err == nil {
 		t.Fatal("want error for 4001 characters")
 	}
