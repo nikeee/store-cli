@@ -68,6 +68,48 @@ func TestAppleTestflightNotesSetDryRun(t *testing.T) {
 	}
 }
 
+// Right after an upload the build is not visible yet; --wait-for-build polls until it is.
+func TestAppleTestflightNotesSetWaitsForBuild(t *testing.T) {
+	srv := notesCLIServer(t)
+	empty, valid := ascfake.JSON(http.StatusOK, "builds_empty.json"), ascfake.JSON(http.StatusOK, "builds_valid.json")
+	lookups := 0
+	srv.Handle("GET", "/v1/builds", func(w http.ResponseWriter, r *http.Request) {
+		lookups++
+		if lookups < 3 {
+			empty(w, r)
+			return
+		}
+		valid(w, r)
+	})
+	code, stdout, stderr := runEnv(t, buildEnv(srv), false, "apple", "testflight", "notes", "set", "45", "--text", "Fixed login", "--wait-for-build", "5m", "-o", "json")
+	if code != 0 || !strings.Contains(stdout, `"text": "Fixed login"`) {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if lookups != 3 {
+		t.Errorf("looked the build up %d times, want 3", lookups)
+	}
+
+	// without the flag a missing build is an error at once
+	srv = notesCLIServer(t)
+	srv.Handle("GET", "/v1/builds", empty)
+	if code, _, stderr := runEnv(t, buildEnv(srv), false, "apple", "testflight", "notes", "set", "45", "--text", "Fixed login"); code != 1 {
+		t.Errorf("code=%d stderr=%q", code, stderr)
+	}
+}
+
+func TestAppleTestflightNotesSetWaitUsage(t *testing.T) {
+	for _, args := range [][]string{
+		{"latest", "--wait-for-build", "5m"},
+		{"45", "--wait-for-build", "-1m"},
+	} {
+		srv := notesCLIServer(t)
+		code, _, stderr := runEnv(t, buildEnv(srv), false, append([]string{"apple", "testflight", "notes", "set", "--text", "x"}, args...)...)
+		if code != 2 || !strings.Contains(stderr, "--wait-for-build") {
+			t.Errorf("%v: code=%d stderr=%q", args, code, stderr)
+		}
+	}
+}
+
 func distServer(t *testing.T) *ascfake.Server {
 	t.Helper()
 	srv := buildServer(t)
