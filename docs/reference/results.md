@@ -332,7 +332,7 @@ Used by `push` and by `--dry-run`.
 
 ## SelfUpgrade
 
-`action` is `upgrade`, or `skip` when this binary already is the latest release.
+`action` is `upgrade`, or `skip` when this binary already is the latest release or newer.
 
 | Field | Type |
 |---|---|

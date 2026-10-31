@@ -6,7 +6,7 @@ Replace this binary with the latest release
 
 Downloads the archive of the latest GitHub release for this platform, verifies it against the
 release's checksums.txt and replaces this binary with the store in it. Skips when this binary
-already is the latest release; local builds (dev) are always replaced.
+already is the latest release or newer; local builds (dev) are always replaced.
 
 Result: SelfUpgrade
 

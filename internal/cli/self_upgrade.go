@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
 
 	"github.com/nikeee/store-cli/internal/clierr"
 	"github.com/nikeee/store-cli/internal/config"
@@ -61,7 +62,7 @@ func newSelfUpgradeCmd(Deps) *cobra.Command {
 		Short: "Replace this binary with the latest release",
 		Long: "Downloads the archive of the latest GitHub release for this platform, verifies it against the\n" +
 			"release's checksums.txt and replaces this binary with the store in it. Skips when this binary\n" +
-			"already is the latest release; local builds (dev) are always replaced.\n" +
+			"already is the latest release or newer; local builds (dev) are always replaced.\n" +
 			"Result: SelfUpgrade",
 		Example: "  store self-upgrade --dry-run\n  store self-upgrade",
 		Args:    cobra.NoArgs,
@@ -74,11 +75,11 @@ func newSelfUpgradeCmd(Deps) *cobra.Command {
 func runSelfUpgrade(cmd *cobra.Command, _ []string) error {
 	d := cmdDeps(cmd)
 	exe, err := d.Executable()
-	if err == nil {
-		// Replace the file a symlink points to, not the symlink.
-		exe, err = filepath.EvalSymlinks(exe)
-	}
 	if err != nil {
+		return clierr.New("locate this binary: %v", err)
+	}
+	// Replace the file a symlink points to, not the symlink.
+	if exe, err = filepath.EvalSymlinks(exe); err != nil {
 		return clierr.New("locate this binary: %v", err)
 	}
 
@@ -98,37 +99,38 @@ func runSelfUpgrade(cmd *cobra.Command, _ []string) error {
 
 	latest := strings.TrimPrefix(rel.TagName, "v")
 	res := SelfUpgrade{From: version, To: latest, Path: exe, Action: "upgrade"}
-	if latest == version {
+	// dev is no semver: local builds always upgrade.
+	if semver.IsValid("v"+version) && semver.Compare("v"+latest, "v"+version) <= 0 {
 		res.Action = "skip"
 		return emit(cmd, res)
+	}
+	archive := fmt.Sprintf("store_%s_%s_%s.tar.gz", latest, runtime.GOOS, runtime.GOARCH)
+	archiveURL, err := rel.assetURL(archive)
+	if err != nil {
+		return err
 	}
 	if dryRun(cmd) {
 		return emit(cmd, res)
 	}
 
-	archive := fmt.Sprintf("store_%s_%s_%s.tar.gz", latest, runtime.GOOS, runtime.GOARCH)
-	bin, err := downloadStore(cmd, client, rel, archive)
+	bin, err := downloadStore(cmd, client, rel, archive, archiveURL)
 	if err != nil {
 		return err
 	}
 	if err := replaceFile(exe, bin); err != nil {
 		e := clierr.New("replace %s: %v", exe, err)
 		if errors.Is(err, fs.ErrPermission) {
-			e.Hint = "sudo store self-upgrade"
+			e.Hint = "sudo " + exe + " self-upgrade"
 		}
 		return e
 	}
 	return emit(cmd, res)
 }
 
-// downloadStore downloads archive of rel, verifies it against the release's
-// checksums.txt and returns the store binary in it.
-func downloadStore(cmd *cobra.Command, client *http.Client, rel githubRelease, archive string) ([]byte, error) {
+// downloadStore downloads archive of rel from archiveURL, verifies it against
+// the release's checksums.txt and returns the store binary in it.
+func downloadStore(cmd *cobra.Command, client *http.Client, rel githubRelease, archive, archiveURL string) ([]byte, error) {
 	ctx := cmd.Context()
-	archiveURL, err := rel.assetURL(archive)
-	if err != nil {
-		return nil, err
-	}
 	sumsURL, err := rel.assetURL("checksums.txt")
 	if err != nil {
 		return nil, err
@@ -170,7 +172,11 @@ func fetch(ctx context.Context, client *http.Client, url string) ([]byte, error)
 	if resp.StatusCode != http.StatusOK {
 		return nil, clierr.New("GET %s: %s", url, resp.Status)
 	}
-	return io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, clierr.New("GET %s: %v", url, err)
+	}
+	return b, nil
 }
 
 // checksumOf returns the SHA-256 of name in a checksums.txt ("<sum>  <name>" lines).
@@ -217,6 +223,11 @@ func replaceFile(path string, content []byte) error {
 	}
 	defer func() { _ = os.Remove(tmp.Name()) }() // fails harmlessly after the rename
 	if _, err := tmp.Write(content); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	// On disk before the rename, so a crash cannot leave an empty binary.
+	if err := tmp.Sync(); err != nil {
 		_ = tmp.Close()
 		return err
 	}

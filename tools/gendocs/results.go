@@ -61,7 +61,7 @@ var resultTypes = []resultType{
 	rt[lint.Result]("LintResult", "`errors` and `warnings` count the findings."),
 	rt[lint.Finding]("Finding", "`severity` is `error` or `warning`; `file`, `line` and `col` are left out when unknown."),
 	rt[cli.VersionInfo]("VersionInfo", "`dev` for local builds."),
-	rt[cli.SelfUpgrade]("SelfUpgrade", "`action` is `upgrade`, or `skip` when this binary already is the latest release."),
+	rt[cli.SelfUpgrade]("SelfUpgrade", "`action` is `upgrade`, or `skip` when this binary already is the latest release or newer."),
 	rt[cli.GoogleAuthCheck]("GoogleAuthCheck", ""),
 	rt[google.BundleUploadResult]("BundleUploadResult", ""),
 	rt[google.Track]("Track", ""),

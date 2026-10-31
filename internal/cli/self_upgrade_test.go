@@ -149,15 +149,47 @@ func TestSelfUpgradeDryRunChangesNothing(t *testing.T) {
 	assertContent(t, exe, "old")
 }
 
-func TestSelfUpgradeSkipsTheLatestRelease(t *testing.T) {
+// The latest release or newer, a prerelease included, is never replaced.
+func TestSelfUpgradeSkipsTheLatestReleaseOrNewer(t *testing.T) {
 	prev := version
-	version = "9.9.9"
 	t.Cleanup(func() { version = prev })
 	srv, downloads := releaseServer(t, tarGz(t, map[string]string{"store": "new"}), "")
 	exe := installed(t)
-	code, res, stderr := upgradeWith(t, srv.URL, exe)
-	if code != 0 || res.Action != "skip" || downloads.Load() != 0 {
-		t.Fatalf("code=%d res=%+v downloads=%d stderr=%q", code, res, downloads.Load(), stderr)
+	for _, v := range []string{"9.9.9", "10.0.0-rc.1"} {
+		version = v
+		code, res, stderr := upgradeWith(t, srv.URL, exe)
+		if code != 0 || res.Action != "skip" || downloads.Load() != 0 {
+			t.Fatalf("%s: code=%d res=%+v downloads=%d stderr=%q", v, code, res, downloads.Load(), stderr)
+		}
+	}
+	assertContent(t, exe, "old")
+}
+
+func TestSelfUpgradeDryRunFailsWithoutABuildForThisPlatform(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = fmt.Fprintf(w, `{"tag_name":%q,"assets":[]}`, fakeTag)
+	}))
+	t.Cleanup(srv.Close)
+	code, _, stderr := upgradeWith(t, srv.URL, installed(t), "--dry-run")
+	if code != 1 || !strings.Contains(stderr, "release v9.9.9 has no "+fakeArchive) {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
+	}
+}
+
+func TestSelfUpgradeHintsSudoForAReadOnlyDir(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root writes into read-only directories")
+	}
+	srv, _ := releaseServer(t, tarGz(t, map[string]string{"store": "new"}), "")
+	exe := installed(t)
+	dir := filepath.Dir(exe)
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+	code, _, stderr := upgradeWith(t, srv.URL, exe)
+	if code != 1 || !strings.Contains(stderr, "sudo "+exe+" self-upgrade") {
+		t.Fatalf("code=%d stderr=%q", code, stderr)
 	}
 	assertContent(t, exe, "old")
 }
