@@ -15,7 +15,7 @@ unpack it and put `store` on your `PATH`. Or build it with Go:
 go install github.com/nikeee/store-cli/cmd/store@latest
 ```
 
-Check it with `store version`.
+Check it with `store version`. `store self-upgrade` replaces it with the latest release.
 
 ## Credentials
 

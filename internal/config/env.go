@@ -21,6 +21,7 @@ const (
 	// Test-only API base URL overrides. Never documented for users.
 	EnvInternalAppleAPIURL  = "STORE_INTERNAL_APPLE_API_URL"
 	EnvInternalGoogleAPIURL = "STORE_INTERNAL_GOOGLE_API_URL"
+	EnvInternalGitHubAPIURL = "STORE_INTERNAL_GITHUB_API_URL"
 )
 
 // Var documents an environment variable for users: UsedBy is the command

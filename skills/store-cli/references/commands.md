@@ -78,6 +78,10 @@ Generated from the command help by `go generate ./...`; do not edit.
 - `store google track testers set <track> --group <google-group-email>...` - Replace the tester groups of a track
 - `store google track testers show <track>` - Show the tester groups of a track
 
+## store self-upgrade
+
+- `store self-upgrade` - Replace this binary with the latest release
+
 ## store version
 
 - `store version` - Print the version

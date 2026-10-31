@@ -36,7 +36,7 @@ func NewRootCmd(d Deps) *cobra.Command {
 	root.PersistentFlags().StringP("output", "o", "", "output format: text, json or toon (default: auto)")
 	root.PersistentFlags().BoolP("verbose", "v", false, "log every HTTP request to stderr")
 
-	root.AddCommand(newVersionCmd(d), newAppleCmd(d), newGoogleCmd(d))
+	root.AddCommand(newVersionCmd(d), newSelfUpgradeCmd(d), newAppleCmd(d), newGoogleCmd(d))
 	root.InitDefaultCompletionCmd()
 	if c, _, err := root.Find([]string{"completion"}); err == nil && c != root {
 		makeGroup(c)

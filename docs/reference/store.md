@@ -25,5 +25,6 @@ store [flags]
 * [store apple](store_apple.md)	 - Manage apps in App Store Connect
 * [store completion](store_completion.md)	 - Generate the autocompletion script for the specified shell
 * [store google](store_google.md)	 - Manage apps in Google Play
+* [store self-upgrade](store_self-upgrade.md)	 - Replace this binary with the latest release
 * [store version](store_version.md)	 - Print the version
 

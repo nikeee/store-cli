@@ -26,6 +26,8 @@ type Deps struct {
 	ErrTTY   bool // stderr is a terminal
 	Now      func() time.Time
 	Sleep    func(ctx context.Context, d time.Duration) error // polling and retries; instant in tests
+
+	Executable func() (string, error) // path of this binary, which self-upgrade replaces
 }
 
 // DefaultDeps returns the production dependencies.
@@ -48,6 +50,7 @@ func DefaultDeps() Deps {
 				return nil
 			}
 		},
+		Executable: os.Executable,
 	}
 }
 

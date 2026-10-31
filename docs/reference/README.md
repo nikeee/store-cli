@@ -105,4 +105,5 @@ Conventions, output formats and exit codes are in [../commands.md](../commands.m
       - [store google track testers](store_google_track_testers.md) - Show or set the tester groups of a track
         - [store google track testers set](store_google_track_testers_set.md) - Replace the tester groups of a track
         - [store google track testers show](store_google_track_testers_show.md) - Show the tester groups of a track
+  - [store self-upgrade](store_self-upgrade.md) - Replace this binary with the latest release
   - [store version](store_version.md) - Print the version

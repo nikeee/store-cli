@@ -330,6 +330,17 @@ Used by `push` and by `--dry-run`.
 | `commit` | string |
 | `date` | string |
 
+## SelfUpgrade
+
+`action` is `upgrade`, or `skip` when this binary already is the latest release.
+
+| Field | Type |
+|---|---|
+| `from` | string |
+| `to` | string |
+| `path` | string |
+| `action` | string |
+
 ## GoogleAuthCheck
 
 | Field | Type |
